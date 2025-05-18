@@ -105,3 +105,15 @@ width: 140px;
     border-radius: 0;
     border: none;
 }
+  #resultGrid .row {
+      pointer-events: none;
+    }
+
+    #hintText {
+      color: #ccc;
+      font-style: italic;
+    }
+
+    button {
+      cursor: pointer;
+    }
