@@ -6,7 +6,7 @@ const wordList = [
   "ribari", "gradac", "vrtlar", "pijaca",
   "kupati", "prodaj", "poklon", "olovka",
   "gumica", "satovi", "stočić", "krevet",
-  "dugmad", "zavesa", "slikaš", "sveska",
+  "dugmad", "zavesa", "sveska",
   "patika", "makaze", "zidari", "radnik",
   "putnik", "kupac", "nosila", "krovni", "proziv",
   "puknut", "trčati", "leteti", "igrati", "plivaj",
