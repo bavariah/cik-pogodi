@@ -8,7 +8,7 @@ const wordList = [
   "gumica", "satovi", "stočić", "krevet",
   "dugmad", "zavesa", "sveska",
   "patika", "makaze", "zidari", "radnik",
-  "putnik", "kupac", "nosila", "krovni", "proziv",
+  "putnik", "nosila", "krovni", "proziv",
   "puknut", "trčati", "leteti", "igrati", "plivaj",
   "voleti", "čekati", "pisati", "čitati", "pričaj",
   "stanar", "ručati", "kuvati", "kvasac", "prijem",
