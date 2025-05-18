@@ -85,7 +85,6 @@ const statsEl = document.getElementById("stats");
 const resultScreen = document.getElementById("resultScreen");
 const resultTitle = document.getElementById("resultTitle");
 const resultGrid = document.getElementById("resultGrid");
-const shareBtn = document.getElementById("shareBtn");
 
 let currentRow = 0;
 let currentGuess = "";
