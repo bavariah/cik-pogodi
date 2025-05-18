@@ -98,3 +98,10 @@ body {
   background-color: #3a3a3c !important;
   color: white;
 }
+#showHintBtn {
+width: 140px;
+    height: 30px;
+    outline: none;
+    border-radius: 0;
+    border: none;
+}
