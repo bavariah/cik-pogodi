@@ -76,18 +76,17 @@ function createKeyboard() {
     keyboard.appendChild(key);
   });
 
-  const enter = document.createElement("button");
-  enter.textContent = "⏎";
-  enter.classList.add("key");
-  enter.onclick = submitGuess;
-  keyboard.appendChild(enter);
+const enter = document.createElement("button");
+enter.textContent = "⏎";
+enter.classList.add("key", "wide");
+enter.onclick = submitGuess;
+keyboard.appendChild(enter);
 
-  const del = document.createElement("button");
-  del.textContent = "⌫";
-  del.classList.add("key");
-  del.onclick = deleteLetter;
-  keyboard.appendChild(del);
-}
+const del = document.createElement("button");
+del.textContent = "⌫";
+del.classList.add("key", "wide");
+del.onclick = deleteLetter;
+keyboard.appendChild(del);
 
 function handleKey(letter) {
   if (currentGuess.length < 6) {
