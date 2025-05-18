@@ -3,7 +3,7 @@ const wordList = [
   "knjiga", "prozor", "jastuk", "ulazni",
   "ograda", "kapija", "terasa", "polica", "čarapa",
   "kaputi", "jaknar", "torbar", "kuvari", "mesari",
-  "ribari", "gradac", "vrtlar", "pijaca",
+  "ribari", "vrtlar", "pijaca",
   "kupati", "prodaj", "poklon", "olovka",
   "gumica", "satovi", "stočić", "krevet",
   "dugmad", "zavesa", "sveska",
