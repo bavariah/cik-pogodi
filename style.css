@@ -63,6 +63,8 @@ body {
     font-weight: bold;
     cursor: pointer;
     user-select: none;
+        width: 44px;
+    height: 44px;
 }
 
 .key.used {
@@ -73,10 +75,26 @@ body {
   padding: 14px 0;
   font-size: 20px;
         background: green;
+    height: 52px;
 }
 .key.wide:last-of-type {
    background: #9d1414;
 }
 #score {
     margin-top: 20px;
+}
+
+.key.green {
+  background-color: #538d4e !important;
+  color: white;
+}
+
+.key.orange {
+  background-color: #b59f3b !important;
+  color: white;
+}
+
+.key.grey {
+  background-color: #3a3a3c !important;
+  color: white;
 }
