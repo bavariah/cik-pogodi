@@ -1,4 +1,21 @@
-const wordList = ["srpski", "knjiga", "prijem", "slasti", "kvasac"];
+// Expanded word list (add more as needed)
+const wordList = [
+    "srpski", "knjiga", "prijem", "slasno", "kvasac",
+    "nikako", "terasa", "igramo", "ukrasi", "prozor",
+    "jastuk", "pijaca", "dobiti", "ulazni"
+];
+
+// Lockout logic: prevent playing again within 12 hours
+const now = Date.now();
+const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
+
+if (now < lockUntil) {
+    document.body.innerHTML = `<h2 style="text-align:center;margin-top:40px;color:white">
+      Već ste igrali. Vratite se kasnije 😊
+    </h2>`;
+    throw new Error("Game locked until next cycle.");
+}
+
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
 const scoreEl = document.getElementById("score");
@@ -13,6 +30,7 @@ function getTodayWord() {
 }
 
 const targetWord = getTodayWord();
+const lockTime = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
 function updateScore() {
     scoreEl.textContent = `Poeni: ${score.wins} od ${score.total}`;
@@ -83,7 +101,7 @@ function submitGuess() {
 
     const tileStatus = Array(6).fill("grey");
 
-    // First pass - correct position
+    // First pass - correct positions
     for (let i = 0; i < 6; i++) {
         if (guessArr[i] === targetArr[i]) {
             tileStatus[i] = "green";
@@ -91,7 +109,7 @@ function submitGuess() {
         }
     }
 
-    // Second pass - wrong position
+    // Second pass - correct letter, wrong position
     for (let i = 0; i < 6; i++) {
         if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
             tileStatus[i] = "orange";
@@ -99,7 +117,7 @@ function submitGuess() {
         }
     }
 
-    // Apply to tiles
+    // Apply styles
     guessArr.forEach((letter, i) => {
         const tile = row.children[i];
         tile.classList.add(tileStatus[i]);
@@ -108,11 +126,16 @@ function submitGuess() {
     });
 
     score.total++;
+
     if (currentGuess === targetWord) {
         score.wins++;
         alert("Bravo! Pogodili ste reč!");
+        localStorage.setItem("locked_until", Date.now() + lockTime);
+    } else if (currentRow === 2) {
+        alert("Auuuu, i dalje ništa 😬");
     } else if (currentRow === 5) {
         alert("Kraj! Tačna reč je: " + targetWord.toUpperCase());
+        localStorage.setItem("locked_until", Date.now() + lockTime);
     } else {
         currentRow++;
         currentGuess = "";
@@ -128,6 +151,8 @@ function disableInput() {
     [...keyboard.children].forEach(key => key.disabled = true);
 }
 
+// Initialize
 createBoard();
 createKeyboard();
 updateScore();
+  
