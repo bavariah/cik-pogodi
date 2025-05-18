@@ -76,55 +76,40 @@ const wordList = [
   { word: "parfem", hint: "Mirisna tečnost" }
 ];
 
-// Lockout check – prevent game if played within 12 hours
-const now = Date.now();
-const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
-
-if (now < lockUntil) {
-  document.body.innerHTML = `<h2 style="text-align:center;margin-top:40px;color:white">
-    Već ste igrali. Vratite se kasnije 😊
-  </h2>`;
-  throw new Error("Game is currently locked.");
-}
-
-// DOM elements
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
-const scoreEl = document.getElementById("score");
 const hintWrapper = document.getElementById("hintWrapper");
 const showHintBtn = document.getElementById("showHintBtn");
 const hintTextEl = document.getElementById("hintText");
 const statsEl = document.getElementById("stats");
+const resultScreen = document.getElementById("resultScreen");
+const resultTitle = document.getElementById("resultTitle");
+const resultGrid = document.getElementById("resultGrid");
+const shareBtn = document.getElementById("shareBtn");
 
-// Game state
 let currentRow = 0;
 let currentGuess = "";
-let score = JSON.parse(localStorage.getItem("score")) || { wins: 0, total: 0 };
-const lockTime = 12 * 60 * 60 * 1000; // 12 hours in ms
+const lockTime = 12 * 60 * 60 * 1000;
+
+const now = Date.now();
+const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
+if (now < lockUntil) {
+  document.body.innerHTML = "<h2 style='margin-top:40px;'>Već ste igrali. Vratite se kasnije 😊</h2>";
+  throw new Error("Locked");
+}
 
 function getTodayWord() {
   const lastWordIndex = parseInt(localStorage.getItem("last_word_index") || -1);
   const timeWindow = Math.floor(Date.now() / (1000 * 60 * 60 * 12));
   const storedTimeWindow = parseInt(localStorage.getItem("last_time_window") || 0);
-
-  if (storedTimeWindow === timeWindow && lastWordIndex !== -1) {
-    return wordList[lastWordIndex];
-  }
-
-  let nextIndex = (lastWordIndex + 1) % wordList.length;
+  if (storedTimeWindow === timeWindow && lastWordIndex !== -1) return wordList[lastWordIndex];
+  const nextIndex = (lastWordIndex + 1) % wordList.length;
   localStorage.setItem("last_word_index", nextIndex);
   localStorage.setItem("last_time_window", timeWindow);
   return wordList[nextIndex];
 }
 
-const currentWordObj = getTodayWord();
-const targetWord = currentWordObj.word;
-const hintText = currentWordObj.hint;
-
-function updateScore() {
-  scoreEl.textContent = `Poeni: ${score.wins} od ${score.total}`;
-  localStorage.setItem("score", JSON.stringify(score));
-}
+const { word: targetWord, hint: hintText } = getTodayWord();
 
 function createBoard() {
   for (let i = 0; i < 7; i++) {
@@ -148,13 +133,11 @@ function createKeyboard() {
     key.onclick = () => handleKey(letter);
     keyboard.appendChild(key);
   });
-
   const enter = document.createElement("button");
   enter.textContent = "⏎";
   enter.classList.add("key", "wide");
   enter.onclick = submitGuess;
   keyboard.appendChild(enter);
-
   const del = document.createElement("button");
   del.textContent = "⌫";
   del.classList.add("key", "wide");
@@ -183,88 +166,55 @@ function deleteLetter() {
 
 function submitGuess() {
   if (currentGuess.length !== 6) return;
-
   const row = board.children[currentRow];
   const targetArr = targetWord.split("");
   const guessArr = currentGuess.split("");
-
   const tileStatus = Array(6).fill("grey");
 
-  // First pass – correct position
   for (let i = 0; i < 6; i++) {
     if (guessArr[i] === targetArr[i]) {
       tileStatus[i] = "green";
       targetArr[i] = null;
     }
   }
-
-  // Second pass – correct letter, wrong position
   for (let i = 0; i < 6; i++) {
     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
       tileStatus[i] = "orange";
       targetArr[targetArr.indexOf(guessArr[i])] = null;
     }
   }
-
-  // Apply styles
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
     tile.classList.add(tileStatus[i]);
-   const key = [...keyboard.children].find(k => k.textContent === letter.toUpperCase());
-if (key) {
-  const existing = key.classList;
-
-  if (!existing.contains("green")) {
-    if (tileStatus[i] === "green") {
-      key.classList.remove("orange", "grey");
-      key.classList.add("green");
-    } else if (tileStatus[i] === "orange" && !existing.contains("green")) {
-      key.classList.remove("grey");
-      key.classList.add("orange");
-    } else if (!existing.contains("orange") && !existing.contains("green")) {
-      key.classList.add("grey");
+    const key = [...keyboard.children].find(k => k.textContent === letter.toUpperCase());
+    if (key) {
+      const existing = key.classList;
+      if (!existing.contains("green")) {
+        if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
+        else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
+        else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
+      }
     }
-  }
-}
   });
 
-  score.total++;
-
-  if (currentGuess === targetWord) {
-    score.wins++;
-    alert("Bravo! Pogodili ste reč!");
-    localStorage.setItem("locked_until", Date.now() + lockTime);
-    updateScore();
-    disableInput();
-    updateStats(currentRow);
-    return;
-  }
-
-  if (currentRow === 2) {
-    alert("Auuuu, i dalje ništa 😬");
-  }
-
-  if (currentRow === 6) {
-    alert("Kraj! Tačna reč je: " + targetWord.toUpperCase());
-    localStorage.setItem("locked_until", Date.now() + lockTime);
-    updateScore();
-    disableInput();
-    updateStats(null);
-    return;
-  }
-
-  if (currentRow === 6) {
+  if (currentGuess === targetWord) return endGame(true);
+  if (currentRow === 6) return endGame(false);
+  if (currentRow === 5) {
     hintWrapper.style.display = "block";
     showHintBtn.onclick = () => {
       hintTextEl.textContent = "Nagoveštaj: " + hintText;
       hintTextEl.style.display = "block";
     };
   }
-
-  // Continue to next row
   currentRow++;
   currentGuess = "";
-  updateScore();
+}
+
+function endGame(win) {
+  localStorage.setItem("locked_until", Date.now() + lockTime);
+  disableInput();
+  updateStats(win ? currentRow : null);
+  showResultGrid(win);
 }
 
 function disableInput() {
@@ -284,7 +234,6 @@ function updateStats(rowSolved) {
   }
   localStorage.setItem("stats", JSON.stringify(stats));
 
-  // Show stats
   statsEl.innerHTML = `<h3>Statistika</h3>`;
   stats.attempts.forEach((val, i) => {
     statsEl.innerHTML += `<div>Red ${i + 1}: ${val}</div>`;
@@ -295,31 +244,38 @@ function updateStats(rowSolved) {
 function showCountdownIfLocked() {
   const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
   const timerEl = document.getElementById("timer");
-
   if (Date.now() < lockUntil) {
     function updateTimer() {
       const now = Date.now();
       const diff = lockUntil - now;
-
-      if (diff <= 0) {
-        timerEl.textContent = "Nova igra dostupna!";
-        return;
-      }
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      timerEl.textContent = `Sledeća igra za: ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      if (diff <= 0) return timerEl.textContent = "Nova igra dostupna!";
+      const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+      timerEl.textContent = `Sledeća igra za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     }
-
     updateTimer();
     setInterval(updateTimer, 1000);
   }
 }
 
-// Initialize game
+function showResultGrid(win) {
+  const boardRows = document.querySelectorAll(".row");
+  resultGrid.innerHTML = "";
+  resultTitle.textContent = win ? "Bravo! Pogodili ste reč!" : "Niste pogodili 😞";
+  for (let r = 0; r <= currentRow; r++) {
+    const clone = boardRows[r].cloneNode(true);
+    clone.style.marginBottom = "5px";
+    resultGrid.appendChild(clone);
+  }
+  resultScreen.style.display = "block";
+  resultScreen.scrollIntoView({ behavior: "smooth" });
+}
+
+shareBtn.onclick = () => {
+  const text = `${resultTitle.textContent}\nPogledaj igru: https://bavariah.github.io/cik-pogodi/`;
+  navigator.clipboard.writeText(text).then(() => alert("Rezultat kopiran!"));
+};
+
+// Init
 createBoard();
 createKeyboard();
-updateScore();
 showCountdownIfLocked();
