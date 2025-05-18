@@ -117,3 +117,25 @@ width: 140px;
     button {
       cursor: pointer;
     }
+  #stats {
+      margin-top: 30px;
+      padding: 10px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #stats h3 {
+      margin-bottom: 10px;
+      color: #eee;
+    }
+    #stats div {
+      margin: 4px 0;
+      font-size: 16px;
+    }
+    #stats div:last-child {
+      font-weight: bold;
+      color: #ccc;
+    }
