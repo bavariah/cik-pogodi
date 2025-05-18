@@ -1,6 +1,6 @@
 // Word list 
 const wordList = [
-  "knjiga", "prozor", "jastuk", "tepih", "ulazni",
+  "knjiga", "prozor", "jastuk", "ulazni",
   "ograda", "kapija", "terasa", "polica", "čarapa",
   "kaputi", "jaknar", "torbar", "kuvari", "mesari",
   "ribari", "gradac", "vrtlar", "pijaca",
