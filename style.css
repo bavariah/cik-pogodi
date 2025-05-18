@@ -68,7 +68,11 @@ body {
 .key.used {
     background: #444;
 }
-
+.key.wide {
+  flex: 1 1 100%;
+  padding: 14px 0;
+  font-size: 20px;
+}
 #score {
     margin-top: 20px;
 }
