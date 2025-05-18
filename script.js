@@ -253,7 +253,7 @@ if (key) {
     return;
   }
 
-  if (currentRow === 5) {
+  if (currentRow === 6) {
     hintWrapper.style.display = "block";
     showHintBtn.onclick = () => {
       hintTextEl.textContent = "Nagoveštaj: " + hintText;
