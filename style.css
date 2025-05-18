@@ -72,6 +72,10 @@ body {
   flex: 1 1 100%;
   padding: 14px 0;
   font-size: 20px;
+        background: green;
+}
+.key.wide:last-of-type {
+   background: #9d1414;
 }
 #score {
     margin-top: 20px;
