@@ -1,8 +1,22 @@
-// Word list (6-letter Serbian words)
+// Word list 
 const wordList = [
-  "srpski", "knjiga", "prijem", "slasno", "kvasac",
-  "obrano", "terasa", "igrači", "ukrasi", "prozor",
-  "jastuk", "prelep", "pijaca", "dobiti", "ulazni"
+  "knjiga", "prozor", "jastuk", "tepih", "ulazni",
+  "ograda", "kapija", "terasa", "polica", "čarapa",
+  "kaputi", "jaknar", "torbar", "kuvari", "mesari",
+  "ribari", "lovaca", "gradac", "vrtlar", "pijaca",
+  "kupati", "prodaj", "oglasu", "poklon", "olovka",
+  "gumica", "satovi", "stočić", "krevet", "čizama",
+  "majice", "dugmad", "zavesa", "slikaš", "sveska",
+  "patika", "makaze", "pantal", "zidari", "radnik",
+  "putnik", "kupac", "nosila", "krovni", "proziv",
+  "puknut", "trčati", "leteti", "igrati", "plivati",
+  "voleti", "čekati", "pisati", "čitati", "pričaj",
+  "stanar", "ručati", "kuvati", "kvasac", "prijem",
+  "srpski", "kratak", "visina", "dubina", "širina",
+  "lepeza", "razlog", "deliti", "spajam", "ponuda",
+  "kupuje", "nagrada", "oprema", "bočica", "senzor",
+  "filter", "stolar", "gipsar", "voćnjak", "farban",
+  "slavim", "mračan", "živost", "šminka", "parfem"
 ];
 
 // Lockout check – prevent game if played within 12 hours
