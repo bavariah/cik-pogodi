@@ -26,14 +26,17 @@
   <div id="stats"></div>
 
   <script>
-  function showResultGrid(win) {
+function showResultGrid(win) {
   const boardRows = document.querySelectorAll(".row");
   const resultGrid = document.getElementById("resultGrid");
   const resultTitle = document.getElementById("resultTitle");
   const resultScreen = document.getElementById("resultScreen");
 
   resultGrid.innerHTML = "";
-  resultTitle.textContent = win ? "Bravo! Pogodili ste reč!" : "Niste pogodili 😞";
+
+  resultTitle.innerHTML = win
+    ? "Bravo! Pogodili ste reč!"
+    : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
 
   for (let r = 0; r <= currentRow; r++) {
     const rowClone = boardRows[r].cloneNode(true);
@@ -44,27 +47,29 @@
   resultScreen.style.display = "block";
   resultScreen.scrollIntoView({ behavior: "smooth" });
 
-  // ✅ Now attach the share button handler here, AFTER the element exists
+  // ✅ Setup share button only now
   const shareBtn = document.getElementById("shareImageBtn");
-  shareBtn.onclick = () => {
-    html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
-      canvas.toBlob(blob => {
-        const file = new File([blob], "rezultat.png", { type: "image/png" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({
-            files: [file],
-            title: "Čik Pogodi rezultat",
-            text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
-          });
-        } else {
-          const link = document.createElement("a");
-          link.download = "rezultat.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
-        }
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
+        canvas.toBlob(blob => {
+          const file = new File([blob], "rezultat.png", { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: "Čik Pogodi rezultat",
+              text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
+            });
+          } else {
+            const link = document.createElement("a");
+            link.download = "rezultat.png";
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+          }
+        });
       });
-    });
-  };
+    };
+  }
 }
   </script>
 
