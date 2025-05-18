@@ -16,12 +16,10 @@
     <p id="hintText" style="display:none; margin-top:10px;"></p>
   </div>
 
-   <div id="resultScreen" style="display:none; margin-top:20px;">
+    <div id="resultScreen" style="display:none; margin-top:20px;">
     <h2 id="resultTitle"></h2>
     <div id="resultGrid"></div>
-    <button id="shareBtn" style="margin-top:15px;">Podeli rezultat</button>
-    <button id="downloadImage" style="margin-top:10px;">Preuzmi kao sliku</button>
-    <canvas id="captureCanvas" style="display:none;"></canvas>
+    <button id="shareImageBtn" style="margin-top:15px;">Podeli rezultat</button>
   </div>
 
   <div id="timer" style="margin-top: 20px; color: #ccc;"></div>
@@ -30,18 +28,30 @@
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const resultGrid = document.getElementById("resultGrid");
-      const downloadImageBtn = document.getElementById("downloadImage");
+      const shareBtn = document.getElementById("shareImageBtn");
 
-      downloadImageBtn.onclick = () => {
+      shareBtn.onclick = () => {
         html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
-          const link = document.createElement("a");
-          link.download = "cik-pogodi-rezultat.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
+          canvas.toBlob(blob => {
+            const file = new File([blob], "rezultat.png", { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              navigator.share({
+                files: [file],
+                title: "Čik Pogodi rezultat",
+                text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
+              });
+            } else {
+              const link = document.createElement("a");
+              link.download = "rezultat.png";
+              link.href = canvas.toDataURL("image/png");
+              link.click();
+            }
+          });
         });
       };
     });
   </script>
+  <script src="script.js"></script>
 
       <script src="script.js"></script>
   </body>
