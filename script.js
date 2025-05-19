@@ -316,7 +316,7 @@ function showLockedGameScreen() {
 };
     };
   }
-}
+
 
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
