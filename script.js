@@ -76,6 +76,7 @@ const wordList = [
   { word: "parfem", hint: "Mirisna tečnost" }
 ];
 
+
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
 const hintWrapper = document.getElementById("hintWrapper");
@@ -89,13 +90,6 @@ const resultGrid = document.getElementById("resultGrid");
 let currentRow = 0;
 let currentGuess = "";
 const lockTime = 12 * 60 * 60 * 1000;
-
-const now = Date.now();
-const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
-if (now < lockUntil) {
-  document.body.innerHTML = "<h2 style='margin-top:40px;'>Već ste igrali. Vratite se kasnije 😊</h2>";
-  throw new Error("Locked");
-}
 
 function getTodayWord() {
   const lastWordIndex = parseInt(localStorage.getItem("last_word_index") || -1);
@@ -182,6 +176,7 @@ function submitGuess() {
       targetArr[targetArr.indexOf(guessArr[i])] = null;
     }
   }
+
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
     tile.classList.add(tileStatus[i]);
@@ -198,6 +193,7 @@ function submitGuess() {
 
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
+
   if (currentRow === 5) {
     hintWrapper.style.display = "block";
     showHintBtn.onclick = () => {
@@ -211,6 +207,8 @@ function submitGuess() {
 
 function endGame(win) {
   localStorage.setItem("locked_until", Date.now() + lockTime);
+  localStorage.setItem("last_result", win ? "win" : "lose");
+  localStorage.setItem("last_attempt_row", currentRow.toString());
   disableInput();
   updateStats(win ? currentRow : null);
   showResultGrid(win);
@@ -244,6 +242,7 @@ function showCountdownIfLocked() {
   const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
   const timerEl = document.getElementById("timer");
   if (Date.now() < lockUntil) {
+    showLockedGameScreen();
     function updateTimer() {
       const now = Date.now();
       const diff = lockUntil - now;
@@ -256,7 +255,19 @@ function showCountdownIfLocked() {
   }
 }
 
+function showLockedGameScreen() {
+  disableInput();
+  const lastRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
+  const win = localStorage.getItem("last_result") === "win";
+  showResultGrid(win);
 
+  const msg = document.createElement("div");
+  msg.style.marginTop = "20px";
+  msg.style.color = "#fff";
+  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte 12h za novu reč.</p>";
+
+  resultScreen.insertBefore(msg, resultScreen.firstChild);
+}
 
 // Init
 createBoard();
