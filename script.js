@@ -1,79 +1,99 @@
 // Word list with hints
 const wordList = [
-  { word: "knjiga", hint: "Predmet za čitanje, obično sa stranicama i koricama" },
-  { word: "prozor", hint: "Otvor na zidu koji propušta svetlost i vazduh" },
-  { word: "jastuk", hint: "Predmet na kom se oslanja glava prilikom spavanja" },
-  { word: "ulazni", hint: "Koji se odnosi na ulaz, npr. ulazna vrata" },
-  { word: "ograda", hint: "Struktura koja ograđuje neki prostor" },
-  { word: "kapija", hint: "Velika vrata na ulazu u dvorište ili objekat" },
-  { word: "terasa", hint: "Spoljašnji deo stana ili kuće za sedenje" },
-  { word: "polica", hint: "Ravna površina za odlaganje stvari na zidu" },
-  { word: "čarapa", hint: "Odeća koja pokriva stopala" },
-  { word: "kaputi", hint: "Zimska odeća za gornji deo tela" },
-  { word: "jaknar", hint: "Muško ime ili ređe korišćena reč (može se izostaviti)" },
-  { word: "torbar", hint: "Osoba koja nosi torbe (ili starija reč)" },
-  { word: "kuvari", hint: "Osobe koje pripremaju hranu" },
-  { word: "mesari", hint: "Ljudi koji prodaju ili seku meso" },
-  { word: "ribari", hint: "Osobe koje love ribu" },
-  { word: "vrtlar", hint: "Osoba koja uređuje vrtove" },
-  { word: "pijaca", hint: "Mesto gde se prodaje hrana i druge stvari" },
-  { word: "kupati", hint: "Radnja pranja tela u vodi" },
-  { word: "prodaj", hint: "Imperativ od 'prodati', čin razmene za novac" },
-  { word: "poklon", hint: "Nešto što se daje nekome bez nadoknade" },
-  { word: "olovka", hint: "Predmet za pisanje, često grafitna ili hemijska" },
-  { word: "gumica", hint: "Predmet za brisanje napisanog" },
-  { word: "satovi", hint: "Uređaji koji pokazuju vreme" },
-  { word: "stočić", hint: "Mali sto" },
-  { word: "krevet", hint: "Mesto za spavanje" },
-  { word: "dugmad", hint: "Množina od dugme; koristi se za zakopčavanje" },
-  { word: "zavesa", hint: "Tkanina koja se stavlja na prozore" },
-  { word: "sveska", hint: "Sveska za pisanje, često za školu" },
-  { word: "patika", hint: "Obuća namenjena sportu ili svakodnevici" },
-  { word: "makaze", hint: "Alat za sečenje papira, tkanine itd." },
-  { word: "zidari", hint: "Radnici koji zidaju kuće i zgrade" },
-  { word: "radnik", hint: "Osoba koja obavlja fizički ili intelektualni rad" },
-  { word: "putnik", hint: "Osoba koja putuje" },
-  { word: "nosila", hint: "Sprava za nošenje povređenih ili bolesnih" },
-  { word: "krovni", hint: "Koji se odnosi na krov" },
-  { word: "proziv", hint: "Skraćeno od prozivanje; redosled po imenima" },
-  { word: "puknut", hint: "Nešto što je napuklo ili puklo" },
-  { word: "trčati", hint: "Kretati se brzo na nogama" },
-  { word: "leteti", hint: "Kretati se vazduhom" },
-  { word: "igrati", hint: "Baviti se igrom ili plesom" },
-  { word: "plivaj", hint: "Imperativ od 'plivati'" },
-  { word: "voleti", hint: "Imati osećaj ljubavi prema nekome ili nečemu" },
-  { word: "čekati", hint: "Biti u iščekivanju nečega" },
-  { word: "pisati", hint: "Radnja ispisivanja znakova" },
-  { word: "čitati", hint: "Razumevanje pisanog teksta" },
-  { word: "pričaj", hint: "Imperativ od 'pričati', govoriti nekom nešto" },
-  { word: "stanar", hint: "Osoba koja stanuje u stanu ili kući" },
-  { word: "ručati", hint: "Jesti glavni dnevni obrok" },
-  { word: "kuvati", hint: "Pripremati hranu uz pomoć toplote" },
-  { word: "kvasac", hint: "Sredstvo za narastanje testa" },
-  { word: "prijem", hint: "Akt prijema, često za goste ili posao" },
-  { word: "srpski", hint: "Koji se odnosi na Srbiju ili srpski jezik" },
-  { word: "kratak", hint: "Suprotno od 'dugačak'" },
-  { word: "visina", hint: "Udaljenost od donje do gornje tačke" },
-  { word: "dubina", hint: "Suprotno od 'plitko'" },
-  { word: "širina", hint: "Udaljenost s leva na desno" },
-  { word: "lepeza", hint: "Predmet za rashlađivanje pomeranjem vazduha" },
-  { word: "razlog", hint: "Uzrok nečega, objašnjenje" },
-  { word: "deliti", hint: "Podeliti nešto sa drugima" },
-  { word: "spajam", hint: "Povezujem više stvari u jedno" },
-  { word: "ponuda", hint: "Predlog ili mogućnost izbora" },
-  { word: "kupuje", hint: "Radnja sticanja robe uz novac" },
-  { word: "oprema", hint: "Set alata ili stvari potrebnih za neku svrhu" },
-  { word: "bočica", hint: "Mala boca" },
-  { word: "senzor", hint: "Uređaj koji meri ili otkriva promene" },
-  { word: "filter", hint: "Sredstvo za filtraciju ili prečišćavanje" },
-  { word: "stolar", hint: "Majstor koji pravi stvari od drveta" },
-  { word: "gipsar", hint: "Radnik koji postavlja ... površine" },
-  { word: "farban", hint: "Premazan bojom" },
-  { word: "slavim", hint: "Obeležavam praznik ili rođendan" },
-  { word: "mračan", hint: "Bez svetla" },
-  { word: "živost", hint: "Energija" },
-  { word: "šminka", hint: "Ulepšavanje lica" },
-  { word: "parfem", hint: "Mirisna tečnost" }
+  { word: "књигаш", hint: "Предмет за читање, обично са страницама и корицама" },
+  { word: "прозор", hint: "Отвор на зиду који пропушта светлост и ваздух" },
+  { word: "јастук", hint: "Предмет на ком се ослања глава приликом спавања" },
+  { word: "црвићи", hint: "Мали инсекти који се гмижу" },
+  { word: "бацање", hint: "Радња испуштања нечега у даљину" },
+  { word: "бушење", hint: "Прављење рупа у некој површини" },
+  { word: "ципела", hint: "Обувa за свакодневну употребу" },
+  { word: "бркови", hint: "Длаке изнад горње усне" },
+  { word: "банана", hint: "Жуто воће издуженог облика" },
+  { word: "чарапе", hint: "Одећа која се носи на стопалима" },
+  { word: "четири", hint: "Број између три и пет" },
+  { word: "бојице", hint: "Шарене оловке за цртање" },
+  { word: "гурање", hint: "Физички помак неког предмета или особе" },
+  { word: "ћевапи", hint: "Јело од млевеног меса" },
+  { word: "федери", hint: "Металне опруге које се сабијају" },
+  { word: "гаража", hint: "Место за паркирање аутомобила" },
+  { word: "фотеља", hint: "Удобна столица са наслонима" },
+  { word: "иглице", hint: "Мале игле, често на јелкама или боровима" },
+  { word: "грбови", hint: "Хералдички знаци породице или државе" },
+  { word: "јахање", hint: "Вожња коња" },
+  { word: "јагода", hint: "Црвено воће са ситним семенкама" },
+  { word: "горење", hint: "Процес сагоревања или паљења" },
+  { word: "једење", hint: "Конзумирање хране" },
+  { word: "хаљина", hint: "Одећа коју често носе жене" },
+  { word: "латице", hint: "Делови цвета, обично шарени" },
+  { word: "магаре", hint: "Домаћа животиња слична коњу" },
+  { word: "мишеви", hint: "Мале животиње или уређаји за рачунар" },
+  { word: "ножеви", hint: "Алат за сечење, често у кухињи" },
+  { word: "новине", hint: "Печатени медији са вестима" },
+  { word: "пекара", hint: "Место где се прави и продаје хлеб" },
+  { word: "рогови", hint: "Шпиљасти делови на глави неких животиња" },
+  { word: "салата", hint: "Јело од свежег поврћа" },
+  { word: "шибице", hint: "Малене дрвене палице за паљење ватре" },
+  { word: "шумица", hint: "Мала шума, често близу насеља" },
+  { word: "украси", hint: "Предмети за улепшавање простора" },
+  { word: "вагони", hint: "Делови воза у којима седе путници" },
+  { word: "жирафа", hint: "Животиња дугог врата која живи у Африци" },
+  { word: "камера", hint: "Уређај за снимање слике и видеа" },
+  { word: "кокице", hint: "Грицкалица добијена од кукуруза" },
+  { word: "пециво", hint: "Пекарски производ попут кифле" },
+  { word: "крмача", hint: "Женска свиња" },
+  { word: "кутија", hint: "Предмет у који се нешто пакује" },
+  { word: "корито", hint: "Суд за воду или храњење животиња" },
+  { word: "кораци", hint: "Покрети приликом ходања" },
+  { word: "камион", hint: "Велико теретно возило" },
+  { word: "кацига", hint: "Заштита за главу при вожњи" },
+  { word: "забава", hint: "Активност ради уживања" },
+  { word: "вариоц", hint: "Занатлија који спаја метал ватром" },
+  { word: "салама", hint: "Меснати производ у облику ваљка" },
+  { word: "шишање", hint: "Скраћивање косе маказама" },
+  { word: "улазни", hint: "Који се односи на улаз, као улазна врата" },
+  { word: "ограда", hint: "Структура која ограђује неки простор" },
+     { word: "тестер", hint: "Алат за сечење дрвета" },
+    { word: "кафено", hint: "Боја или пиће са кофеином" },
+  { word: "тераса", hint: "Спољашњи део стана или куће за седење" },
+  { word: "мрачан", hint: "Без светла, таман" },
+  { word: "полица", hint: "Равна површина за одлагање ствари" },
+  { word: "чарапа", hint: "Одећа која покрива стопала" },
+  { word: "патике", hint: "Обувене ципеле за спорт или свакодневицу" },
+  { word: "свеска", hint: "Свеска за писање, често за школу" },
+  { word: "завеса", hint: "Тканина која прекрива прозор" },
+   { word: "друмар", hint: "Особа која одржава путеве" },
+  { word: "столар", hint: "Занатлија који ради са дрветом" },
+  { word: "живост", hint: "Енергичност, пуно живота" },
+  { word: "кревет", hint: "Комад намештаја за спавање" },
+ { word: "волети", hint: "Имати љубав према некоме или нечему" },
+   { word: "лопата", hint: "Алат за копање или чишћење снега" },
+  { word: "сликар", hint: "Уметник који слика" },
+  { word: "кљешта", hint: "Алат за држање или сечење жица" },
+  { word: "кувари", hint: "Особе које припремају храну" },
+  { word: "зграда", hint: "Велика структура са више станова или канцеларија" },
+  { word: "причај", hint: "Императив од „причати“" },
+  { word: "читати", hint: "Разумевање писаног текста" },
+  { word: "глумац", hint: "Особа која глуми у позоришту или филму" },
+  { word: "писати", hint: "Радња уписивања речи" },
+  { word: "свирач", hint: "Онај који свира инструмент" },
+  { word: "летети", hint: "Кретање кроз ваздух" },
+  { word: "играти", hint: "Бавити се игром или плесом" },
+  { word: "успеси", hint: "Резултат постигнутог труда или рада" },
+  { word: "питања", hint: "Множина од реч „питање“" },
+  { word: "кафана", hint: "певај" },
+  { word: "зубари", hint: "Особа која поправља зубе" },
+  { word: "гориво", hint: "Материјал који обезбеђује енергију за моторе" },
+  { word: "лампај", hint: "Императив од лампати, у жаргону — осветли!" },
+  { word: "маказе", hint: "Алат за сечење папира или тканине" },
+  { word: "гумене", hint: "Израђене од гуме, попут чизама или рукавица" },
+  { word: "облаци", hint: "Скуп водене паре на небу" },
+  { word: "столић", hint: "Мали сто у дневној соби" },
+  { word: "мрежац", hint: "Рибарска мрежа или мрежасти предмет" },
+  { word: "капија", hint: "Велика врата на улазу у двориште" },
+  { word: "књижар", hint: "Продавница књига" },
+  { word: "њушкај", hint: "Тражи мирисом као пас" },
+  { word: "бицикл", hint: "Превозно средство на два точка" },
+  { word: "песник", hint: "Особа која пише поезију" },
 ];
 // Rewritten script.js using fixed START_TIME and enhanced share/save features
 
@@ -114,24 +134,46 @@ function createBoard() {
 }
 
 function createKeyboard() {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZČĆŽŠĐ";
-  [...letters].forEach(letter => {
-    const key = document.createElement("button");
-    key.textContent = letter;
-    key.classList.add("key");
-    key.onclick = () => handleKey(letter);
-    keyboard.appendChild(key);
+  const layout = [
+    "Љ Њ Е Р Т З У И О П Ш Ђ",
+    "А С Д Ф Г Х Ј К Л Ч Ћ",
+    "Џ Ц В Б Н М"
+  ];
+
+  layout.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("keyboard-row");
+
+    row.split(" ").forEach(letter => {
+      const key = document.createElement("button");
+      key.textContent = letter;
+      key.classList.add("key");
+      key.onclick = () => handleKey(letter);
+      rowDiv.appendChild(key);
+    });
+
+    keyboard.appendChild(rowDiv);
   });
+
+  // Enter and Delete buttons side-by-side
+  const bottomRow = document.createElement("div");
+  bottomRow.classList.add("keyboard-row");
+
   const enter = document.createElement("button");
   enter.textContent = "⏎";
   enter.classList.add("key", "wide");
+  enter.style.width = "50%";
   enter.onclick = submitGuess;
-  keyboard.appendChild(enter);
+
   const del = document.createElement("button");
   del.textContent = "⌫";
   del.classList.add("key", "wide");
+  del.style.width = "50%";
   del.onclick = deleteLetter;
-  keyboard.appendChild(del);
+
+  bottomRow.appendChild(enter);
+  bottomRow.appendChild(del);
+  keyboard.appendChild(bottomRow);
 }
 
 function handleKey(letter) {
