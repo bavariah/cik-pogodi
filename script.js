@@ -281,7 +281,7 @@ function showLockedGameScreen() {
     rowData.forEach(tileData => {
       const tile = document.createElement("div");
       tile.classList.add("tile");
-      tile.textContent = tileData.letter;
+      // tile.textContent = tileData.letter; // Removed to avoid showing letters
       if (tileData.color) tile.classList.add(tileData.color);
       rowDiv.appendChild(tile);
     });
@@ -302,21 +302,23 @@ function showLockedGameScreen() {
 
   // Share button logic
   const shareBtn = document.getElementById("shareImageBtn");
-if (shareBtn) {
-  shareBtn.onclick = () => {
-    const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-    const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
-    const text = savedGrid.map(row =>
-      row.map(tile => emojiMap[tile.color] || "⬛").join("")
-    ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+  const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  const text = savedGrid.map(row =>
+    row.map(tile => emojiMap[tile.color] || "⬛").join("")
+  ).join("
+") + "
+Pogledaj igru: https://bavariah.github.io/cik-pogodi/";
 
-    navigator.clipboard.writeText(text).then(() =>
-      alert("Rezultat kopiran! Možete ga podeliti!")
-    );
-  };
-}
+  navigator.clipboard.writeText(text).then(() =>
+    alert("Rezultat kopiran! Možete ga podeliti!")
+  );
+};
+    };
   }
-
+}
 
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
@@ -335,6 +337,5 @@ if (!checkIfLocked()) {
   createKeyboard();
 }
 showCountdownToNextWord();
-
 
 
