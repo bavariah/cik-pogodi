@@ -256,23 +256,7 @@ function showCountdownIfLocked() {
   }
 }
 
-function showResultGrid(win) {
-  const boardRows = document.querySelectorAll(".row");
-  resultGrid.innerHTML = "";
-  resultTitle.textContent = win ? "Bravo! Pogodili ste reč!" : "Niste pogodili 😞";
-  for (let r = 0; r <= currentRow; r++) {
-    const clone = boardRows[r].cloneNode(true);
-    clone.style.marginBottom = "5px";
-    resultGrid.appendChild(clone);
-  }
-  resultScreen.style.display = "block";
-  resultScreen.scrollIntoView({ behavior: "smooth" });
-}
 
-shareBtn.onclick = () => {
-  const text = `${resultTitle.textContent}\nPogledaj igru: https://bavariah.github.io/cik-pogodi/`;
-  navigator.clipboard.writeText(text).then(() => alert("Rezultat kopiran!"));
-};
 
 // Init
 createBoard();
