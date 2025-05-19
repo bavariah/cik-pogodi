@@ -265,7 +265,8 @@ function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
   if (lastPlayed === currentTimeWindow) {
-    showLockedGameScreen();
+     createBoard(); // ✅ ensure boardRows exist
+  showLockedGameScreen();
     return true;
   }
   return false;
