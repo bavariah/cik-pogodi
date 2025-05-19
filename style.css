@@ -139,3 +139,6 @@ width: 140px;
       font-weight: bold;
       color: #ccc;
     }
+div#stats > * {
+    padding: 5px 30px;
+}
