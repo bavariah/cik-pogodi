@@ -316,7 +316,7 @@ if (shareBtn) {
   };
 }
   }
-}
+
 
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
