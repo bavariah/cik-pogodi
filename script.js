@@ -76,6 +76,7 @@ const wordList = [
   { word: "parfem", hint: "Mirisna tečnost" }
 ];
 
+// Rewritten script.js using fixed START_TIME for synchronized 12h word cycle
 
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
@@ -89,17 +90,13 @@ const resultGrid = document.getElementById("resultGrid");
 
 let currentRow = 0;
 let currentGuess = "";
-const lockTime = 12 * 60 * 60 * 1000;
+const lockTime = 12 * 60 * 60 * 1000; // 12h
+const START_TIME = new Date("2025-05-19T07:00:00Z").getTime(); // 09:00 Belgrade time
 
 function getTodayWord() {
-  const lastWordIndex = parseInt(localStorage.getItem("last_word_index") || -1);
-  const timeWindow = Math.floor(Date.now() / (1000 * 60 * 60 * 12));
-  const storedTimeWindow = parseInt(localStorage.getItem("last_time_window") || 0);
-  if (storedTimeWindow === timeWindow && lastWordIndex !== -1) return wordList[lastWordIndex];
-  const nextIndex = (lastWordIndex + 1) % wordList.length;
-  localStorage.setItem("last_word_index", nextIndex);
-  localStorage.setItem("last_time_window", timeWindow);
-  return wordList[nextIndex];
+  const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const index = timeWindow % wordList.length;
+  return wordList[index];
 }
 
 const { word: targetWord, hint: hintText } = getTodayWord();
@@ -206,7 +203,7 @@ function submitGuess() {
 }
 
 function endGame(win) {
-  localStorage.setItem("locked_until", Date.now() + lockTime);
+  localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
   disableInput();
@@ -238,21 +235,17 @@ function updateStats(rowSolved) {
   statsEl.innerHTML += `<div style="margin-top:10px;">Ukupno: ${stats.wins}/${stats.total}</div>`;
 }
 
-function showCountdownIfLocked() {
-  const lockUntil = parseInt(localStorage.getItem("locked_until") || 0);
+function showCountdownToNextWord() {
   const timerEl = document.getElementById("timer");
-  if (Date.now() < lockUntil) {
-    showLockedGameScreen();
-    function updateTimer() {
-      const now = Date.now();
-      const diff = lockUntil - now;
-      if (diff <= 0) return timerEl.textContent = "Nova igra dostupna!";
-      const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-      timerEl.textContent = `Sledeća igra za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    }
-    updateTimer();
-    setInterval(updateTimer, 1000);
+  function updateTimer() {
+    const now = Date.now();
+    const elapsed = now - START_TIME;
+    const remainder = lockTime - (elapsed % lockTime);
+    const h = Math.floor(remainder / 3600000), m = Math.floor((remainder % 3600000) / 60000), s = Math.floor((remainder % 60000) / 1000);
+    timerEl.textContent = `Sledeća reč za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+  updateTimer();
+  setInterval(updateTimer, 1000);
 }
 
 function showLockedGameScreen() {
@@ -264,12 +257,24 @@ function showLockedGameScreen() {
   const msg = document.createElement("div");
   msg.style.marginTop = "20px";
   msg.style.color = "#fff";
-  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte 12h za novu reč.</p>";
-
+  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte za sledeću reč.</p>";
   resultScreen.insertBefore(msg, resultScreen.firstChild);
 }
 
+function checkIfLocked() {
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
+  if (lastPlayed === currentTimeWindow) {
+    showLockedGameScreen();
+    return true;
+  }
+  return false;
+}
+
 // Init
-createBoard();
-createKeyboard();
-showCountdownIfLocked();
+if (!checkIfLocked()) {
+  createBoard();
+  createKeyboard();
+}
+showCountdownToNextWord();
+
