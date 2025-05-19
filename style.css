@@ -12,7 +12,7 @@ body {
     display: grid;
     grid-template-rows: repeat(6, 1fr);
     gap: 10px;
-    margin: 20px 0;
+    margin: 0 0 20px 0;
 }
 
 .row {
@@ -50,11 +50,19 @@ body {
 #keyboard {
     display: flex;
     flex-wrap: wrap;
-    max-width: 360px;
+    max-width: 540px;
     justify-content: center;
     gap: 5px;
 }
-
+.keyboard-row {
+    display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.keyboard-row:last-of-type {
+    width: 100%;
+}
 .key {
     padding: 14px 16px;
     border: none;
@@ -141,4 +149,36 @@ width: 140px;
     }
 div#stats > * {
     padding: 5px 30px;
+}
+@media only screen and (max-width: 768px) {
+    #keyboard {
+    flex-wrap: wrap;
+    max-width: 100%;
+    justify-content: center;
+    gap: 2px;
+}
+    .keyboard-row {
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.key {
+    padding: 0px 0px;
+    border: none;
+        border-radius: 2px;
+    background: #666;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    width: 27px;
+    height: 40px;
+}
+    .keyboard-row:last-of-type {
+    width: 100%;
+    flex-wrap: nowrap;
+    padding: 0 2px;
+}
 }
