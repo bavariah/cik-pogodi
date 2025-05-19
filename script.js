@@ -302,21 +302,19 @@ function showLockedGameScreen() {
 
   // Share button logic
   const shareBtn = document.getElementById("shareImageBtn");
-  if (shareBtn) {
-    shareBtn.onclick = () => {
-  const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
-  const text = savedGrid.map(row =>
-    row.map(tile => emojiMap[tile.color] || "⬛").join("")
-  ).join("
-") + "
-Pogledaj igru: https://bavariah.github.io/cik-pogodi/";
+if (shareBtn) {
+  shareBtn.onclick = () => {
+    const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+    const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+    const text = savedGrid.map(row =>
+      row.map(tile => emojiMap[tile.color] || "⬛").join("")
+    ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
 
-  navigator.clipboard.writeText(text).then(() =>
-    alert("Rezultat kopiran! Možete ga podeliti!")
-  );
-};
-    };
+    navigator.clipboard.writeText(text).then(() =>
+      alert("Rezultat kopiran! Možete ga podeliti!")
+    );
+  };
+}
   }
 }
 
