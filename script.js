@@ -75,8 +75,7 @@ const wordList = [
   { word: "šminka", hint: "Ulepšavanje lica" },
   { word: "parfem", hint: "Mirisna tečnost" }
 ];
-
-// Rewritten script.js using fixed START_TIME for synchronized 12h word cycle
+// Rewritten script.js using fixed START_TIME and enhanced share/save features
 
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
@@ -154,6 +153,26 @@ function deleteLetter() {
   updateBoard();
 }
 
+function saveResultGrid() {
+  const resultData = [];
+  document.querySelectorAll(".row").forEach(row => {
+    const rowData = [...row.children].map(tile => {
+      return {
+        letter: tile.textContent,
+        color: tile.classList.contains("green")
+          ? "green"
+          : tile.classList.contains("orange")
+          ? "orange"
+          : tile.classList.contains("grey")
+          ? "grey"
+          : ""
+      };
+    });
+    resultData.push(rowData);
+  });
+  localStorage.setItem("last_result_grid", JSON.stringify(resultData));
+}
+
 function submitGuess() {
   if (currentGuess.length !== 6) return;
   const row = board.children[currentRow];
@@ -206,6 +225,7 @@ function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
+  saveResultGrid();
   disableInput();
   updateStats(win ? currentRow : null);
   showResultGrid(win);
@@ -250,23 +270,58 @@ function showCountdownToNextWord() {
 
 function showLockedGameScreen() {
   disableInput();
-  const lastRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
   const win = localStorage.getItem("last_result") === "win";
-  showResultGrid(win);
+
+  // Build resultGrid from saved grid
+  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  resultGrid.innerHTML = "";
+  savedGrid.forEach(rowData => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("row");
+    rowData.forEach(tileData => {
+      const tile = document.createElement("div");
+      tile.classList.add("tile");
+      tile.textContent = tileData.letter;
+      if (tileData.color) tile.classList.add(tileData.color);
+      rowDiv.appendChild(tile);
+    });
+    resultGrid.appendChild(rowDiv);
+  });
+
+  resultTitle.innerHTML = win
+    ? "Bravo! Pogodili ste reč!"
+    : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+
+  resultScreen.style.display = "block";
 
   const msg = document.createElement("div");
   msg.style.marginTop = "20px";
   msg.style.color = "#fff";
   msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte za sledeću reč.</p>";
   resultScreen.insertBefore(msg, resultScreen.firstChild);
+
+  // Share button logic
+  const shareBtn = document.getElementById("shareImageBtn");
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+      const text = savedGrid.map(row =>
+        row.map(tile => emojiMap[tile.color] || "⬛").join("")
+      ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
+
+      navigator.clipboard.writeText(text).then(() =>
+        alert("Rezultat kopiran! Možete ga podeliti!")
+      );
+    };
+  }
 }
 
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
   if (lastPlayed === currentTimeWindow) {
-     createBoard(); // ✅ ensure boardRows exist
-  showLockedGameScreen();
+    createBoard();
+    showLockedGameScreen();
     return true;
   }
   return false;
