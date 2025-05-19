@@ -76,7 +76,6 @@ const wordList = [
   { word: "parfem", hint: "Mirisna tečnost" }
 ];
 // Rewritten script.js using fixed START_TIME and enhanced share/save features
-// Rewritten script.js using fixed START_TIME and enhanced share/save features
 
 const board = document.getElementById("board");
 const keyboard = document.getElementById("keyboard");
