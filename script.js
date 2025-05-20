@@ -433,3 +433,12 @@ document.getElementById("openStatsBtn").onclick = () => {
 document.getElementById("closeStatsBtn").onclick = () => {
   document.getElementById("statsModal").style.display = "none";
 };
+
+let lastTouchTime = 0;
+document.addEventListener('touchend', function (e) {
+  const now = new Date().getTime();
+  if (now - lastTouchTime <= 300) {
+    e.preventDefault(); // prevent double-tap zoom
+  }
+  lastTouchTime = now;
+}, false);
