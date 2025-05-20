@@ -137,7 +137,7 @@ function createKeyboard() {
   const layout = [
     "Љ Њ Е Р Т З У И О П Ш Ђ",
     "А С Д Ф Г Х Ј К Л Ч Ћ",
-    "Џ Ц В Б Н М"
+    "Џ Ц В Б Н М Ж"
   ];
 
   layout.forEach(row => {
