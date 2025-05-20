@@ -2,7 +2,7 @@
 <html lang="sr">
   <head>
     <meta charset="UTF-8" />
-    <title>Čik Pogodi</title>
+    <title>Чик Погоди</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css" />
       <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -20,18 +20,18 @@
     <button id="openStatsBtn" title="Statistika" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">
   📊
 </button>
-    <h1 style="font-size: 28px;">Čik Pogodi</h1>
+    <h1 style="font-size: 28px;">Чик Погоди</h1>
     <div id="board"></div>
     <div id="keyboard"></div>
   <div id="hintWrapper" style="display:none; margin-top:10px;">
-    <button id="showHintBtn">Prikaži nagoveštaj</button>
+    <button id="showHintBtn">Прикажи наговештај</button>
     <p id="hintText" style="display:none; margin-top:10px;"></p>
   </div>
 
     <div id="resultScreen" style="display:none; margin-top:20px;     text-align: center;">
     <h2 id="resultTitle"></h2>
     <div id="resultGrid"></div>
-    <button id="shareImageBtn" style="margin-top:15px;">Podeli rezultat</button>
+    <button id="shareImageBtn" style="margin-top:15px;">Подели резултат</button>
   </div>
 
   <div id="timer" style="margin-top: 20px; color: #ccc; margin-bottom: 30px;"></div>
@@ -41,7 +41,7 @@
     <div id="statsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
   <div style="background:#222; padding:20px; border-radius:8px; width:300px; max-width:90%; position:relative;">
     <button id="closeStatsBtn" style="position:absolute; top:5px; right:10px; background:none; border:none; font-size:20px; cursor:pointer;">✖️</button>
-    <h3 style="margin-bottom:15px;">📈 Statistika</h3>
+    <h3 style="margin-bottom:15px;">📈 Статистика</h3>
     <div id="statsContent"></div>
   </div>
 </div>
@@ -94,27 +94,39 @@ function showResultGrid(win) {
   //   : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
 
 if (win) {
-  let message = "Bravo! Pogodili ste reč!";
-  if (currentRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
-  else if (currentRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
-  else if (currentRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+  let message = "Браво! Погодили сте реч!";
+  if (currentRow === 0) message = "🌟 Невероватно! Погодак из прве!";
+  else if (currentRow === 1) message = "🔥 Сјајно! Погодили сте из другог покушаја!";
+  else if (currentRow === 2) message = "💪 Одлично! Трећи покушај и успех!";
+  else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
   resultTitle.innerHTML = message;
 } else {
-  resultTitle.innerHTML = `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+  resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
 }
   
-  for (let r = 0; r <= currentRow; r++) {
-    const rowClone = boardRows[r].cloneNode(true);
-    rowClone.style.marginBottom = "5px";
+  // for (let r = 0; r <= currentRow; r++) {
+  //   const rowClone = boardRows[r].cloneNode(true);
+  //   rowClone.style.marginBottom = "5px";
 
-    // 🚫 Remove letter content from tiles
-    [...rowClone.children].forEach(tile => {
-      tile.textContent = "";
-    });
+  //   // 🚫 Remove letter content from tiles
+  //   [...rowClone.children].forEach(tile => {
+  //     tile.textContent = "";
+  //   });
 
-    resultGrid.appendChild(rowClone);
-  }
+  //   resultGrid.appendChild(rowClone);
+  // }
+for (let r = 0; r < 7; r++) {
+  const row = boardRows[r];
+  const rowClone = row.cloneNode(true);
+  rowClone.style.marginBottom = "5px";
 
+  [...rowClone.children].forEach(tile => {
+    tile.textContent = "";
+  });
+
+  resultGrid.appendChild(rowClone);
+}
+  
   resultScreen.style.display = "block";
   resultScreen.scrollIntoView({ behavior: "smooth" });
 
