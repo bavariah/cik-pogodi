@@ -365,7 +365,7 @@ function showCountdownToNextWord() {
     const elapsed = now - START_TIME;
     const remainder = lockTime - (elapsed % lockTime);
     const h = Math.floor(remainder / 3600000), m = Math.floor((remainder % 3600000) / 60000), s = Math.floor((remainder % 60000) / 1000);
-    timerEl.textContent = `Sledeća reč za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    timerEl.textContent = `Следећа реч за: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
   updateTimer();
   setInterval(updateTimer, 1000);
@@ -394,13 +394,14 @@ function showLockedGameScreen() {
 
   // Show result message
   if (win) {
-    let message = "Bravo! Pogodili ste reč!";
-    if (lastAttemptRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
-    else if (lastAttemptRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
+    let message = "Браво! Погодили сте реч!";
+    if (lastAttemptRow === 0) message = "🌟 Невероватно! Погодак из прве!!";
+    else if (lastAttemptRow === 1) message = "🔥 Сјајно! Погодили сте из другог покушаја!";
     else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+    else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
     resultTitle.innerHTML = message;
   } else {
-    resultTitle.innerHTML = `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+    resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
   }
 
   resultScreen.style.display = "block";
