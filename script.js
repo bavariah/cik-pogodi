@@ -366,10 +366,20 @@ function showLockedGameScreen() {
     resultGrid.appendChild(rowDiv);
   });
 
-  resultTitle.innerHTML = win
-    ? "Bravo! Pogodili ste reč!"
-    : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+  // resultTitle.innerHTML = win
+  //   ? "Bravo! Pogodili ste reč!"
+  //   : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
 
+if (win) {
+  let message = "Bravo! Pogodili ste reč!";
+  if (currentRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
+  else if (currentRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
+  else if (currentRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+  resultTitle.innerHTML = message;
+} else {
+  resultTitle.innerHTML = `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+}
+  
   resultScreen.style.display = "block";
 
   const msg = document.createElement("div");
