@@ -8,6 +8,15 @@
       <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </head>
   <body>
+    <button id="hintIconBtn" style="
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+">❓</button>
     <button id="openStatsBtn" title="Statistika" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">
   📊
 </button>
@@ -36,6 +45,38 @@
     <div id="statsContent"></div>
   </div>
 </div>
+
+<!-- Hint Modal -->
+<div id="hintModal" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+">
+  <div style="
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 300px;
+    text-align: center;
+    position: relative;
+  ">
+    <button id="closeHintBtn" style="
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+    ">✖</button>
+    <p id="hintModalText" style="margin: 0;">Hint text here</p>
+  </div>
+</div>
+    
   <script>
 function showResultGrid(win) {
   const boardRows = document.querySelectorAll(".row");
