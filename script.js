@@ -412,20 +412,30 @@ function showLockedGameScreen() {
   msg.innerHTML = "<h2 style='margin-bottom:10px;'>Већ сте играли ову игру 😊</h2><p>Сачекајте за следећу реч.</p>";
   resultScreen.insertBefore(msg, resultScreen.firstChild);
 
-  const shareBtn = document.getElementById("shareImageBtn");
-  if (shareBtn) {
-    shareBtn.onclick = () => {
-      const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-      const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
-      const text = savedGrid.map(row =>
-        row.map(tile => emojiMap[tile.color] || "⬛").join("")
-      ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
+const shareBtn = document.getElementById("shareImageBtn");
+if (shareBtn) {
+  shareBtn.onclick = () => {
+    const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+    const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
 
-      navigator.clipboard.writeText(text).then(() =>
-        alert("Rezultat kopiran! Možete ga podeliti!")
-      );
-    };
-  }
+    const shareText = savedGrid.map(row =>
+      row.map(tile => emojiMap[tile.color] || "⬛").join("")
+    ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Чик Погоди резултат",
+        text: shareText
+      }).catch(err => {
+        console.log("Share canceled or failed", err);
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
+      });
+    }
+  };
+}
 }
 
 function checkIfLocked() {
