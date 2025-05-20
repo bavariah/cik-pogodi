@@ -235,19 +235,20 @@ function submitGuess() {
     }
   }
 
-  guessArr.forEach((letter, i) => {
-    const tile = row.children[i];
-    tile.classList.add(tileStatus[i]);
-    const key = [...keyboard.children].find(k => k.textContent === letter.toUpperCase());
-    if (key) {
-      const existing = key.classList;
-      if (!existing.contains("green")) {
-        if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
-        else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
-        else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
-      }
+guessArr.forEach((letter, i) => {
+  const tile = row.children[i];
+  tile.classList.add(tileStatus[i]);
+
+  const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
+  if (key) {
+    const existing = key.classList;
+    if (!existing.contains("green")) {
+      if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
+      else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
+      else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
     }
-  });
+  }
+});
 
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
