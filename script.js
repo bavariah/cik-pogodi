@@ -5,17 +5,17 @@ const wordList = [
   { word: "јастук", hint: "Предмет на ком се ослања глава приликом спавања" },
   { word: "црвићи", hint: "Мали инсекти који се гмижу" },
   { word: "бацање", hint: "Радња испуштања нечега у даљину" },
+  { word: "ћевапи", hint: "Јело од млевеног меса" },
+  { word: "федери", hint: "Металне опруге које се сабијају" },
   { word: "бушење", hint: "Прављење рупа у некој површини" },
   { word: "ципела", hint: "Обувa за свакодневну употребу" },
   { word: "бркови", hint: "Длаке изнад горње усне" },
-  { word: "банана", hint: "Жуто воће издуженог облика" },
-  { word: "чарапе", hint: "Одећа која се носи на стопалима" },
-  { word: "четири", hint: "Број између три и пет" },
-  { word: "бојице", hint: "Шарене оловке за цртање" },
-  { word: "гурање", hint: "Физички помак неког предмета или особе" },
-  { word: "ћевапи", hint: "Јело од млевеног меса" },
-  { word: "федери", hint: "Металне опруге које се сабијају" },
   { word: "гаража", hint: "Место за паркирање аутомобила" },
+  { word: "бојице", hint: "Шарене оловке за цртање" },
+   { word: "чарапе", hint: "Одећа која се носи на стопалима" },
+  { word: "банана", hint: "Жуто воће издуженог облика" },
+  { word: "четири", hint: "Број између три и пет" },
+  { word: "гурање", hint: "Физички помак неког предмета или особе" },
   { word: "фотеља", hint: "Удобна столица са наслонима" },
   { word: "иглице", hint: "Мале игле, често на јелкама или боровима" },
   { word: "грбови", hint: "Хералдички знаци породице или државе" },
@@ -194,23 +194,46 @@ function deleteLetter() {
   updateBoard();
 }
 
+// function saveResultGrid() {
+//   const resultData = [];
+//   document.querySelectorAll(".row").forEach(row => {
+//     const rowData = [...row.children].map(tile => {
+//       return {
+//         letter: tile.textContent,
+//         color: tile.classList.contains("green")
+//           ? "green"
+//           : tile.classList.contains("orange")
+//           ? "orange"
+//           : tile.classList.contains("grey")
+//           ? "grey"
+//           : ""
+//       };
+//     });
+//     resultData.push(rowData);
+//   });
+//   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
+// }
+
 function saveResultGrid() {
   const resultData = [];
-  document.querySelectorAll(".row").forEach(row => {
-    const rowData = [...row.children].map(tile => {
-      return {
-        letter: tile.textContent,
-        color: tile.classList.contains("green")
-          ? "green"
-          : tile.classList.contains("orange")
-          ? "orange"
-          : tile.classList.contains("grey")
-          ? "grey"
-          : ""
-      };
-    });
+  const rows = document.querySelectorAll(".row");
+
+  for (let i = 0; i < 7; i++) {
+    const row = rows[i];
+    const rowData = [];
+
+    for (let tile of row.children) {
+      let color = "";
+      if (tile.classList.contains("green")) color = "green";
+      else if (tile.classList.contains("orange")) color = "orange";
+      else if (tile.classList.contains("grey")) color = "grey";
+
+      rowData.push({ letter: tile.textContent || "", color });
+    }
+
     resultData.push(rowData);
-  });
+  }
+
   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
 }
 
