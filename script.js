@@ -409,7 +409,7 @@ function showLockedGameScreen() {
   const msg = document.createElement("div");
   msg.style.marginTop = "20px";
   msg.style.color = "#fff";
-  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte za sledeću reč.</p>";
+  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Већ сте играли ову игру 😊</h2><p>Сачекајте за следећу реч.</p>";
   resultScreen.insertBefore(msg, resultScreen.firstChild);
 
   const shareBtn = document.getElementById("shareImageBtn");
@@ -478,8 +478,8 @@ function enableHintAccess() {
   hintIconBtn.onclick = () => {
     // Replace the "Show Hint" button inside modal with functionality
     hintModalText.innerHTML = `
-      <button id="showHintBtnModal">Prikaži nagoveštaj</button>
-      <p id="hintTextModal" style="display:none;margin-top:10px;">Nagoveštaj: ${hintText}</p>
+      <button id="showHintBtnModal">Прикажи наговештај</button>
+      <p id="hintTextModal" style="display:none;margin-top:10px;">Наговештај: ${hintText}</p>
     `;
     hintModal.style.display = "flex";
 
