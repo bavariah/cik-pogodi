@@ -318,7 +318,7 @@ function updateStats(rowSolved) {
 
   statsEl.innerHTML = `<h3>Statistika</h3>`;
   stats.attempts.forEach((val, i) => {
-    statsEl.innerHTML += `<div>Red ${i + 1}: ${val}</div>`;
+    statsEl.innerHTML += `<div>Ред ${i + 1}: ${val}</div>`;
   });
   statsEl.innerHTML += `<div style="margin-top:10px;">Ukupno: ${stats.wins}/${stats.total}</div>`;
 }
@@ -346,7 +346,7 @@ function renderStatsPopup() {
     else if (val > 0) row.style.backgroundColor = "#28a745";
     else row.style.backgroundColor = "#aaa";
 
-    row.innerHTML = `<span>Red ${i + 1}</span><strong>${val}</strong>`;
+    row.innerHTML = `<span>Ред ${i + 1}</span><strong>${val}</strong>`;
     statsContent.appendChild(row);
   });
 
