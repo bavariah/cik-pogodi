@@ -371,10 +371,11 @@ function showLockedGameScreen() {
   //   : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
 
 if (win) {
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6"); // fallback to 6 if not found
   let message = "Bravo! Pogodili ste reč!";
-  if (currentRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
-  else if (currentRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
-  else if (currentRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+  if (lastAttemptRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
+  else if (lastAttemptRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
+  else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
   resultTitle.innerHTML = message;
 } else {
   resultTitle.innerHTML = `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
