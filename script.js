@@ -378,7 +378,7 @@ document.getElementById("closeStatsBtn").onclick = () => {
 let lastTouchTime = 0;
 document.addEventListener('touchend', function (e) {
   const now = new Date().getTime();
-  if (now - lastTouchTime <= 300) {
+  if (now - lastTouchTime <= 100) {
     e.preventDefault();
   }
   lastTouchTime = now;
