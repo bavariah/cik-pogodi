@@ -354,7 +354,7 @@ function renderStatsPopup() {
   totalDiv.style.marginTop = "10px";
   totalDiv.style.textAlign = "center";
   totalDiv.style.fontWeight = "bold";
-  totalDiv.textContent = `Ukupno: ${stats.wins}/${stats.total}`;
+  totalDiv.textContent = `Укупно: ${stats.wins}/${stats.total}`;
   statsContent.appendChild(totalDiv);
 }
 
