@@ -7,7 +7,9 @@ body {
     color: white;
     margin: 0;
 }
-
+button {
+  touch-action: manipulation;
+}
 #board {
     display: grid;
     grid-template-rows: repeat(6, 1fr);
