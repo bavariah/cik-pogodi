@@ -106,14 +106,9 @@ const statsEl = document.getElementById("stats");
 const resultScreen = document.getElementById("resultScreen");
 const resultTitle = document.getElementById("resultTitle");
 const resultGrid = document.getElementById("resultGrid");
-const hintIconBtn = document.getElementById("hintIconBtn");
-const hintModal = document.getElementById("hintModal");
-const hintModalText = document.getElementById("hintModalText");
-const closeHintBtn = document.getElementById("closeHintBtn");
 
 let currentRow = 0;
 let currentGuess = "";
-let hintAvailable = false;
 const lockTime = 12 * 60 * 60 * 1000; // 12h
 const START_TIME = new Date("2025-05-19T07:00:00Z").getTime(); // 09:00 Belgrade time
 
@@ -160,6 +155,7 @@ function createKeyboard() {
     keyboard.appendChild(rowDiv);
   });
 
+  // Enter and Delete buttons side-by-side
   const bottomRow = document.createElement("div");
   bottomRow.classList.add("keyboard-row");
 
@@ -239,29 +235,31 @@ function submitGuess() {
     }
   }
 
-  guessArr.forEach((letter, i) => {
-    const tile = row.children[i];
-    tile.classList.add(tileStatus[i]);
+guessArr.forEach((letter, i) => {
+  const tile = row.children[i];
+  tile.classList.add(tileStatus[i]);
 
-    const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
-    if (key) {
-      const existing = key.classList;
-      if (!existing.contains("green")) {
-        if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
-        else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
-        else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
-      }
+  const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
+  if (key) {
+    const existing = key.classList;
+    if (!existing.contains("green")) {
+      if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
+      else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
+      else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
     }
-  });
+  }
+});
 
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
 
   if (currentRow === 5) {
-    hintAvailable = true;
-    hintIconBtn.style.display = "block";
+    hintWrapper.style.display = "block";
+    showHintBtn.onclick = () => {
+      hintTextEl.textContent = "Nagoveštaj: " + hintText;
+      hintTextEl.style.display = "block";
+    };
   }
-
   currentRow++;
   currentGuess = "";
 }
@@ -280,6 +278,61 @@ function disableInput() {
   [...keyboard.children].forEach(key => key.disabled = true);
 }
 
+function updateStats(rowSolved) {
+  let stats = JSON.parse(localStorage.getItem("stats")) || {
+    total: 0,
+    wins: 0,
+    attempts: [0, 0, 0, 0, 0, 0, 0]
+  };
+  stats.total++;
+  if (rowSolved !== null) {
+    stats.wins++;
+    stats.attempts[rowSolved]++;
+  }
+  localStorage.setItem("stats", JSON.stringify(stats));
+
+  statsEl.innerHTML = <h3>Statistika</h3>;
+  stats.attempts.forEach((val, i) => {
+    statsEl.innerHTML += <div>Red ${i + 1}: ${val}</div>;
+  });
+  statsEl.innerHTML += <div style="margin-top:10px;">Ukupno: ${stats.wins}/${stats.total}</div>;
+}
+
+function renderStatsPopup() {
+  let stats = JSON.parse(localStorage.getItem("stats")) || {
+    total: 0,
+    wins: 0,
+    attempts: [0, 0, 0, 0, 0, 0, 0]
+  };
+
+  const statsContent = document.getElementById("statsContent");
+  statsContent.innerHTML = "";
+
+  stats.attempts.forEach((val, i) => {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.justifyContent = "space-between";
+    row.style.padding = "6px 10px";
+    row.style.marginBottom = "5px";
+    row.style.borderRadius = "4px";
+    row.style.color = "#fff";
+
+    if (i === 6) row.style.backgroundColor = "#f90"; // 7th row (orange)
+    else if (val > 0) row.style.backgroundColor = "#28a745"; // green for wins
+    else row.style.backgroundColor = "#aaa"; // grey for 0
+
+    row.innerHTML = <span>Red ${i + 1}</span><strong>${val}</strong>;
+    statsContent.appendChild(row);
+  });
+
+  const totalDiv = document.createElement("div");
+  totalDiv.style.marginTop = "10px";
+  totalDiv.style.textAlign = "center";
+  totalDiv.style.fontWeight = "bold";
+  totalDiv.textContent = Ukupno: ${stats.wins}/${stats.total};
+  statsContent.appendChild(totalDiv);
+}
+
 function showCountdownToNextWord() {
   const timerEl = document.getElementById("timer");
   function updateTimer() {
@@ -287,28 +340,105 @@ function showCountdownToNextWord() {
     const elapsed = now - START_TIME;
     const remainder = lockTime - (elapsed % lockTime);
     const h = Math.floor(remainder / 3600000), m = Math.floor((remainder % 3600000) / 60000), s = Math.floor((remainder % 60000) / 1000);
-    timerEl.textContent = `Sledeća reč za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    timerEl.textContent = Sledeća reč za: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")};
   }
   updateTimer();
   setInterval(updateTimer, 1000);
 }
 
-hintIconBtn.style.display = "none";
-hintIconBtn.onclick = () => {
-  if (hintAvailable) {
-    hintModalText.textContent = "Nagoveštaj: " + hintText;
-    hintModal.style.display = "flex";
+function showLockedGameScreen() {
+  disableInput();
+  const win = localStorage.getItem("last_result") === "win";
+
+  // Build resultGrid from saved grid
+  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  resultGrid.innerHTML = "";
+  savedGrid.forEach(rowData => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("row");
+    rowData.forEach(tileData => {
+      const tile = document.createElement("div");
+      tile.classList.add("tile");
+      // tile.textContent = tileData.letter; // Removed to avoid showing letters
+      if (tileData.color) tile.classList.add(tileData.color);
+      rowDiv.appendChild(tile);
+    });
+    resultGrid.appendChild(rowDiv);
+  });
+
+  // resultTitle.innerHTML = win
+  //   ? "Bravo! Pogodili ste reč!"
+  //   : Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>;
+
+if (win) {
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6"); // fallback to 6 if not found
+  let message = "Bravo! Pogodili ste reč!";
+  if (lastAttemptRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
+  else if (lastAttemptRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
+  else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+  resultTitle.innerHTML = message;
+} else {
+  resultTitle.innerHTML = Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>;
+}
+  
+  resultScreen.style.display = "block";
+
+  const msg = document.createElement("div");
+  msg.style.marginTop = "20px";
+  msg.style.color = "#fff";
+  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte za sledeću reč.</p>";
+  resultScreen.insertBefore(msg, resultScreen.firstChild);
+
+  // Share button logic
+  const shareBtn = document.getElementById("shareImageBtn");
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+  const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  const text = savedGrid.map(row =>
+    row.map(tile => emojiMap[tile.color] || "⬛").join("")
+  ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
+
+  navigator.clipboard.writeText(text).then(() =>
+    alert("Rezultat kopiran! Možete ga podeliti!")
+  );
+};
+    };
   }
+
+
+function checkIfLocked() {
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
+  if (lastPlayed === currentTimeWindow) {
+    createBoard();
+    showLockedGameScreen();
+    return true;
+  }
+  return false;
+}
+
+// Init
+if (!checkIfLocked()) {
+  createBoard();
+  createKeyboard();
+}
+showCountdownToNextWord();
+
+document.getElementById("openStatsBtn").onclick = () => {
+  renderStatsPopup();
+  document.getElementById("statsModal").style.display = "flex";
 };
 
-closeHintBtn.onclick = () => {
-  hintModal.style.display = "none";
+document.getElementById("closeStatsBtn").onclick = () => {
+  document.getElementById("statsModal").style.display = "none";
 };
 
+let lastTouchTime = 0;
 document.addEventListener('touchend', function (e) {
   const now = new Date().getTime();
   if (now - lastTouchTime <= 300) {
-    e.preventDefault();
+    e.preventDefault(); // prevent double-tap zoom
   }
   lastTouchTime = now;
 }, false);
