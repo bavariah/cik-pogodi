@@ -298,6 +298,41 @@ function updateStats(rowSolved) {
   statsEl.innerHTML += `<div style="margin-top:10px;">Ukupno: ${stats.wins}/${stats.total}</div>`;
 }
 
+function renderStatsPopup() {
+  let stats = JSON.parse(localStorage.getItem("stats")) || {
+    total: 0,
+    wins: 0,
+    attempts: [0, 0, 0, 0, 0, 0, 0]
+  };
+
+  const statsContent = document.getElementById("statsContent");
+  statsContent.innerHTML = "";
+
+  stats.attempts.forEach((val, i) => {
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.justifyContent = "space-between";
+    row.style.padding = "6px 10px";
+    row.style.marginBottom = "5px";
+    row.style.borderRadius = "4px";
+    row.style.color = "#fff";
+
+    if (i === 6) row.style.backgroundColor = "#f90"; // 7th row (orange)
+    else if (val > 0) row.style.backgroundColor = "#28a745"; // green for wins
+    else row.style.backgroundColor = "#aaa"; // grey for 0
+
+    row.innerHTML = `<span>Red ${i + 1}</span><strong>${val}</strong>`;
+    statsContent.appendChild(row);
+  });
+
+  const totalDiv = document.createElement("div");
+  totalDiv.style.marginTop = "10px";
+  totalDiv.style.textAlign = "center";
+  totalDiv.style.fontWeight = "bold";
+  totalDiv.textContent = `Ukupno: ${stats.wins}/${stats.total}`;
+  statsContent.appendChild(totalDiv);
+}
+
 function showCountdownToNextWord() {
   const timerEl = document.getElementById("timer");
   function updateTimer() {
@@ -379,3 +414,11 @@ if (!checkIfLocked()) {
 }
 showCountdownToNextWord();
 
+document.getElementById("openStatsBtn").onclick = () => {
+  renderStatsPopup();
+  document.getElementById("statsModal").style.display = "flex";
+};
+
+document.getElementById("closeStatsBtn").onclick = () => {
+  document.getElementById("statsModal").style.display = "none";
+};
