@@ -252,13 +252,16 @@ function submitGuess() {
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
 
-  if (currentRow === 5) {
-    hintWrapper.style.display = "block";
-    showHintBtn.onclick = () => {
-      hintTextEl.textContent = "Nagoveštaj: " + hintText;
-      hintTextEl.style.display = "block";
-    };
-  }
+  // if (currentRow === 5) {
+  //   hintWrapper.style.display = "block";
+  //   showHintBtn.onclick = () => {
+  //     hintTextEl.textContent = "Nagoveštaj: " + hintText;
+  //     hintTextEl.style.display = "block";
+  //   };
+  // }
+if (currentRow === 5) {
+  enableHintAccess();
+}
   currentRow++;
   currentGuess = "";
 }
@@ -381,4 +384,33 @@ document.addEventListener('touchend', function (e) {
   lastTouchTime = now;
 }, false);
 
+const hintIconBtn = document.getElementById("hintIconBtn");
+const hintModal = document.getElementById("hintModal");
+const hintModalText = document.getElementById("hintModalText");
+const closeHintBtn = document.getElementById("closeHintBtn");
 
+// Hide the icon initially
+hintIconBtn.style.display = "none";
+
+// Enable icon and modal trigger after 6th row
+function enableHintAccess() {
+  hintIconBtn.style.display = "block";
+  hintIconBtn.onclick = () => {
+    // Replace the "Show Hint" button inside modal with functionality
+    hintModalText.innerHTML = `
+      <button id="showHintBtnModal">Prikaži nagoveštaj</button>
+      <p id="hintTextModal" style="display:none;margin-top:10px;">Nagoveštaj: ${hintText}</p>
+    `;
+    hintModal.style.display = "flex";
+
+    // Activate reveal logic inside modal
+    document.getElementById("showHintBtnModal").onclick = () => {
+      document.getElementById("hintTextModal").style.display = "block";
+    };
+  };
+}
+
+// Close modal
+closeHintBtn.onclick = () => {
+  hintModal.style.display = "none";
+};
