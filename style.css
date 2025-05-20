@@ -154,11 +154,16 @@ div#stats > * {
 }
 
 #showHintBtnModal {
-    padding: 6px;
-    border-radius: 10px;
+ padding: 6px;
+    border-radius: 27px;
     outline: none;
     border: none;
     margin-bottom: 5px;
+    background: green;
+    color: #fff;
+    width: 150px;
+    height: 40px;
+    box-shadow: 0 0 10px 10px #00000026;
 }
 
 @media only screen and (max-width: 768px) {
