@@ -320,7 +320,7 @@ function updateStats(rowSolved) {
   stats.attempts.forEach((val, i) => {
     statsEl.innerHTML += `<div>Ред ${i + 1}: ${val}</div>`;
   });
-  statsEl.innerHTML += `<div style="margin-top:10px;">Ukupno: ${stats.wins}/${stats.total}</div>`;
+  statsEl.innerHTML += `<div style="margin-top:10px;">Укупно: ${stats.wins}/${stats.total}</div>`;
 }
 
 function renderStatsPopup() {
