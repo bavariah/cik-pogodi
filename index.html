@@ -133,26 +133,42 @@ for (let r = 0; r < 7; r++) {
   // ✅ Setup share button only now
   const shareBtn = document.getElementById("shareImageBtn");
   if (shareBtn) {
-    shareBtn.onclick = () => {
-      html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
-        canvas.toBlob(blob => {
-          const file = new File([blob], "rezultat.png", { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              files: [file],
-              title: "Čik Pogodi rezultat",
-              text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
-            });
-          } else {
-            const link = document.createElement("a");
-            link.download = "rezultat.png";
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-          }
-        });
-      });
-    };
-  }
+  shareBtn.onclick = () => {
+    const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+    const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+
+    const text = savedGrid.map(row =>
+      row.map(tile => emojiMap[tile.color] || "⬛").join("")
+    ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
+
+    navigator.clipboard.writeText(text).then(() =>
+      alert("Резултат је копиран! Можете га налепити и поделити.")
+    ).catch(() =>
+      alert("Нешто није успело са копирањем. Покушајте ручно.")
+    );
+  };
+}
+  // if (shareBtn) {
+  //   shareBtn.onclick = () => {
+  //     html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
+  //       canvas.toBlob(blob => {
+  //         const file = new File([blob], "rezultat.png", { type: "image/png" });
+  //         if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  //           navigator.share({
+  //             files: [file],
+  //             title: "Čik Pogodi rezultat",
+  //             text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
+  //           });
+  //         } else {
+  //           const link = document.createElement("a");
+  //           link.download = "rezultat.png";
+  //           link.href = canvas.toDataURL("image/png");
+  //           link.click();
+  //         }
+  //       });
+  //     });
+  //   };
+  // }
 }
   </script>
 
