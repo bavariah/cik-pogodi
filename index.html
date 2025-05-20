@@ -131,21 +131,28 @@ for (let r = 0; r < 7; r++) {
   resultScreen.scrollIntoView({ behavior: "smooth" });
 
   // ✅ Setup share button only now
-  const shareBtn = document.getElementById("shareImageBtn");
-  if (shareBtn) {
+const shareBtn = document.getElementById("shareImageBtn");
+if (shareBtn) {
   shareBtn.onclick = () => {
     const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
     const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
 
-    const text = savedGrid.map(row =>
+    const shareText = savedGrid.map(row =>
       row.map(tile => emojiMap[tile.color] || "⬛").join("")
     ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
 
-    navigator.clipboard.writeText(text).then(() =>
-      alert("Резултат је копиран! Можете га налепити и поделити.")
-    ).catch(() =>
-      alert("Нешто није успело са копирањем. Покушајте ручно.")
-    );
+    if (navigator.share) {
+      navigator.share({
+        title: "Чик Погоди резултат",
+        text: shareText
+      }).catch(err => {
+        console.log("Share canceled or failed", err);
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
+      });
+    }
   };
 }
   // if (shareBtn) {
