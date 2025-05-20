@@ -348,6 +348,62 @@ function showCountdownToNextWord() {
   setInterval(updateTimer, 1000);
 }
 
+function showLockedGameScreen() {
+  disableInput();
+
+  const win = localStorage.getItem("last_result") === "win";
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
+
+  // Render saved result grid
+  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  resultGrid.innerHTML = "";
+  savedGrid.forEach(rowData => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("row");
+    rowData.forEach(tileData => {
+      const tile = document.createElement("div");
+      tile.classList.add("tile");
+      if (tileData.color) tile.classList.add(tileData.color);
+      rowDiv.appendChild(tile);
+    });
+    resultGrid.appendChild(rowDiv);
+  });
+
+  // Show result message
+  if (win) {
+    let message = "Bravo! Pogodili ste reč!";
+    if (lastAttemptRow === 0) message = "🌟 Neverovatno! Pogodak iz prve!";
+    else if (lastAttemptRow === 1) message = "🔥 Sjajno! Pogodili ste iz drugog pokušaja!";
+    else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+    resultTitle.innerHTML = message;
+  } else {
+    resultTitle.innerHTML = `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
+  }
+
+  resultScreen.style.display = "block";
+
+  const msg = document.createElement("div");
+  msg.style.marginTop = "20px";
+  msg.style.color = "#fff";
+  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Već ste igrali ovu igru 😊</h2><p>Sačekajte za sledeću reč.</p>";
+  resultScreen.insertBefore(msg, resultScreen.firstChild);
+
+  const shareBtn = document.getElementById("shareImageBtn");
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+      const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+      const text = savedGrid.map(row =>
+        row.map(tile => emojiMap[tile.color] || "⬛").join("")
+      ).join("\n") + "\nPogledaj igru: https://bavariah.github.io/cik-pogodi/";
+
+      navigator.clipboard.writeText(text).then(() =>
+        alert("Rezultat kopiran! Možete ga podeliti!")
+      );
+    };
+  }
+}
+
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
