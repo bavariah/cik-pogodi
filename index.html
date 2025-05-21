@@ -145,16 +145,46 @@ if (shareBtn) {
       navigator.share({
         title: "Чик Погоди резултат",
         text: shareText
-      }).catch(err => {
-        console.log("Share canceled or failed", err);
+      }).catch(() => {
+        fallbackShare(shareText);
       });
     } else {
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
-      });
+      fallbackShare(shareText);
     }
   };
 }
+
+function fallbackShare(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Резултат копиран! Отворите Viber, WhatsApp или другу апликацију и налепите.");
+    // Optional deep link trigger:
+    // window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  });
+}
+// const shareBtn = document.getElementById("shareImageBtn");
+// if (shareBtn) {
+//   shareBtn.onclick = () => {
+//     const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+//     const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+
+//     const shareText = savedGrid.map(row =>
+//       row.map(tile => emojiMap[tile.color] || "⬛").join("")
+//     ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
+
+//     if (navigator.share) {
+//       navigator.share({
+//         title: "Чик Погоди резултат",
+//         text: shareText
+//       }).catch(err => {
+//         console.log("Share canceled or failed", err);
+//       });
+//     } else {
+//       navigator.clipboard.writeText(shareText).then(() => {
+//         alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
+//       });
+//     }
+//   };
+// }
   // if (shareBtn) {
   //   shareBtn.onclick = () => {
   //     html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
