@@ -210,25 +210,6 @@ function deleteLetter() {
   updateBoard();
 }
 
-// function saveResultGrid() {
-//   const resultData = [];
-//   document.querySelectorAll(".row").forEach(row => {
-//     const rowData = [...row.children].map(tile => {
-//       return {
-//         letter: tile.textContent,
-//         color: tile.classList.contains("green")
-//           ? "green"
-//           : tile.classList.contains("orange")
-//           ? "orange"
-//           : tile.classList.contains("grey")
-//           ? "grey"
-//           : ""
-//       };
-//     });
-//     resultData.push(rowData);
-//   });
-//   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
-// }
 
 function saveResultGrid() {
   const resultData = [];
@@ -291,13 +272,7 @@ function submitGuess() {
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
 
-  // if (currentRow === 5) {
-  //   hintWrapper.style.display = "block";
-  //   showHintBtn.onclick = () => {
-  //     hintTextEl.textContent = "Nagoveštaj: " + hintText;
-  //     hintTextEl.style.display = "block";
-  //   };
-  // }
+
 if (currentRow === 5) {
   enableHintAccess();
 }
@@ -305,7 +280,17 @@ if (currentRow === 5) {
   currentGuess = "";
 }
 
-function endGame(win) {
+// function endGame(win) {
+//   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
+//   localStorage.setItem("last_result", win ? "win" : "lose");
+//   localStorage.setItem("last_attempt_row", currentRow.toString());
+//   saveResultGrid();
+//   disableInput();
+//   updateStats(win ? currentRow : null);
+//   showResultGrid(win);
+// }
+// 
+  function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
@@ -313,8 +298,32 @@ function endGame(win) {
   disableInput();
   updateStats(win ? currentRow : null);
   showResultGrid(win);
-}
 
+  // 📌 Step 1: Ask for name (only once, saved in localStorage)
+  if (win && !localStorage.getItem("username")) {
+    const name = prompt("Унеси своје име за табелу резултата:");
+    if (name) {
+      localStorage.setItem("username", name.trim());
+    } else {
+      return; // don't save score without name
+    }
+  }
+
+  // 📌 Step 2: Save score to Supabase if game was won
+  if (win) {
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+    const username = localStorage.getItem("username");
+
+    supabase.from("leaderboard").insert([{ username, score }])
+      .then(({ error }) => {
+        if (error) {
+          console.error("Грешка при упису у табелу резултата:", error);
+        }
+      });
+  }
+}
+// 
 function disableInput() {
   [...keyboard.children].forEach(key => key.disabled = true);
 }
@@ -459,30 +468,6 @@ function fallbackShare(text) {
     // window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   });
 }
-// const shareBtn = document.getElementById("shareImageBtn");
-// if (shareBtn) {
-//   shareBtn.onclick = () => {
-//     const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-//     const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
-
-//     const shareText = savedGrid.map(row =>
-//       row.map(tile => emojiMap[tile.color] || "⬛").join("")
-//     ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
-
-//     if (navigator.share) {
-//       navigator.share({
-//         title: "Чик Погоди резултат",
-//         text: shareText
-//       }).catch(err => {
-//         console.log("Share canceled or failed", err);
-//       });
-//     } else {
-//       navigator.clipboard.writeText(shareText).then(() => {
-//         alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
-//       });
-//     }
-//   };
-// }
 }
 
 function checkIfLocked() {
@@ -550,4 +535,29 @@ function enableHintAccess() {
 // Close modal
 closeHintBtn.onclick = () => {
   hintModal.style.display = "none";
+};
+
+
+
+document.getElementById("openLeaderboardBtn").onclick = async () => {
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("*")
+    .order("score", { ascending: false })
+    .limit(10);
+
+  const container = document.getElementById("leaderboardContent");
+  container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
+
+  if (data) {
+    data.forEach((entry, i) => {
+      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong> – ${entry.score} поена</div>`;
+    });
+  }
+
+  document.getElementById("leaderboardModal").style.display = "flex";
+};
+
+document.getElementById("closeLeaderboardBtn").onclick = () => {
+  document.getElementById("leaderboardModal").style.display = "none";
 };
