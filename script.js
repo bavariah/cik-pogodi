@@ -314,8 +314,9 @@ if (currentRow === 5) {
     const scoreMap = [50, 25, 10, 8, 5, 2, 1];
     const score = scoreMap[currentRow] || 0;
     const username = localStorage.getItem("username");
-
-    client.from("scores").insert([{ username, score }])
+const attempts = currentRow + 1;
+    
+    client.from("scores").insert([{ username, score, attempts }])
       .then(({ error }) => {
         if (error) {
           console.error("Грешка при упису у табелу резултата:", error);
