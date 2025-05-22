@@ -19,7 +19,7 @@
       <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const supabase = supabase.createClient(
+  const client = supabase.createClient(
     "https://enhpbzexilgpphdmvfpo.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
   );
@@ -177,6 +177,24 @@ function fallbackShare(text) {
 
 
     // leaderboard
+    // Ask for username if not saved
+if (!localStorage.getItem("username")) {
+  const name = prompt("Унеси своје име за табелу резултата:");
+  if (name) localStorage.setItem("username", name.trim());
+}
+    // Calculate score (row 0 = 50, 1 = 25, 2 = 10, 3 = 8, 4 = 5, 5 = 2, 6 = 1)
+if (win) {
+  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+  const score = scoreMap[currentRow] || 0;
+  const username = localStorage.getItem("username");
+
+  // Insert into Supabase
+  supabase.from("leaderboard").insert([{ username, score }])
+    .then(({ error }) => {
+      if (error) console.error("Грешка при упису у табелу резултата:", error);
+    });
+}
+    
 document.getElementById("openLeaderboardBtn").onclick = async () => {
   const { data, error } = await supabase
     .from("leaderboard")
@@ -199,6 +217,16 @@ document.getElementById("openLeaderboardBtn").onclick = async () => {
 document.getElementById("closeLeaderboardBtn").onclick = () => {
   document.getElementById("leaderboardModal").style.display = "none";
 };
+
+document.getElementById("openLeaderboardBtn").onclick = () => {
+  document.getElementById("leaderboardModal").style.display = "flex";
+  loadLeaderboard();
+};
+
+document.getElementById("closeLeaderboardBtn").onclick = () => {
+  document.getElementById("leaderboardModal").style.display = "none";
+};
+    
   </script>
 
 
