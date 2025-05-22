@@ -17,6 +17,13 @@
 <meta property="og:image:height" content="192">
     <link rel="stylesheet" href="style.css" />
       <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const supabase = supabase.createClient(
+    "https://enhpbzexilgpphdmvfpo.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
+  );
+</script>
   </head>
   <body>
     <button id="hintIconBtn" style="
@@ -28,6 +35,7 @@
   border: none;
   cursor: pointer;
 ">❓</button>
+    <button id="openLeaderboardBtn" title="Leaderboard" style="position:absolute; top:15px; right:65px; background:none; border:none; font-size:24px; cursor:pointer;">🏆</button>
     <button id="openStatsBtn" title="Statistika" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">
   📊
 </button>
@@ -90,6 +98,14 @@
     <p id="hintModalText" style="margin: 0;">Hint text here</p>
   </div>
 </div>
+<!--leaderboard  -->
+<div id="leaderboardModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+  <div style="background:white; padding:20px; border-radius:10px; max-width:300px; text-align:center; position:relative;">
+    <button id="closeLeaderboardBtn" style="position:absolute; top:8px; right:10px; background:none; border:none; font-size:18px; cursor:pointer;">✖</button>
+    <h3>Табела резултата</h3>
+    <div id="leaderboardContent" style="margin-top:10px; text-align:left;"></div>
+  </div>
+</div>
     
   <script>
 function showResultGrid(win) {
@@ -99,10 +115,6 @@ function showResultGrid(win) {
   const resultScreen = document.getElementById("resultScreen");
 
   resultGrid.innerHTML = "";
-
-  // resultTitle.innerHTML = win
-  //   ? "Bravo! Pogodili ste reč!"
-  //   : `Niste pogodili 😞<br><small style="color:#ccc;">Tačna reč je: <strong>${targetWord.toUpperCase()}</strong></small>`;
 
 if (win) {
   let message = "Браво! Погодили сте реч!";
@@ -114,18 +126,7 @@ if (win) {
 } else {
   resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
 }
-  
-  // for (let r = 0; r <= currentRow; r++) {
-  //   const rowClone = boardRows[r].cloneNode(true);
-  //   rowClone.style.marginBottom = "5px";
 
-  //   // 🚫 Remove letter content from tiles
-  //   [...rowClone.children].forEach(tile => {
-  //     tile.textContent = "";
-  //   });
-
-  //   resultGrid.appendChild(rowClone);
-  // }
 for (let r = 0; r < 7; r++) {
   const row = boardRows[r];
   const rowClone = row.cloneNode(true);
@@ -168,56 +169,36 @@ if (shareBtn) {
 function fallbackShare(text) {
   navigator.clipboard.writeText(text).then(() => {
     alert("Резултат копиран! Отворите Viber, WhatsApp или другу апликацију и налепите.");
-    // Optional deep link trigger:
-    // window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   });
 }
-// const shareBtn = document.getElementById("shareImageBtn");
-// if (shareBtn) {
-//   shareBtn.onclick = () => {
-//     const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-//     const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
 
-//     const shareText = savedGrid.map(row =>
-//       row.map(tile => emojiMap[tile.color] || "⬛").join("")
-//     ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
-
-//     if (navigator.share) {
-//       navigator.share({
-//         title: "Чик Погоди резултат",
-//         text: shareText
-//       }).catch(err => {
-//         console.log("Share canceled or failed", err);
-//       });
-//     } else {
-//       navigator.clipboard.writeText(shareText).then(() => {
-//         alert("Резултат копиран! Можете га налепити у апликацију за дељење.");
-//       });
-//     }
-//   };
-// }
-  // if (shareBtn) {
-  //   shareBtn.onclick = () => {
-  //     html2canvas(resultGrid, { backgroundColor: null }).then(canvas => {
-  //       canvas.toBlob(blob => {
-  //         const file = new File([blob], "rezultat.png", { type: "image/png" });
-  //         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-  //           navigator.share({
-  //             files: [file],
-  //             title: "Čik Pogodi rezultat",
-  //             text: "Pogledaj kako sam prošao u Čik Pogodi! https://bavariah.github.io/cik-pogodi/"
-  //           });
-  //         } else {
-  //           const link = document.createElement("a");
-  //           link.download = "rezultat.png";
-  //           link.href = canvas.toDataURL("image/png");
-  //           link.click();
-  //         }
-  //       });
-  //     });
-  //   };
-  // }
 }
+
+
+
+    // leaderboard
+document.getElementById("openLeaderboardBtn").onclick = async () => {
+  const { data, error } = await supabase
+    .from("leaderboard")
+    .select("*")
+    .order("score", { ascending: false })
+    .limit(10);
+
+  const container = document.getElementById("leaderboardContent");
+  container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
+
+  if (data) {
+    data.forEach((entry, i) => {
+      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong> – ${entry.score} поена</div>`;
+    });
+  }
+
+  document.getElementById("leaderboardModal").style.display = "flex";
+};
+
+document.getElementById("closeLeaderboardBtn").onclick = () => {
+  document.getElementById("leaderboardModal").style.display = "none";
+};
   </script>
 
 
