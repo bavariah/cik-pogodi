@@ -552,7 +552,7 @@ document.getElementById("openLeaderboardBtn").onclick = async () => {
 
   if (data) {
     data.forEach((entry, i) => {
-      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong> – ${entry.score} поена</div>`;
+      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong>  ${entry.score} поена</div>`;
     });
   }
 
