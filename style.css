@@ -183,6 +183,12 @@ div#stats > * {
     display: flex;
     flex-direction: column;
     gap: 15px;
+        margin: auto;
+    padding: 15px 25px;
+    background: #333;
+    box-sizing: border-box;
+    border-radius: 20px;
+    box-shadow: 0 0 10px 10px #0000003d;
 }
 #leaderboardContent > div {
 display: flex;
