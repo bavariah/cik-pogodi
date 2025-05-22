@@ -315,7 +315,7 @@ if (currentRow === 5) {
     const score = scoreMap[currentRow] || 0;
     const username = localStorage.getItem("username");
 
-    client.from("leaderboard").insert([{ username, score }])
+    client.from("scores").insert([{ username, score }])
       .then(({ error }) => {
         if (error) {
           console.error("Грешка при упису у табелу резултата:", error);
@@ -541,7 +541,7 @@ closeHintBtn.onclick = () => {
 
 document.getElementById("openLeaderboardBtn").onclick = async () => {
   const { data, error } = await client
-    .from("leaderboard")
+    .from("scores")
     .select("*")
     .order("score", { ascending: false })
     .limit(10);
