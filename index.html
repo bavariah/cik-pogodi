@@ -177,42 +177,7 @@ function fallbackShare(text) {
 
 
     // leaderboard
-    // Ask for username if not saved
-if (!localStorage.getItem("username")) {
-  const name = prompt("Унеси своје име за табелу резултата:");
-  if (name) localStorage.setItem("username", name.trim());
-}
-    // Calculate score (row 0 = 50, 1 = 25, 2 = 10, 3 = 8, 4 = 5, 5 = 2, 6 = 1)
-if (win) {
-  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-  const score = scoreMap[currentRow] || 0;
-  const username = localStorage.getItem("username");
 
-  // Insert into Supabase
-  supabase.from("leaderboard").insert([{ username, score }])
-    .then(({ error }) => {
-      if (error) console.error("Грешка при упису у табелу резултата:", error);
-    });
-}
-    
-document.getElementById("openLeaderboardBtn").onclick = async () => {
-  const { data, error } = await supabase
-    .from("leaderboard")
-    .select("*")
-    .order("score", { ascending: false })
-    .limit(10);
-
-  const container = document.getElementById("leaderboardContent");
-  container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
-
-  if (data) {
-    data.forEach((entry, i) => {
-      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong> – ${entry.score} поена</div>`;
-    });
-  }
-
-  document.getElementById("leaderboardModal").style.display = "flex";
-};
 
 document.getElementById("closeLeaderboardBtn").onclick = () => {
   document.getElementById("leaderboardModal").style.display = "none";
@@ -223,9 +188,7 @@ document.getElementById("openLeaderboardBtn").onclick = () => {
   loadLeaderboard();
 };
 
-document.getElementById("closeLeaderboardBtn").onclick = () => {
-  document.getElementById("leaderboardModal").style.display = "none";
-};
+
     
   </script>
 
