@@ -315,7 +315,7 @@ if (currentRow === 5) {
     const score = scoreMap[currentRow] || 0;
     const username = localStorage.getItem("username");
 
-    supabase.from("leaderboard").insert([{ username, score }])
+    client.from("leaderboard").insert([{ username, score }])
       .then(({ error }) => {
         if (error) {
           console.error("Грешка при упису у табелу резултата:", error);
@@ -540,7 +540,7 @@ closeHintBtn.onclick = () => {
 
 
 document.getElementById("openLeaderboardBtn").onclick = async () => {
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("leaderboard")
     .select("*")
     .order("score", { ascending: false })
