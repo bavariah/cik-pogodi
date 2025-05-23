@@ -290,40 +290,40 @@ if (currentRow === 5) {
 //   showResultGrid(win);
 // }
 // 
-//   function endGame(win) {
-//   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
-//   localStorage.setItem("last_result", win ? "win" : "lose");
-//   localStorage.setItem("last_attempt_row", currentRow.toString());
-//   saveResultGrid();
-//   disableInput();
-//   updateStats(win ? currentRow : null);
-//   showResultGrid(win);
+  function endGame(win) {
+  localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
+  localStorage.setItem("last_result", win ? "win" : "lose");
+  localStorage.setItem("last_attempt_row", currentRow.toString());
+  saveResultGrid();
+  disableInput();
+  updateStats(win ? currentRow : null);
+  showResultGrid(win);
 
-//   // 📌 Step 1: Ask for name (only once, saved in localStorage)
-//   if (win && !localStorage.getItem("username")) {
-//     const name = prompt("Унеси своје име за табелу резултата:");
-//     if (name) {
-//       localStorage.setItem("username", name.trim());
-//     } else {
-//       return; // don't save score without name
-//     }
-//   }
+  // 📌 Step 1: Ask for name (only once, saved in localStorage)
+  if (win && !localStorage.getItem("username")) {
+    const name = prompt("Унеси своје име за табелу резултата:");
+    if (name) {
+      localStorage.setItem("username", name.trim());
+    } else {
+      return; // don't save score without name
+    }
+  }
 
-//   // 📌 Step 2: Save score to Supabase if game was won
-//   if (win) {
-//     const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-//     const score = scoreMap[currentRow] || 0;
-//     const username = localStorage.getItem("username");
-// const attempts = currentRow + 1;
+  // 📌 Step 2: Save score to Supabase if game was won
+  if (win) {
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+    const username = localStorage.getItem("username");
+const attempts = currentRow + 1;
     
-//     client.from("scores").insert([{ username, score, attempts }])
-//       .then(({ error }) => {
-//         if (error) {
-//           console.error("Грешка при упису у табелу резултата:", error);
-//         }
-//       });
-//   }
-// }
+    client.from("scores").insert([{ username, score, attempts }])
+      .then(({ error }) => {
+        if (error) {
+          console.error("Грешка при упису у табелу резултата:", error);
+        }
+      });
+  }
+}
 if (win) {
   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
   const score = scoreMap[currentRow] || 0;
@@ -368,6 +368,50 @@ if (win) {
       }
     });
 }
+// if (win) {
+//   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+//   const score = scoreMap[currentRow] || 0;
+//   const username = localStorage.getItem("username");
+
+//   // First check if this user already exists
+//   client
+//     .from("scores")
+//     .select("*")
+//     .eq("username", username)
+//     .then(({ data, error }) => {
+//       if (error) {
+//         console.error("Грешка при читању:", error);
+//         return;
+//       }
+
+//       if (data.length > 0) {
+//         // ✅ User exists – update
+//         const existing = data[0];
+//         const newScore = existing.score + score;
+//         const newAttempts = existing.attempts + 1;
+
+//         client
+//           .from("scores")
+//           .update({ score: newScore, attempts: newAttempts })
+//           .eq("username", username)
+//           .then(({ error }) => {
+//             if (error) {
+//               console.error("Грешка при ажурирању резултата:", error);
+//             }
+//           });
+//       } else {
+//         // ✅ New user – insert
+//         client
+//           .from("scores")
+//           .insert([{ username, score, attempts: 1 }])
+//           .then(({ error }) => {
+//             if (error) {
+//               console.error("Грешка при упису у табелу резултата:", error);
+//             }
+//           });
+//       }
+//     });
+// }
 // 
 function disableInput() {
   [...keyboard.children].forEach(key => key.disabled = true);
