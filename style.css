@@ -48,7 +48,15 @@ button {
 .grey {
     background: #3a3a3c;
 }
-
+#shareImageBtn {
+    margin-top: 20px;
+    height: 40px;
+    width: 200px;
+    border-radius: 20px;
+    outline: none;
+    border: none;
+    background: #ffffff;
+}
 #keyboard {
     display: flex;
     flex-wrap: wrap;
