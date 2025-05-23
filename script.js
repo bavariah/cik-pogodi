@@ -310,20 +310,6 @@ if (currentRow === 5) {
   }
 
   // 📌 Step 2: Save score to Supabase if game was won
-  if (win) {
-    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-    const score = scoreMap[currentRow] || 0;
-    const username = localStorage.getItem("username");
-const attempts = currentRow + 1;
-    
-    client.from("scores").insert([{ username, score, attempts }])
-      .then(({ error }) => {
-        if (error) {
-          console.error("Грешка при упису у табелу резултата:", error);
-        }
-      });
-  }
-}
 if (win) {
   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
   const score = scoreMap[currentRow] || 0;
@@ -368,6 +354,21 @@ if (win) {
       }
     });
 }
+//   if (win) {
+//     const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+//     const score = scoreMap[currentRow] || 0;
+//     const username = localStorage.getItem("username");
+// const attempts = currentRow + 1;
+    
+//     client.from("scores").insert([{ username, score, attempts }])
+//       .then(({ error }) => {
+//         if (error) {
+//           console.error("Грешка при упису у табелу резултата:", error);
+//         }
+//       });
+//   }
+}
+
 // if (win) {
 //   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
 //   const score = scoreMap[currentRow] || 0;
