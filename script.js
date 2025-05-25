@@ -612,8 +612,8 @@ function loadLeaderboard(orderBy = "score") {
         .map((entry, i) => {
           const text =
             orderBy === "avg_score"
-              ? `${(entry.avg_score || 0).toFixed(2)} просек (${entry.attempts} игара)`
-              : `${entry.score} поена (${entry.attempts} игара)`;
+              ? `${(entry.avg_score || 0).toFixed(2)} просек (${entry.attempts})`
+              : `${entry.score} поена (${entry.attempts})`;
           return `<div>${i + 1}. <strong>${entry.username}</strong>  ${text}</div>`;
         })
         .join("");
