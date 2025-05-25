@@ -125,7 +125,7 @@ const resultGrid = document.getElementById("resultGrid");
 
 let currentRow = 0;
 let currentGuess = "";
-const lockTime = 12 * 60 * 60 * 1000; // 12h
+const lockTime = 24 * 60 * 60 * 1000; // 24h
 const START_TIME = new Date("2025-05-19T07:00:00Z").getTime(); // 09:00 Belgrade time
 
 function getTodayWord() {
