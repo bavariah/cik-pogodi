@@ -99,14 +99,79 @@
   </div>
 </div>
 <!--leaderboard  -->
-<div id="leaderboardModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+<!-- <div id="leaderboardModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
   <div style="background:#222; padding:20px 20px 30px 20px; border-radius:10px; width: 100%; max-width:500px; text-align:center; position:relative;">
     <button id="closeLeaderboardBtn" style="color: #f1f1f1; position:absolute; top:8px; right:10px; background:none; border:none; font-size:18px; cursor:pointer;">✖</button>
     <h3>Топ 10</h3>
     <div id="leaderboardContent" style="margin-top:10px; text-align:left;"></div>
   </div>
-</div>
-    
+</div> -->
+<div id="leaderboardModal" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  font-family: sans-serif;
+">
+  <div style="
+    background: #222;
+    padding: 20px 20px 30px 20px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    color: #fff;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  ">
+
+    <button id="closeLeaderboardBtn" style="
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+    ">✖</button>
+
+    <h2 style="margin-bottom: 15px;">🏆 Табела резултата</h2>
+
+    <div style="margin-bottom: 15px;">
+      <button onclick="loadLeaderboard('score')" style="
+        margin-right: 5px;
+        padding: 6px 12px;
+        border: none;
+        background: #444;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      ">Највише поена</button>
+      <button onclick="loadLeaderboard('avg_score')" style="
+        padding: 6px 12px;
+        border: none;
+        background: #444;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      ">Најбољи просек</button>
+    </div>
+
+    <div id="leaderboardContent" style="
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0 10px;
+    "></div>
+
+  </div>
+</div>    
+
+
   <script>
 function showResultGrid(win) {
   const boardRows = document.querySelectorAll(".row");
@@ -179,14 +244,14 @@ function fallbackShare(text) {
     // leaderboard
 
 
-document.getElementById("closeLeaderboardBtn").onclick = () => {
-  document.getElementById("leaderboardModal").style.display = "none";
-};
+// document.getElementById("closeLeaderboardBtn").onclick = () => {
+//   document.getElementById("leaderboardModal").style.display = "none";
+// };
 
-document.getElementById("openLeaderboardBtn").onclick = () => {
-  document.getElementById("leaderboardModal").style.display = "flex";
-  loadLeaderboard();
-};
+// document.getElementById("openLeaderboardBtn").onclick = () => {
+//   document.getElementById("leaderboardModal").style.display = "flex";
+//   loadLeaderboard();
+// };
 
 
     
