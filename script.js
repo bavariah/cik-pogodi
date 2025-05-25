@@ -6,7 +6,6 @@ const wordList = [
   { word: "црвићи", hint: "Мали инсекти који се гмижу" },
    { word: "ћевапи", hint: "Јело од млевеног меса" },
    { word: "федери", hint: "Металне опруге које се сабијају" },
-    { word: "сликар", hint: "Уметник који слика" },
    { word: "гурање", hint: "Физички помак неког предмета или особе" },
     { word: "фотеља", hint: "Удобна столица са наслонима" },
   { word: "кувари", hint: "Особе које припремају храну" },
@@ -127,7 +126,8 @@ const resultGrid = document.getElementById("resultGrid");
 let currentRow = 0;
 let currentGuess = "";
 const lockTime = 24 * 60 * 60 * 1000; // 24h
-const START_TIME = new Date("2025-05-19T07:00:00Z").getTime(); // 09:00 Belgrade time
+// const START_TIME = new Date("2025-05-19T07:00:00Z").getTime();  09:00 Belgrade time
+const START_TIME = new Date("2025-05-19T21:55:00Z").getTime();
 
 function getTodayWord() {
   const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
