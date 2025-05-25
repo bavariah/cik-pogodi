@@ -280,16 +280,6 @@ if (currentRow === 5) {
   currentGuess = "";
 }
 
-// function endGame(win) {
-//   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
-//   localStorage.setItem("last_result", win ? "win" : "lose");
-//   localStorage.setItem("last_attempt_row", currentRow.toString());
-//   saveResultGrid();
-//   disableInput();
-//   updateStats(win ? currentRow : null);
-//   showResultGrid(win);
-// }
-// 
   function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
@@ -311,108 +301,63 @@ if (currentRow === 5) {
 
   // 📌 Step 2: Save score to Supabase if game was won
 if (win) {
-  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-  const score = scoreMap[currentRow] || 0;
-  const username = localStorage.getItem("username");
+const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+const score = scoreMap[currentRow] || 0;
+const username = localStorage.getItem("username");
 
-  // First check if this user already exists
-  client
-    .from("scores")
-    .select("*")
-    .eq("username", username)
-    .then(({ data, error }) => {
-      if (error) {
-        console.error("Грешка при читању:", error);
-        return;
-      }
+// First check if this user already exists
+client
+  .from("scores")
+  .select("*")
+  .eq("username", username)
+  .then(({ data, error }) => {
+    if (error) {
+      console.error("Грешка при читању:", error);
+      return;
+    }
 
-      if (data.length > 0) {
-        // ✅ User exists – update
-        const existing = data[0];
-        const newScore = existing.score + score;
-        const newAttempts = existing.attempts + 1;
+    if (data.length > 0) {
+      // ✅ User exists – update
+      const existing = data[0];
+      const newScore = existing.score + score;
+      const newAttempts = existing.attempts + 1;
+      const newAvg = (newScore / newAttempts).toFixed(2);
 
-        client
-          .from("scores")
-          .update({ score: newScore, attempts: newAttempts })
-          .eq("username", username)
-          .then(({ error }) => {
-            if (error) {
-              console.error("Грешка при ажурирању резултата:", error);
-            }
-          });
-      } else {
-        // ✅ New user – insert
-        client
-          .from("scores")
-          .insert([{ username, score, attempts: 1 }])
-          .then(({ error }) => {
-            if (error) {
-              console.error("Грешка при упису у табелу резултата:", error);
-            }
-          });
-      }
-    });
+      client
+        .from("scores")
+        .update({
+          score: newScore,
+          attempts: newAttempts,
+          avg_score: newAvg
+        })
+        .eq("username", username)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Грешка при ажурирању резултата:", error);
+          }
+        });
+    } else {
+      // ✅ New user – insert
+      client
+        .from("scores")
+        .insert([
+          {
+            username,
+            score,
+            attempts: 1,
+            avg_score: score.toFixed(2)
+          }
+        ])
+        .then(({ error }) => {
+          if (error) {
+            console.error("Грешка при упису у табелу резултата:", error);
+          }
+        });
+    }
+  });
 }
-//   if (win) {
-//     const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-//     const score = scoreMap[currentRow] || 0;
-//     const username = localStorage.getItem("username");
-// const attempts = currentRow + 1;
-    
-//     client.from("scores").insert([{ username, score, attempts }])
-//       .then(({ error }) => {
-//         if (error) {
-//           console.error("Грешка при упису у табелу резултата:", error);
-//         }
-//       });
-//   }
 }
 
-// if (win) {
-//   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-//   const score = scoreMap[currentRow] || 0;
-//   const username = localStorage.getItem("username");
-
-//   // First check if this user already exists
-//   client
-//     .from("scores")
-//     .select("*")
-//     .eq("username", username)
-//     .then(({ data, error }) => {
-//       if (error) {
-//         console.error("Грешка при читању:", error);
-//         return;
-//       }
-
-//       if (data.length > 0) {
-//         // ✅ User exists – update
-//         const existing = data[0];
-//         const newScore = existing.score + score;
-//         const newAttempts = existing.attempts + 1;
-
-//         client
-//           .from("scores")
-//           .update({ score: newScore, attempts: newAttempts })
-//           .eq("username", username)
-//           .then(({ error }) => {
-//             if (error) {
-//               console.error("Грешка при ажурирању резултата:", error);
-//             }
-//           });
-//       } else {
-//         // ✅ New user – insert
-//         client
-//           .from("scores")
-//           .insert([{ username, score, attempts: 1 }])
-//           .then(({ error }) => {
-//             if (error) {
-//               console.error("Грешка при упису у табелу резултата:", error);
-//             }
-//           });
-//       }
-//     });
-// }
 // 
 function disableInput() {
   [...keyboard.children].forEach(key => key.disabled = true);
