@@ -614,7 +614,7 @@ function loadLeaderboard(orderBy = "score") {
             orderBy === "avg_score"
               ? `${(entry.avg_score || 0).toFixed(2)} просек (${entry.attempts} игара)`
               : `${entry.score} поена (${entry.attempts} игара)`;
-          return `<div>${i + 1}. <strong>${entry.username}</strong> – ${text}</div>`;
+          return `<div>${i + 1}. <strong>${entry.username}</strong>  ${text}</div>`;
         })
         .join("");
     });
