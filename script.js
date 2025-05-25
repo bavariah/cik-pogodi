@@ -574,23 +574,58 @@ closeHintBtn.onclick = () => {
 
 
 
-document.getElementById("openLeaderboardBtn").onclick = async () => {
-  const { data, error } = await client
+// document.getElementById("openLeaderboardBtn").onclick = async () => {
+//   const { data, error } = await client
+//     .from("scores")
+//     .select("*")
+//     .order("score", { ascending: false })
+//     .limit(10);
+
+//   const container = document.getElementById("leaderboardContent");
+//   container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
+
+//   if (data) {
+//     data.forEach((entry, i) => {
+//       container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong>  ${entry.score} поена</div>`;
+//     });
+//   }
+
+//   document.getElementById("leaderboardModal").style.display = "flex";
+// };
+
+// document.getElementById("closeLeaderboardBtn").onclick = () => {
+//   document.getElementById("leaderboardModal").style.display = "none";
+// };
+function loadLeaderboard(orderBy = "score") {
+  client
     .from("scores")
     .select("*")
-    .order("score", { ascending: false })
-    .limit(10);
+    .order(orderBy, { ascending: false })
+    .limit(10)
+    .then(({ data, error }) => {
+      const container = document.getElementById("leaderboardContent");
+      if (error) {
+        container.innerHTML = "<p>Грешка при учитавању.</p>";
+        return;
+      }
 
-  const container = document.getElementById("leaderboardContent");
-  container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
-
-  if (data) {
-    data.forEach((entry, i) => {
-      container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong>  ${entry.score} поена</div>`;
+      container.innerHTML = data
+        .map((entry, i) => {
+          const text =
+            orderBy === "avg_score"
+              ? `${(entry.avg_score || 0).toFixed(2)} просек (${entry.attempts} игара)`
+              : `${entry.score} поена (${entry.attempts} игара)`;
+          return `<div>${i + 1}. <strong>${entry.username}</strong> – ${text}</div>`;
+        })
+        .join("");
     });
-  }
 
   document.getElementById("leaderboardModal").style.display = "flex";
+}
+
+// 🎯 Button handlers
+document.getElementById("openLeaderboardBtn").onclick = () => {
+  loadLeaderboard("score"); // default view
 };
 
 document.getElementById("closeLeaderboardBtn").onclick = () => {
