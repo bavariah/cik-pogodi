@@ -459,7 +459,7 @@ function showLockedGameScreen() {
     let message = "Браво! Погодили сте реч!";
     if (lastAttemptRow === 0) message = "🌟 Невероватно! Погодак из прве!!";
     else if (lastAttemptRow === 1) message = "🔥 Сјајно! Погодили сте из другог покушаја!";
-    else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
+    else if (lastAttemptRow === 2) message = "💪 Одлично! Трећи покушај и успех!";
     else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
     resultTitle.innerHTML = message;
   } else {
