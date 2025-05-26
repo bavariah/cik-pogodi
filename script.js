@@ -193,6 +193,17 @@ function createKeyboard() {
   keyboard.appendChild(bottomRow);
 }
 
+// test save
+function saveProgress() {
+  const guesses = [];
+  for (let i = 0; i < currentRow; i++) {
+    const row = board.children[i];
+    const word = [...row.children].map(tile => tile.textContent).join("");
+    guesses.push(word);
+  }
+  localStorage.setItem("in_progress", JSON.stringify({ row: currentRow, guesses }));
+}
+
 function handleKey(letter) {
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
