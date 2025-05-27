@@ -249,8 +249,22 @@ function saveResultGrid() {
   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
 }
 
+// test save
+function restoreProgress() {
+  const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
+  if (!saved) return;
+
+  currentRow = saved.row;
+  for (let i = 0; i < saved.guesses.length; i++) {
+    currentGuess = saved.guesses[i];
+    submitGuess(true); // Pass restore flag to skip endGame
+  }
+  currentGuess = "";
+}
+
 function submitGuess() {
-  if (currentGuess.length !== 6) return;
+  // if (currentGuess.length !== 6) return;
+if (!restore && currentGuess.length !== 6) return;
   const row = board.children[currentRow];
   const targetArr = targetWord.split("");
   const guessArr = currentGuess.split("");
@@ -284,13 +298,16 @@ function submitGuess() {
     }
   });
 
-  if (currentGuess === targetWord) return endGame(true);
-  if (currentRow === 6) return endGame(false);
+  if (!restore && currentGuess === targetWord) return endGame(true);
+  if (!restore && currentRow === 6) return endGame(false);
+  // if (currentGuess === targetWord) return endGame(true);
+  // if (currentRow === 6) return endGame(false);
 
-
-if (currentRow === 5) {
-  enableHintAccess();
-}
+ if (!restore && currentRow === 5) enableHintAccess();
+// if (currentRow === 5) {
+//   enableHintAccess();
+  
+// }
   currentRow++;
   currentGuess = "";
  saveProgress();
@@ -533,6 +550,7 @@ function checkIfLocked() {
 if (!checkIfLocked()) {
   createBoard();
   createKeyboard();
+ restoreProgress(); 
 }
 showCountdownToNextWord();
 
