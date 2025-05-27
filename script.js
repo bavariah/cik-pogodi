@@ -193,44 +193,23 @@ function createKeyboard() {
   keyboard.appendChild(bottomRow);
 }
 
-// test save
-function saveProgress() {
-  const guesses = [];
-  for (let i = 0; i < currentRow; i++) {
-    const row = board.children[i];
-    const word = [...row.children].map(t => t.textContent).join("");
-    guesses.push(word);
-  }
-  localStorage.setItem("in_progress", JSON.stringify({ row: currentRow, guesses }));
-}
-
 function handleKey(letter) {
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
     updateBoard();
-
   }
 }
 
-// function updateBoard() {
-//   const row = board.children[currentRow];
-//   [...row.children].forEach((tile, i) => {
-//     tile.textContent = currentGuess[i] || "";
-//   });
-// }
 function updateBoard() {
   const row = board.children[currentRow];
-  if (!row) return; // ⛑ Prevent undefined crash
   [...row.children].forEach((tile, i) => {
     tile.textContent = currentGuess[i] || "";
   });
 }
 
-
 function deleteLetter() {
   currentGuess = currentGuess.slice(0, -1);
   updateBoard();
-
 }
 
 
@@ -257,32 +236,9 @@ function saveResultGrid() {
   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
 }
 
-// test save
-function restoreProgress() {
-  const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
-  if (!saved || !Array.isArray(saved.guesses)) return;
-
-  // paint each saved guess
-  saved.guesses.forEach((guess, rowIdx) => {
-    const row = board.children[rowIdx];
-    if (!row) return;
-    guess.split("").forEach((ch, colIdx) => {
-      row.children[colIdx].textContent = ch;
-    });
-  });
-
-  // next empty row:
-  currentRow = saved.row;
-  currentGuess = "";
-}
-
-
-function submitGuess(restore = false) {
-  if (!restore && currentGuess.length !== 6) return;
-  
+function submitGuess() {
+  if (currentGuess.length !== 6) return;
   const row = board.children[currentRow];
-  if (!row) return; // ⛑ protection
-
   const targetArr = targetWord.split("");
   const guessArr = currentGuess.split("");
   const tileStatus = Array(6).fill("grey");
@@ -293,7 +249,6 @@ function submitGuess(restore = false) {
       targetArr[i] = null;
     }
   }
-
   for (let i = 0; i < 6; i++) {
     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
       tileStatus[i] = "orange";
@@ -304,7 +259,6 @@ function submitGuess(restore = false) {
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
     tile.classList.add(tileStatus[i]);
-    tile.textContent = letter;
 
     const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
     if (key) {
@@ -317,65 +271,16 @@ function submitGuess(restore = false) {
     }
   });
 
-  if (!restore && currentGuess === targetWord) return endGame(true);
-  if (!restore && currentRow === 6) return endGame(false);
-  if (!restore && currentRow === 5) enableHintAccess();
- if (!restore) {
+  if (currentGuess === targetWord) return endGame(true);
+  if (currentRow === 6) return endGame(false);
+
+
+if (currentRow === 5) {
+  enableHintAccess();
+}
   currentRow++;
   currentGuess = "";
-  saveProgress(); 
-  }
 }
-// function submitGuess(restore = false) {
-//   // if (currentGuess.length !== 6) return;
-// if (!restore && currentGuess.length !== 6) return;
-//   const row = board.children[currentRow];
-//   const targetArr = targetWord.split("");
-//   const guessArr = currentGuess.split("");
-//   const tileStatus = Array(6).fill("grey");
-
-//   for (let i = 0; i < 6; i++) {
-//     if (guessArr[i] === targetArr[i]) {
-//       tileStatus[i] = "green";
-//       targetArr[i] = null;
-//     }
-//   }
-//   for (let i = 0; i < 6; i++) {
-//     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
-//       tileStatus[i] = "orange";
-//       targetArr[targetArr.indexOf(guessArr[i])] = null;
-//     }
-//   }
-
-//   guessArr.forEach((letter, i) => {
-//     const tile = row.children[i];
-//     tile.classList.add(tileStatus[i]);
-
-//     const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
-//     if (key) {
-//       const existing = key.classList;
-//       if (!existing.contains("green")) {
-//         if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
-//         else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
-//         else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
-//       }
-//     }
-//   });
-
-//   if (!restore && currentGuess === targetWord) return endGame(true);
-//   if (!restore && currentRow === 6) return endGame(false);
-//   // if (currentGuess === targetWord) return endGame(true);
-//   // if (currentRow === 6) return endGame(false);
-
-//  if (!restore && currentRow === 5) enableHintAccess();
-// // if (currentRow === 5) {
-// //   enableHintAccess();
-  
-// // }
-//   currentRow++;
-//   currentGuess = "";
-//  saveProgress();
-// }
 
   function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
@@ -385,7 +290,6 @@ function submitGuess(restore = false) {
   disableInput();
   updateStats(win ? currentRow : null);
   showResultGrid(win);
-    localStorage.removeItem("in_progress");
 
  if (win) {
   // Step 1: Ask for name only once
@@ -552,7 +456,7 @@ function showLockedGameScreen() {
     let message = "Браво! Погодили сте реч!";
     if (lastAttemptRow === 0) message = "🌟 Невероватно! Погодак из прве!!";
     else if (lastAttemptRow === 1) message = "🔥 Сјајно! Погодили сте из другог покушаја!";
-    else if (lastAttemptRow === 2) message = "💪 Одлично! Трећи покушај и успех!";
+    else if (lastAttemptRow === 2) message = "💪 Odlično! Treći pokušaj i uspeh!";
     else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
     resultTitle.innerHTML = message;
   } else {
@@ -615,7 +519,6 @@ function checkIfLocked() {
 if (!checkIfLocked()) {
   createBoard();
   createKeyboard();
- restoreProgress(); 
 }
 showCountdownToNextWord();
 
