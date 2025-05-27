@@ -208,7 +208,7 @@ function handleKey(letter) {
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
     updateBoard();
- saveProgress();
+
   }
 }
 
@@ -230,7 +230,7 @@ function updateBoard() {
 function deleteLetter() {
   currentGuess = currentGuess.slice(0, -1);
   updateBoard();
- saveProgress();
+
 }
 
 
