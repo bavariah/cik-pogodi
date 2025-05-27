@@ -261,20 +261,23 @@ function saveResultGrid() {
 // test save
 function restoreProgress() {
   const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
-  if (!saved) return;
+  if (!saved || !saved.guesses || !Array.isArray(saved.guesses)) return;
 
-  currentRow = saved.row;
+  currentRow = saved.row || 0;
   for (let i = 0; i < saved.guesses.length; i++) {
     currentGuess = saved.guesses[i];
-    submitGuess(true); // flag means: skip calling endGame
+    submitGuess(true); // ✅ pass 'true' to skip endGame
   }
   currentGuess = "";
 }
 
+
 function submitGuess(restore = false) {
-  // if (currentGuess.length !== 6) return;
-if (!restore && currentGuess.length !== 6) return;
+  if (!restore && currentGuess.length !== 6) return;
+  
   const row = board.children[currentRow];
+  if (!row) return; // ⛑ protection
+
   const targetArr = targetWord.split("");
   const guessArr = currentGuess.split("");
   const tileStatus = Array(6).fill("grey");
@@ -285,6 +288,7 @@ if (!restore && currentGuess.length !== 6) return;
       targetArr[i] = null;
     }
   }
+
   for (let i = 0; i < 6; i++) {
     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
       tileStatus[i] = "orange";
@@ -295,6 +299,7 @@ if (!restore && currentGuess.length !== 6) return;
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
     tile.classList.add(tileStatus[i]);
+    tile.textContent = letter;
 
     const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
     if (key) {
@@ -309,18 +314,62 @@ if (!restore && currentGuess.length !== 6) return;
 
   if (!restore && currentGuess === targetWord) return endGame(true);
   if (!restore && currentRow === 6) return endGame(false);
-  // if (currentGuess === targetWord) return endGame(true);
-  // if (currentRow === 6) return endGame(false);
+  if (!restore && currentRow === 5) enableHintAccess();
 
- if (!restore && currentRow === 5) enableHintAccess();
-// if (currentRow === 5) {
-//   enableHintAccess();
-  
-// }
   currentRow++;
   currentGuess = "";
- saveProgress();
+  saveProgress(); // 🔁 also triggered during restore for next row
 }
+// function submitGuess(restore = false) {
+//   // if (currentGuess.length !== 6) return;
+// if (!restore && currentGuess.length !== 6) return;
+//   const row = board.children[currentRow];
+//   const targetArr = targetWord.split("");
+//   const guessArr = currentGuess.split("");
+//   const tileStatus = Array(6).fill("grey");
+
+//   for (let i = 0; i < 6; i++) {
+//     if (guessArr[i] === targetArr[i]) {
+//       tileStatus[i] = "green";
+//       targetArr[i] = null;
+//     }
+//   }
+//   for (let i = 0; i < 6; i++) {
+//     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
+//       tileStatus[i] = "orange";
+//       targetArr[targetArr.indexOf(guessArr[i])] = null;
+//     }
+//   }
+
+//   guessArr.forEach((letter, i) => {
+//     const tile = row.children[i];
+//     tile.classList.add(tileStatus[i]);
+
+//     const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
+//     if (key) {
+//       const existing = key.classList;
+//       if (!existing.contains("green")) {
+//         if (tileStatus[i] === "green") key.classList.remove("orange", "grey"), key.classList.add("green");
+//         else if (tileStatus[i] === "orange" && !existing.contains("green")) key.classList.remove("grey"), key.classList.add("orange");
+//         else if (!existing.contains("orange") && !existing.contains("green")) key.classList.add("grey");
+//       }
+//     }
+//   });
+
+//   if (!restore && currentGuess === targetWord) return endGame(true);
+//   if (!restore && currentRow === 6) return endGame(false);
+//   // if (currentGuess === targetWord) return endGame(true);
+//   // if (currentRow === 6) return endGame(false);
+
+//  if (!restore && currentRow === 5) enableHintAccess();
+// // if (currentRow === 5) {
+// //   enableHintAccess();
+  
+// // }
+//   currentRow++;
+//   currentGuess = "";
+//  saveProgress();
+// }
 
   function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
