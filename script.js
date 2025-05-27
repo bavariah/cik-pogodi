@@ -262,7 +262,7 @@ function restoreProgress() {
   const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
   if (!saved || !Array.isArray(saved.guesses)) return;
 
-  // Fill each previous row with its guess
+  // paint each saved guess
   saved.guesses.forEach((guess, rowIdx) => {
     const row = board.children[rowIdx];
     if (!row) return;
@@ -271,8 +271,9 @@ function restoreProgress() {
     });
   });
 
-  // Next free row to continue typing into:
-  currentRow = saved.row || saved.guesses.length;
+  // next empty row:
+  currentRow = saved.row;
+  currentGuess = "";
 }
 
 
