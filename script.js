@@ -198,8 +198,7 @@ function saveProgress() {
   const guesses = [];
   for (let i = 0; i < currentRow; i++) {
     const row = board.children[i];
-    if (!row) continue;
-    const word = [...row.children].map(tile => tile.textContent).join("");
+    const word = [...row.children].map(t => t.textContent).join("");
     guesses.push(word);
   }
   localStorage.setItem("in_progress", JSON.stringify({ row: currentRow, guesses }));
@@ -259,16 +258,21 @@ function saveResultGrid() {
 }
 
 // test save
-restoreProgress() {
+function restoreProgress() {
   const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
   if (!saved || !Array.isArray(saved.guesses)) return;
 
-  saved.guesses.forEach(word => {
-    currentGuess = word;
-    submitGuess(true);
+  // Fill each previous row with its guess
+  saved.guesses.forEach((guess, rowIdx) => {
+    const row = board.children[rowIdx];
+    if (!row) return;
+    guess.split("").forEach((ch, colIdx) => {
+      row.children[colIdx].textContent = ch;
+    });
   });
-  currentGuess = "";
-  saveProgress();
+
+  // Next free row to continue typing into:
+  currentRow = saved.row || saved.guesses.length;
 }
 
 
