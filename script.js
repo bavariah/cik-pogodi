@@ -315,10 +315,11 @@ function submitGuess(restore = false) {
   if (!restore && currentGuess === targetWord) return endGame(true);
   if (!restore && currentRow === 6) return endGame(false);
   if (!restore && currentRow === 5) enableHintAccess();
-
+ if (!restore) {
   currentRow++;
   currentGuess = "";
-  saveProgress(); // 🔁 also triggered during restore for next row
+  saveProgress(); 
+  }
 }
 // function submitGuess(restore = false) {
 //   // if (currentGuess.length !== 6) return;
