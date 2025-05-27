@@ -261,14 +261,17 @@ function saveResultGrid() {
 // test save
 function restoreProgress() {
   const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
-  if (!saved || !saved.guesses || !Array.isArray(saved.guesses)) return;
+  if (!saved || !Array.isArray(saved.guesses)) return;
 
   currentRow = saved.row || 0;
-  for (let i = 0; i < saved.guesses.length; i++) {
-    currentGuess = saved.guesses[i];
-    submitGuess(true); // ✅ pass 'true' to skip endGame
-  }
-  currentGuess = "";
+
+  saved.guesses.forEach((word, i) => {
+    const row = board.children[i];
+    word.split("").forEach((letter, j) => {
+      const tile = row.children[j];
+      tile.textContent = letter;
+    });
+  });
 }
 
 
@@ -380,6 +383,7 @@ function submitGuess(restore = false) {
   disableInput();
   updateStats(win ? currentRow : null);
   showResultGrid(win);
+    localStorage.removeItem("in_progress");
 
  if (win) {
   // Step 1: Ask for name only once
