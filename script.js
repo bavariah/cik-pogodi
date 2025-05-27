@@ -198,7 +198,7 @@ function saveProgress() {
   const guesses = [];
   for (let i = 0; i < currentRow; i++) {
     const row = board.children[i];
-    if (!row) continue; // skip if row not found
+    if (!row) continue;
     const word = [...row.children].map(tile => tile.textContent).join("");
     guesses.push(word);
   }
@@ -213,12 +213,20 @@ function handleKey(letter) {
   }
 }
 
+// function updateBoard() {
+//   const row = board.children[currentRow];
+//   [...row.children].forEach((tile, i) => {
+//     tile.textContent = currentGuess[i] || "";
+//   });
+// }
 function updateBoard() {
   const row = board.children[currentRow];
+  if (!row) return; // ⛑ Prevent undefined crash
   [...row.children].forEach((tile, i) => {
     tile.textContent = currentGuess[i] || "";
   });
 }
+
 
 function deleteLetter() {
   currentGuess = currentGuess.slice(0, -1);
@@ -258,7 +266,7 @@ function restoreProgress() {
   currentRow = saved.row;
   for (let i = 0; i < saved.guesses.length; i++) {
     currentGuess = saved.guesses[i];
-    submitGuess(true); // Pass restore flag to skip endGame
+    submitGuess(true); // flag means: skip calling endGame
   }
   currentGuess = "";
 }
