@@ -262,7 +262,7 @@ function restoreProgress() {
   currentGuess = "";
 }
 
-function submitGuess() {
+function submitGuess(restore = false) {
   // if (currentGuess.length !== 6) return;
 if (!restore && currentGuess.length !== 6) return;
   const row = board.children[currentRow];
