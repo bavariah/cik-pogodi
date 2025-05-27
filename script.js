@@ -259,19 +259,16 @@ function saveResultGrid() {
 }
 
 // test save
-function restoreProgress() {
+restoreProgress() {
   const saved = JSON.parse(localStorage.getItem("in_progress") || "null");
   if (!saved || !Array.isArray(saved.guesses)) return;
 
-  currentRow = saved.row || 0;
-
-  saved.guesses.forEach((word, i) => {
-    const row = board.children[i];
-    word.split("").forEach((letter, j) => {
-      const tile = row.children[j];
-      tile.textContent = letter;
-    });
+  saved.guesses.forEach(word => {
+    currentGuess = word;
+    submitGuess(true);
   });
+  currentGuess = "";
+  saveProgress();
 }
 
 
