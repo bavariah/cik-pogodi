@@ -197,6 +197,7 @@ function handleKey(letter) {
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
     updateBoard();
+    saveGameState(); // Save after each letter
   }
 }
 
@@ -210,6 +211,7 @@ function updateBoard() {
 function deleteLetter() {
   currentGuess = currentGuess.slice(0, -1);
   updateBoard();
+  saveGameState(); // Save after deleting a letter
 }
 
 
@@ -274,12 +276,14 @@ function submitGuess() {
   if (currentGuess === targetWord) return endGame(true);
   if (currentRow === 6) return endGame(false);
 
+  // Save game state after each row
+  saveGameState();
 
-if (currentRow === 5) {
-  enableHintAccess();
-}
   currentRow++;
   currentGuess = "";
+  
+  // Check if hint should be shown
+  checkAndShowHint();
 }
 
   function endGame(win) {
@@ -515,10 +519,177 @@ function checkIfLocked() {
   return false;
 }
 
+// Add this function to save game state after each row
+function saveGameState() {
+  const gameState = {
+    currentRow,
+    currentGuess,
+    boardState: []
+  };
+  
+  // Save all rows up to and including the current row
+  for (let i = 0; i <= currentRow; i++) {
+    const row = board.children[i];
+    const rowState = [];
+    
+    for (let j = 0; j < 6; j++) {
+      const tile = row.children[j];
+      rowState.push({
+        letter: tile.textContent,
+        color: tile.classList.contains("green") ? "green" : 
+               tile.classList.contains("orange") ? "orange" : 
+               tile.classList.contains("grey") ? "grey" : ""
+      });
+    }
+    
+    gameState.boardState.push(rowState);
+  }
+  
+  localStorage.setItem("gameState", JSON.stringify(gameState));
+}
+
+// Add this function to load saved game state
+function loadGameState() {
+  const savedState = localStorage.getItem("gameState");
+  if (!savedState) return false;
+  
+  const gameState = JSON.parse(savedState);
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
+  
+  // Only restore if it's the same word (same time window)
+  if (lastPlayed === currentTimeWindow) return false;
+  
+  // First, restore all tiles and keyboard colors
+  gameState.boardState.forEach((rowState, rowIndex) => {
+    const row = board.children[rowIndex];
+    
+    rowState.forEach((tileState, tileIndex) => {
+      const tile = row.children[tileIndex];
+      tile.textContent = tileState.letter;
+      if (tileState.color) tile.classList.add(tileState.color);
+      
+      // Update keyboard colors
+      const key = [...document.querySelectorAll(".key")].find(
+        k => k.textContent === tileState.letter.toUpperCase()
+      );
+      if (key) {
+        if (tileState.color === "green") key.classList.add("green");
+        else if (tileState.color === "orange" && !key.classList.contains("green")) 
+          key.classList.add("orange");
+        else if (!key.classList.contains("green") && !key.classList.contains("orange"))
+          key.classList.add("grey");
+      }
+    });
+  });
+  
+  // Determine the correct current row
+  // Find the last row that has all colored tiles
+  let lastCompletedRow = -1;
+  for (let i = 0; i < gameState.boardState.length; i++) {
+    const rowState = gameState.boardState[i];
+    const allColored = rowState.every(tile => tile.color);
+    if (allColored) {
+      lastCompletedRow = i;
+    } else {
+      break;
+    }
+  }
+  
+  // Set currentRow to the row after the last completed row
+  currentRow = lastCompletedRow + 1;
+  
+  // Set currentGuess based on the saved state
+  if (currentRow < gameState.boardState.length) {
+    // If there's an incomplete row, set currentGuess to its letters
+    currentGuess = gameState.boardState[currentRow]
+      .map(tile => tile.letter.toLowerCase())
+      .join('');
+  } else {
+    // Otherwise, start with an empty guess
+    currentGuess = "";
+  }
+  
+  // Update the board with the current guess
+  updateBoard();
+  
+  // Check if hint should be shown
+  checkAndShowHint();
+  
+  return true;
+}
+
+// Add this function to check if hint should be shown
+function checkAndShowHint() {
+  // Get reference to the hint button
+  const hintIconBtn = document.getElementById("hintIconBtn");
+  if (!hintIconBtn) return;
+  
+  // Check if we're on the 7th row (index 6)
+  if (currentRow >= 6) {
+    console.log("Showing hint button because currentRow =", currentRow);
+    hintIconBtn.style.display = "block";
+    
+    // Set up the click handler
+    hintIconBtn.onclick = () => {
+      const hintModal = document.getElementById("hintModal");
+      const hintModalText = document.getElementById("hintModalText");
+      
+      hintModalText.innerHTML = `
+        <button id="showHintBtnModal">Прикажи наговештај</button>
+        <p id="hintTextModal" style="display:none;margin-top:10px;">Наговештај: ${hintText}</p>
+      `;
+      hintModal.style.display = "flex";
+      
+      // Activate reveal logic inside modal
+      document.getElementById("showHintBtnModal").onclick = () => {
+        document.getElementById("hintTextModal").style.display = "block";
+      };
+    };
+  } else {
+    console.log("Hiding hint button because currentRow =", currentRow);
+    hintIconBtn.style.display = "none";
+  }
+}
+
 // Init
 if (!checkIfLocked()) {
   createBoard();
   createKeyboard();
+  const gameLoaded = loadGameState(); // Load saved game state
+  
+  // Explicitly check if we're on the last row and show hint button if needed
+  if (gameLoaded && currentRow >= 6) {
+    console.log("Init: Showing hint button because currentRow =", currentRow);
+    
+    // Use setTimeout to ensure DOM is fully loaded
+    setTimeout(() => {
+      const hintIconBtn = document.getElementById("hintIconBtn");
+      if (hintIconBtn) {
+        console.log("Setting hint button display to block");
+        hintIconBtn.style.display = "block";
+        
+        // Set up the click handler
+        hintIconBtn.onclick = () => {
+          const hintModal = document.getElementById("hintModal");
+          const hintModalText = document.getElementById("hintModalText");
+          
+          hintModalText.innerHTML = `
+            <button id="showHintBtnModal">Прикажи наговештај</button>
+            <p id="hintTextModal" style="display:none;margin-top:10px;">Наговештај: ${hintText}</p>
+          `;
+          hintModal.style.display = "flex";
+          
+          // Activate reveal logic inside modal
+          document.getElementById("showHintBtnModal").onclick = () => {
+            document.getElementById("hintTextModal").style.display = "block";
+          };
+        };
+      } else {
+        console.log("Hint button not found");
+      }
+    }, 100); // Short delay to ensure DOM is ready
+  }
 }
 showCountdownToNextWord();
 
@@ -545,25 +716,16 @@ const hintModal = document.getElementById("hintModal");
 const hintModalText = document.getElementById("hintModalText");
 const closeHintBtn = document.getElementById("closeHintBtn");
 
-// Hide the icon initially
-hintIconBtn.style.display = "none";
+// Only hide the icon if we're not on the last row
+if (currentRow < 6) {
+  hintIconBtn.style.display = "none";
+} else {
+  hintIconBtn.style.display = "block";
+}
 
 // Enable icon and modal trigger after 6th row
 function enableHintAccess() {
-  hintIconBtn.style.display = "block";
-  hintIconBtn.onclick = () => {
-    // Replace the "Show Hint" button inside modal with functionality
-    hintModalText.innerHTML = `
-      <button id="showHintBtnModal">Прикажи наговештај</button>
-      <p id="hintTextModal" style="display:none;margin-top:10px;">Наговештај: ${hintText}</p>
-    `;
-    hintModal.style.display = "flex";
-
-    // Activate reveal logic inside modal
-    document.getElementById("showHintBtnModal").onclick = () => {
-      document.getElementById("hintTextModal").style.display = "block";
-    };
-  };
+  checkAndShowHint();
 }
 
 // Close modal

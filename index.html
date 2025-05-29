@@ -3,261 +3,390 @@
   <head>
     <meta charset="UTF-8" />
     <title>Чик Погоди</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <!-- Favicon for browser tabs -->
-<!-- Browser tab favicon -->
-<link rel="icon" type="image/png" href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" sizes="192x192">
+    <!-- Browser tab favicon -->
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png"
+      sizes="192x192"
+    />
 
-<!-- Apple devices -->
-<link rel="apple-touch-icon" href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png">
+    <!-- Apple devices -->
+    <link
+      rel="apple-touch-icon"
+      href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png"
+    />
 
-<!-- Social preview (Open Graph) -->
-<meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png">
-<meta property="og:image:width" content="192">
-<meta property="og:image:height" content="192">
+    <!-- Social preview (Open Graph) -->
+    <meta
+      property="og:image"
+      content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png"
+    />
+    <meta property="og:image:width" content="192" />
+    <meta property="og:image:height" content="192" />
     <link rel="stylesheet" href="style.css" />
-      <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const client = supabase.createClient(
-    "https://enhpbzexilgpphdmvfpo.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
-  );
-</script>
+    <script>
+      const client = supabase.createClient(
+        "https://enhpbzexilgpphdmvfpo.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
+      );
+    </script>
   </head>
   <body>
-    <button id="hintIconBtn" style="
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-">❓</button>
-    <button id="openLeaderboardBtn" title="Leaderboard" style="position:absolute; top:15px; right:60px; background:none; border:none; font-size:24px; cursor:pointer;">🏆</button>
-    <button id="openStatsBtn" title="Statistika" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">
-  📊
-</button>
-    <h1 style="font-size: 28px;">Чик Погоди</h1>
+    <button
+      id="hintIconBtn"
+      style="
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        font-size: 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+      "
+    >
+      ❓
+    </button>
+    <button
+      id="openLeaderboardBtn"
+      title="Leaderboard"
+      style="
+        position: absolute;
+        top: 15px;
+        right: 60px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+      "
+    >
+      🏆
+    </button>
+    <button
+      id="openStatsBtn"
+      title="Statistika"
+      style="
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+      "
+    >
+      📊
+    </button>
+    <h1 style="font-size: 28px">Чик Погоди</h1>
     <div id="board"></div>
     <div id="keyboard"></div>
-  <div id="hintWrapper" style="display:none; margin-top:10px;">
-    <button id="showHintBtn">Прикажи наговештај</button>
-    <p id="hintText" style="display:none; margin-top:10px;"></p>
-  </div>
+    <div id="hintWrapper" style="display: none; margin-top: 10px">
+      <button id="showHintBtn">Прикажи наговештај</button>
+      <p id="hintText" style="display: none; margin-top: 10px"></p>
+    </div>
 
-    <div id="resultScreen" style="display:none; margin-top:20px;     text-align: center;">
-    <h2 id="resultTitle"></h2>
-    <div id="resultGrid"></div>
-    <button id="shareImageBtn" style="margin-top:15px;">Подели резултат</button>
-  </div>
+    <div
+      id="resultScreen"
+      style="display: none; margin-top: 20px; text-align: center"
+    >
+      <h2 id="resultTitle"></h2>
+      <div id="resultGrid"></div>
+      <button id="shareImageBtn" style="margin-top: 15px">
+        Подели резултат
+      </button>
+    </div>
 
-  <div id="timer" style="margin-top: 20px; color: #ccc; margin-bottom: 30px;"></div>
-  <div id="stats" style="display: none !important;"></div>
+    <div
+      id="timer"
+      style="margin-top: 20px; color: #ccc; margin-bottom: 30px"
+    ></div>
+    <div id="stats" style="display: none !important"></div>
 
+    <div
+      id="statsModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background: #222;
+          padding: 20px;
+          border-radius: 8px;
+          width: 300px;
+          max-width: 90%;
+          position: relative;
+        "
+      >
+        <button
+          id="closeStatsBtn"
+          style="
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+          "
+        >
+          ✖️
+        </button>
+        <h3 style="margin-bottom: 15px">📈 Статистика</h3>
+        <div id="statsContent"></div>
+      </div>
+    </div>
 
-    <div id="statsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
-  <div style="background:#222; padding:20px; border-radius:8px; width:300px; max-width:90%; position:relative;">
-    <button id="closeStatsBtn" style="position:absolute; top:5px; right:10px; background:none; border:none; font-size:20px; cursor:pointer;">✖️</button>
-    <h3 style="margin-bottom:15px;">📈 Статистика</h3>
-    <div id="statsContent"></div>
-  </div>
-</div>
-
-<!-- Hint Modal -->
-<div id="hintModal" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-">
-  <div style="
-    background: #222;
-    padding: 25px;
-    border-radius: 10px;
-    max-width: 300px;
-    text-align: center;
-    position: relative;
-        min-width: 290px;
-    min-height: 60px;
-  ">
-    <button id="closeHintBtn" style="
-      position: absolute;
-      top: 8px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: #fff;
-    ">✖</button>
-    <p id="hintModalText" style="margin: 0;">Hint text here</p>
-  </div>
-</div>
-<!--leaderboard  -->
-<!-- <div id="leaderboardModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
+    <!-- Hint Modal -->
+    <div
+      id="hintModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      "
+    >
+      <div
+        style="
+          background: #222;
+          padding: 25px;
+          border-radius: 10px;
+          max-width: 300px;
+          text-align: center;
+          position: relative;
+          min-width: 290px;
+          min-height: 60px;
+        "
+      >
+        <button
+          id="closeHintBtn"
+          style="
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #fff;
+          "
+        >
+          ✖
+        </button>
+        <p id="hintModalText" style="margin: 0">Hint text here</p>
+      </div>
+    </div>
+    <!--leaderboard  -->
+    <!-- <div id="leaderboardModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:1000;">
   <div style="background:#222; padding:20px 20px 30px 20px; border-radius:10px; width: 100%; max-width:500px; text-align:center; position:relative;">
     <button id="closeLeaderboardBtn" style="color: #f1f1f1; position:absolute; top:8px; right:10px; background:none; border:none; font-size:18px; cursor:pointer;">✖</button>
     <h3>Топ 10</h3>
     <div id="leaderboardContent" style="margin-top:10px; text-align:left;"></div>
   </div>
 </div> -->
-<div id="leaderboardModal" style="
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  font-family: sans-serif;
-">
-  <div style="
-    background: #222;
-    padding: 20px 20px 30px 20px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 500px;
-    color: #fff;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  ">
+    <div
+      id="leaderboardModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-family: sans-serif;
+      "
+    >
+      <div
+        style="
+          background: #222;
+          padding: 20px 20px 30px 20px;
+          border-radius: 12px;
+          width: 100%;
+          max-width: 500px;
+          color: #fff;
+          text-align: center;
+          position: relative;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        "
+      >
+        <button
+          id="closeLeaderboardBtn"
+          style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+          "
+        >
+          ✖
+        </button>
 
-    <button id="closeLeaderboardBtn" style="
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
-    ">✖</button>
+        <h2 style="margin-bottom: 15px">🏆 Табела резултата</h2>
 
-    <h2 style="margin-bottom: 15px;">🏆 Табела резултата</h2>
+        <div style="margin-bottom: 15px">
+          <button
+            onclick="loadLeaderboard('score')"
+            style="
+              margin-right: 5px;
+              padding: 6px 12px;
+              border: none;
+              background: #444;
+              color: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Највише поена
+          </button>
+          <button
+            onclick="loadLeaderboard('avg_score')"
+            style="
+              padding: 6px 12px;
+              border: none;
+              background: #444;
+              color: #fff;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Најбољи просек
+          </button>
+        </div>
 
-    <div style="margin-bottom: 15px;">
-      <button onclick="loadLeaderboard('score')" style="
-        margin-right: 5px;
-        padding: 6px 12px;
-        border: none;
-        background: #444;
-        color: #fff;
-        border-radius: 4px;
-        cursor: pointer;
-      ">Највише поена</button>
-      <button onclick="loadLeaderboard('avg_score')" style="
-        padding: 6px 12px;
-        border: none;
-        background: #444;
-        color: #fff;
-        border-radius: 4px;
-        cursor: pointer;
-      ">Најбољи просек</button>
+        <div
+          id="leaderboardContent"
+          style="
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 20px 15px;
+          "
+        ></div>
+      </div>
     </div>
 
-    <div id="leaderboardContent" style="
-      text-align: left;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 20px 15px;
-    "></div>
+    <script>
+      function showResultGrid(win) {
+        const boardRows = document.querySelectorAll(".row");
+        const resultGrid = document.getElementById("resultGrid");
+        const resultTitle = document.getElementById("resultTitle");
+        const resultScreen = document.getElementById("resultScreen");
 
-  </div>
-</div>    
+        resultGrid.innerHTML = "";
 
+        if (win) {
+          let message = "Браво! Погодили сте реч!";
+          if (currentRow === 0) message = "🌟 Невероватно! Погодак из прве!";
+          else if (currentRow === 1)
+            message = "🔥 Сјајно! Погодили сте из другог покушаја!";
+          else if (currentRow === 2)
+            message = "💪 Одлично! Трећи покушај и успех!";
+          else if (currentRow === 3)
+            message = "👏 Није било лако, али успели сте у четвртом покушају!";
+          resultTitle.innerHTML = message;
+        } else {
+          resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
+        }
 
-  <script>
-function showResultGrid(win) {
-  const boardRows = document.querySelectorAll(".row");
-  const resultGrid = document.getElementById("resultGrid");
-  const resultTitle = document.getElementById("resultTitle");
-  const resultScreen = document.getElementById("resultScreen");
+        for (let r = 0; r < 7; r++) {
+          const row = boardRows[r];
+          const rowClone = row.cloneNode(true);
+          rowClone.style.marginBottom = "5px";
 
-  resultGrid.innerHTML = "";
+          [...rowClone.children].forEach((tile) => {
+            tile.textContent = "";
+          });
 
-if (win) {
-  let message = "Браво! Погодили сте реч!";
-  if (currentRow === 0) message = "🌟 Невероватно! Погодак из прве!";
-  else if (currentRow === 1) message = "🔥 Сјајно! Погодили сте из другог покушаја!";
-  else if (currentRow === 2) message = "💪 Одлично! Трећи покушај и успех!";
-  else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
-  resultTitle.innerHTML = message;
-} else {
-  resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
-}
+          resultGrid.appendChild(rowClone);
+        }
 
-for (let r = 0; r < 7; r++) {
-  const row = boardRows[r];
-  const rowClone = row.cloneNode(true);
-  rowClone.style.marginBottom = "5px";
+        resultScreen.style.display = "block";
+        resultScreen.scrollIntoView({ behavior: "smooth" });
 
-  [...rowClone.children].forEach(tile => {
-    tile.textContent = "";
-  });
+        // ✅ Setup share button only now
+        const shareBtn = document.getElementById("shareImageBtn");
+        if (shareBtn) {
+          shareBtn.onclick = () => {
+            const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
+            const savedGrid = JSON.parse(
+              localStorage.getItem("last_result_grid") || "[]"
+            );
 
-  resultGrid.appendChild(rowClone);
-}
-  
-  resultScreen.style.display = "block";
-  resultScreen.scrollIntoView({ behavior: "smooth" });
+            const shareText =
+              savedGrid
+                .map((row) =>
+                  row.map((tile) => emojiMap[tile.color] || "⬛").join("")
+                )
+                .join("\n") +
+              "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
 
-  // ✅ Setup share button only now
-const shareBtn = document.getElementById("shareImageBtn");
-if (shareBtn) {
-  shareBtn.onclick = () => {
-    const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-    const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+            if (navigator.share) {
+              navigator
+                .share({
+                  title: "Чик Погоди резултат",
+                  text: shareText,
+                })
+                .catch(() => {
+                  fallbackShare(shareText);
+                });
+            } else {
+              fallbackShare(shareText);
+            }
+          };
+        }
 
-    const shareText = savedGrid.map(row =>
-      row.map(tile => emojiMap[tile.color] || "⬛").join("")
-    ).join("\n") + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
+        function fallbackShare(text) {
+          navigator.clipboard.writeText(text).then(() => {
+            alert(
+              "Резултат копиран! Отворите Viber, WhatsApp или другу апликацију и налепите."
+            );
+          });
+        }
+      }
 
-    if (navigator.share) {
-      navigator.share({
-        title: "Чик Погоди резултат",
-        text: shareText
-      }).catch(() => {
-        fallbackShare(shareText);
-      });
-    } else {
-      fallbackShare(shareText);
-    }
-  };
-}
+      // leaderboard
 
-function fallbackShare(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Резултат копиран! Отворите Viber, WhatsApp или другу апликацију и налепите.");
-  });
-}
+      // document.getElementById("closeLeaderboardBtn").onclick = () => {
+      //   document.getElementById("leaderboardModal").style.display = "none";
+      // };
 
-}
+      // document.getElementById("openLeaderboardBtn").onclick = () => {
+      //   document.getElementById("leaderboardModal").style.display = "flex";
+      //   loadLeaderboard();
+      // };
+    </script>
 
-
-
-    // leaderboard
-
-
-// document.getElementById("closeLeaderboardBtn").onclick = () => {
-//   document.getElementById("leaderboardModal").style.display = "none";
-// };
-
-// document.getElementById("openLeaderboardBtn").onclick = () => {
-//   document.getElementById("leaderboardModal").style.display = "flex";
-//   loadLeaderboard();
-// };
-
-
-    
-  </script>
-
-
-      <script src="script.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>
