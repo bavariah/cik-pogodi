@@ -184,9 +184,9 @@ function createBoard() {
 
 function createKeyboard() {
   const layout = [
-    "Љ Њ Е Р Т З У И О П Ш Ђ",
+    "Љ Њ Е Р Т З У И О П Ш",
     "А С Д Ф Г Х Ј К Л Ч Ћ",
-    "Џ Ц В Б Н М Ж"
+    "Џ Ц В Б Н М Ђ Ж"
   ];
 
   layout.forEach(row => {
@@ -764,7 +764,22 @@ closeHintBtn.onclick = () => {
   hintModal.style.display = "none";
 };
 
+// Help button functionality
+document.getElementById("helpBtn").onclick = () => {
+  document.getElementById("helpModal").style.display = "flex";
+};
 
+document.getElementById("closeHelpBtn").onclick = () => {
+  document.getElementById("helpModal").style.display = "none";
+};
+
+// Show help modal on first visit
+if (!localStorage.getItem("helpShown")) {
+  setTimeout(() => {
+    document.getElementById("helpModal").style.display = "flex";
+    localStorage.setItem("helpShown", "true");
+  }, 500);
+}
 
 // document.getElementById("openLeaderboardBtn").onclick = async () => {
 //   const { data, error } = await client

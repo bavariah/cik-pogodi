@@ -296,6 +296,184 @@
       </div>
     </div>
 
+    <button
+      id="helpBtn"
+      title="Правила игре"
+      style="
+        position: absolute;
+        top: 15px;
+        left: 60px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+      "
+    >
+      ℹ️
+    </button>
+
+    <!-- Help Modal -->
+    <div
+      id="helpModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-family: sans-serif;
+      "
+    >
+      <div
+        style="
+          background: #222;
+          padding: 20px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+          color: #fff;
+          position: relative;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        "
+      >
+        <button
+          id="closeHelpBtn"
+          style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+          "
+        >
+          ✖
+        </button>
+
+        <h2 style="margin-bottom: 15px; text-align: center">Како играти</h2>
+
+        <div style="margin-bottom: 20px">
+          <p>Погодите реч од 6 слова у 7 покушаја.</p>
+          <p>
+            Након сваког покушаја, боја плочица ће се променити да покаже колико
+            сте близу решења:
+          </p>
+
+          <div
+            style="
+              margin: 15px 0;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: #538d4e;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+              "
+            >
+              А
+            </div>
+            <span>Слово је на правом месту</span>
+          </div>
+
+          <div
+            style="
+              margin: 15px 0;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: #b59f3b;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+              "
+            >
+              Б
+            </div>
+            <span>Слово је у речи, али на погрешном месту</span>
+          </div>
+
+          <div
+            style="
+              margin: 15px 0;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: #3a3a3c;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+              "
+            >
+              В
+            </div>
+            <span>Слово није у речи</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <h3>Наговештај</h3>
+          <p>
+            Ако не успете да погодите реч у првих 6 покушаја, добићете могућност
+            да видите наговештај пре последњег покушаја.
+          </p>
+          <p>
+            Наговештај ће се појавити као знак питања (❓) у горњем левом углу.
+          </p>
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <h3>Бодовање</h3>
+          <p>Бодови се додељују на основу тога у ком реду сте погодили реч:</p>
+          <ul style="list-style-type: none; padding-left: 0">
+            <li>1. ред: 50 поена</li>
+            <li>2. ред: 25 поена</li>
+            <li>3. ред: 10 поена</li>
+            <li>4. ред: 8 поена</li>
+            <li>5. ред: 5 поена</li>
+            <li>6. ред: 2 поена</li>
+            <li>7. ред: 1 поен</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3>Нова реч</h3>
+          <p>Нова реч је доступна сваких 24 сата.</p>
+          <p>Ваш резултат се чува и можете га поделити са пријатељима!</p>
+        </div>
+      </div>
+    </div>
+
     <script>
       function showResultGrid(win) {
         const boardRows = document.querySelectorAll(".row");
