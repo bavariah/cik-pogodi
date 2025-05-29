@@ -228,6 +228,13 @@ function handleKey(letter) {
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
     updateBoard();
+    
+    // Add animation to the current tile
+    const row = board.children[currentRow];
+    const tile = row.children[currentGuess.length - 1];
+    tile.classList.add('tile-animate');
+    setTimeout(() => tile.classList.remove('tile-animate'), 150);
+    
     saveGameState(); // Save after each letter
   }
 }
@@ -240,9 +247,16 @@ function updateBoard() {
 }
 
 function deleteLetter() {
-  currentGuess = currentGuess.slice(0, -1);
-  updateBoard();
-  saveGameState(); // Save after deleting a letter
+  if (currentGuess.length > 0) {
+    // Add animation to the row
+    const row = board.children[currentRow];
+    row.classList.add('row-delete-animate');
+    setTimeout(() => row.classList.remove('row-delete-animate'), 150);
+    
+    currentGuess = currentGuess.slice(0, -1);
+    updateBoard();
+    saveGameState(); // Save after deleting a letter
+  }
 }
 
 
@@ -324,72 +338,87 @@ function submitGuess() {
   saveResultGrid();
   disableInput();
   updateStats(win ? currentRow : null);
-  showResultGrid(win);
-
- if (win) {
-  // Step 1: Ask for name only once
-  let username = localStorage.getItem("username");
-  if (!username) {
-    const name = prompt("Унеси своје име за табелу резултата:");
-    const trimmed = name ? name.trim() : "";
-    if (trimmed.length < 2) return; // skip saving if invalid
-    localStorage.setItem("username", trimmed);
-    username = trimmed;
-  }
-
-  // Step 2: Calculate score
-  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-  const score = scoreMap[currentRow] || 0;
-
-  // Step 3: Insert or update user in Supabase
-  client
-    .from("scores")
-    .select("*")
-    .eq("username", username)
-    .then(({ data, error }) => {
-      if (error) {
-        console.error("Грешка при читању:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const existing = data[0];
-        const newScore = existing.score + score;
-        const newAttempts = existing.attempts + 1;
-        const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
-
-        client
-          .from("scores")
-          .update({
-            score: newScore,
-            attempts: newAttempts,
-            avg_score: newAvg
-          })
-          .eq("username", username)
-          .then(({ error }) => {
-            if (error) {
-              console.error("Грешка при ажурирању резултата:", error);
-            }
-          });
-      } else {
-        client
-          .from("scores")
-          .insert([
-            {
-              username,
-              score,
-              attempts: 1,
-              avg_score: parseFloat(score.toFixed(2))
-            }
-          ])
-          .then(({ error }) => {
-            if (error) {
-              console.error("Грешка при упису у табелу резултата:", error);
-            }
-          });
-      }
+  
+  if (win) {
+    // Add success animation to all tiles in the current row
+    const row = board.children[currentRow];
+    [...row.children].forEach((tile, i) => {
+      setTimeout(() => {
+        tile.classList.add('success-animate');
+      }, i * 100); // Stagger the animation
     });
-}
+    
+    // Play success sound
+    playSuccessSound();
+    
+    // Show fireworks after a short delay
+    setTimeout(() => {
+      createFireworks();
+    }, 600);
+    
+    // Step 1: Ask for name only once
+    let username = localStorage.getItem("username");
+    if (!username) {
+      const name = prompt("Унеси своје име за табелу резултата:");
+      const trimmed = name ? name.trim() : "";
+      if (trimmed.length < 2) return; // skip saving if invalid
+      localStorage.setItem("username", trimmed);
+      username = trimmed;
+    }
+
+    // Step 2: Calculate score
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+
+    // Step 3: Insert or update user in Supabase
+    client
+      .from("scores")
+      .select("*")
+      .eq("username", username)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Грешка при читању:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const existing = data[0];
+          const newScore = existing.score + score;
+          const newAttempts = existing.attempts + 1;
+          const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
+
+          client
+            .from("scores")
+            .update({
+              score: newScore,
+              attempts: newAttempts,
+              avg_score: newAvg
+            })
+            .eq("username", username)
+            .then(({ error }) => {
+              if (error) {
+                console.error("Грешка при ажурирању резултата:", error);
+              }
+            });
+        } else {
+          client
+            .from("scores")
+            .insert([
+              {
+                username,
+                score,
+                attempts: 1,
+                avg_score: parseFloat(score.toFixed(2))
+              }
+            ])
+            .then(({ error }) => {
+              if (error) {
+                console.error("Грешка при упису у табелу резултата:", error);
+              }
+            });
+        }
+      });
+  }
 }
 
 // 
@@ -838,3 +867,146 @@ document.getElementById("openLeaderboardBtn").onclick = () => {
 document.getElementById("closeLeaderboardBtn").onclick = () => {
   document.getElementById("leaderboardModal").style.display = "none";
 };
+
+// Add this function to create fireworks effect
+function createFireworks() {
+  const firework = document.createElement('div');
+  firework.className = 'firework';
+  document.body.appendChild(firework);
+  
+  // Create multiple particles
+  for (let i = 0; i < 100; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'firework-particle';
+    
+    // Random position
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    
+    // Random color
+    const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    
+    // Random direction
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 50 + Math.random() * 100;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    particle.style.backgroundColor = color;
+    particle.style.setProperty('--tx', `${tx}px`);
+    particle.style.setProperty('--ty', `${ty}px`);
+    
+    firework.appendChild(particle);
+  }
+  
+  // Remove firework after animation completes
+  setTimeout(() => {
+    document.body.removeChild(firework);
+  }, 1000);
+}
+
+// Add success sound
+function playSuccessSound() {
+  const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(e => console.log('Audio play failed:', e));
+}
+
+// Update the endGame function to include animations and sound
+function endGame(win) {
+  localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
+  localStorage.setItem("last_result", win ? "win" : "lose");
+  localStorage.setItem("last_attempt_row", currentRow.toString());
+  saveResultGrid();
+  disableInput();
+  updateStats(win ? currentRow : null);
+  
+  if (win) {
+    // Add success animation to all tiles in the current row
+    const row = board.children[currentRow];
+    [...row.children].forEach((tile, i) => {
+      setTimeout(() => {
+        tile.classList.add('success-animate');
+      }, i * 100); // Stagger the animation
+    });
+    
+    // Play success sound
+    playSuccessSound();
+    
+    // Show fireworks after a short delay
+    setTimeout(() => {
+      createFireworks();
+    }, 600);
+    
+    // Step 1: Ask for name only once
+    let username = localStorage.getItem("username");
+    if (!username) {
+      const name = prompt("Унеси своје име за табелу резултата:");
+      const trimmed = name ? name.trim() : "";
+      if (trimmed.length < 2) return; // skip saving if invalid
+      localStorage.setItem("username", trimmed);
+      username = trimmed;
+    }
+
+    // Step 2: Calculate score
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+
+    // Step 3: Insert or update user in Supabase
+    client
+      .from("scores")
+      .select("*")
+      .eq("username", username)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Грешка при читању:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const existing = data[0];
+          const newScore = existing.score + score;
+          const newAttempts = existing.attempts + 1;
+          const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
+
+          client
+            .from("scores")
+            .update({
+              score: newScore,
+              attempts: newAttempts,
+              avg_score: newAvg
+            })
+            .eq("username", username)
+            .then(({ error }) => {
+              if (error) {
+                console.error("Грешка при ажурирању резултата:", error);
+              }
+            });
+        } else {
+          client
+            .from("scores")
+            .insert([
+              {
+                username,
+                score,
+                attempts: 1,
+                avg_score: parseFloat(score.toFixed(2))
+              }
+            ])
+            .then(({ error }) => {
+              if (error) {
+                console.error("Грешка при упису у табелу резултата:", error);
+              }
+            });
+        }
+      });
+  }
+  
+  // Show result grid after animations
+  setTimeout(() => {
+    showResultGrid(win);
+  }, win ? 1200 : 0);
+}
