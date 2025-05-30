@@ -987,3 +987,46 @@ function updateLeaderboard(username, score) {
       }
     });
 }
+
+function initGame() {
+  // Clear the board first
+  board.innerHTML = "";
+  keyboard.innerHTML = "";
+  
+  // Reset game state
+  currentRow = 0;
+  currentGuess = "";
+  
+  // Get today's word
+  const { word: todayWord, hint: todayHint } = getTodayWord();
+  
+  // Set global variables
+  window.targetWord = todayWord;
+  window.hintText = todayHint;
+  
+  // Get current time window
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
+  
+  // THIS IS THE KEY ADDITION: Clear saved state if it's a new day
+  if (lastPlayed !== currentTimeWindow) {
+    console.log("New day detected - clearing saved game state");
+    localStorage.removeItem("gameState");
+    localStorage.removeItem("last_result_grid");
+  }
+  
+  // Create UI elements
+  createBoard();
+  createKeyboard();
+  
+  // Check if game is locked (already played today)
+  if (checkIfLocked()) {
+    return;
+  }
+  
+  // Try to load saved state
+  loadGameState();
+  
+  // Start countdown timer
+  showCountdownToNextWord();
+}
