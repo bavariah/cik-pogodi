@@ -356,69 +356,32 @@ function submitGuess() {
       createFireworks();
     }, 600);
     
-    // Step 1: Ask for name only once
+    // Calculate score and update database
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+    
+    // Get username
     let username = localStorage.getItem("username");
     if (!username) {
       const name = prompt("Унеси своје име за табелу резултата:");
       const trimmed = name ? name.trim() : "";
-      if (trimmed.length < 2) return; // skip saving if invalid
-      localStorage.setItem("username", trimmed);
-      username = trimmed;
+      if (trimmed.length >= 2) {
+        localStorage.setItem("username", trimmed);
+        username = trimmed;
+        
+        // Update database
+        updateLeaderboard(username, score);
+      }
+    } else {
+      // Update database
+      updateLeaderboard(username, score);
     }
-
-    // Step 2: Calculate score
-    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-    const score = scoreMap[currentRow] || 0;
-
-    // Step 3: Insert or update user in Supabase
-    client
-      .from("scores")
-      .select("*")
-      .eq("username", username)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Грешка при читању:", error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const existing = data[0];
-          const newScore = existing.score + score;
-          const newAttempts = existing.attempts + 1;
-          const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
-
-          client
-            .from("scores")
-            .update({
-              score: newScore,
-              attempts: newAttempts,
-              avg_score: newAvg
-            })
-            .eq("username", username)
-            .then(({ error }) => {
-              if (error) {
-                console.error("Грешка при ажурирању резултата:", error);
-              }
-            });
-        } else {
-          client
-            .from("scores")
-            .insert([
-              {
-                username,
-                score,
-                attempts: 1,
-                avg_score: parseFloat(score.toFixed(2))
-              }
-            ])
-            .then(({ error }) => {
-              if (error) {
-                console.error("Грешка при упису у табелу резултата:", error);
-              }
-            });
-        }
-      });
   }
+  
+  // Show result grid after animations
+  setTimeout(() => {
+    showResultGrid(win);
+  }, win ? 1200 : 0);
 }
 
 // 
@@ -941,72 +904,86 @@ function endGame(win) {
       createFireworks();
     }, 600);
     
-    // Step 1: Ask for name only once
+    // Calculate score and update database
+    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+    const score = scoreMap[currentRow] || 0;
+    
+    // Get username
     let username = localStorage.getItem("username");
     if (!username) {
       const name = prompt("Унеси своје име за табелу резултата:");
       const trimmed = name ? name.trim() : "";
-      if (trimmed.length < 2) return; // skip saving if invalid
-      localStorage.setItem("username", trimmed);
-      username = trimmed;
+      if (trimmed.length >= 2) {
+        localStorage.setItem("username", trimmed);
+        username = trimmed;
+        
+        // Update database
+        updateLeaderboard(username, score);
+      }
+    } else {
+      // Update database
+      updateLeaderboard(username, score);
     }
-
-    // Step 2: Calculate score
-    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-    const score = scoreMap[currentRow] || 0;
-
-    // Step 3: Insert or update user in Supabase
-    client
-      .from("scores")
-      .select("*")
-      .eq("username", username)
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Грешка при читању:", error);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const existing = data[0];
-          const newScore = existing.score + score;
-          const newAttempts = existing.attempts + 1;
-          const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
-
-          client
-            .from("scores")
-            .update({
-              score: newScore,
-              attempts: newAttempts,
-              avg_score: newAvg
-            })
-            .eq("username", username)
-            .then(({ error }) => {
-              if (error) {
-                console.error("Грешка при ажурирању резултата:", error);
-              }
-            });
-        } else {
-          client
-            .from("scores")
-            .insert([
-              {
-                username,
-                score,
-                attempts: 1,
-                avg_score: parseFloat(score.toFixed(2))
-              }
-            ])
-            .then(({ error }) => {
-              if (error) {
-                console.error("Грешка при упису у табелу резултата:", error);
-              }
-            });
-        }
-      });
   }
   
   // Show result grid after animations
   setTimeout(() => {
     showResultGrid(win);
   }, win ? 1200 : 0);
+}
+
+// Helper function to update leaderboard
+function updateLeaderboard(username, score) {
+  if (!navigator.onLine) {
+    console.log("Offline mode - score will be saved when online");
+    return;
+  }
+  
+  client
+    .from("scores")
+    .select("*")
+    .eq("username", username)
+    .then(({ data, error }) => {
+      if (error) {
+        console.error("Грешка при читању:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const existing = data[0];
+        const newScore = existing.score + score;
+        const newAttempts = existing.attempts + 1;
+        const newAvg = parseFloat((newScore / newAttempts).toFixed(2));
+
+        client
+          .from("scores")
+          .update({
+            score: newScore,
+            attempts: newAttempts,
+            avg_score: newAvg
+          })
+          .eq("username", username)
+          .then(({ error }) => {
+            if (error) {
+              console.error("Грешка при ажурирању резултата:", error);
+            }
+          });
+      } else {
+        client
+          .from("scores")
+          .insert([
+            {
+              username,
+              score,
+              attempts: 1,
+              avg_score: parseFloat(score.toFixed(2))
+            }
+          ])
+          .then(({ error }) => {
+            if (error) {
+              console.error("Грешка при упису у табелу резултата:", error);
+            }
+          });
+      }
+    });
 }
