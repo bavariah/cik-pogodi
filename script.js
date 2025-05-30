@@ -533,11 +533,20 @@ function fallbackShare(text) {
 
 function checkIfLocked() {
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
+  
+  // Only lock if they've played THIS specific day's word
   if (lastPlayed === currentTimeWindow) {
-    createBoard();
-    showLockedGameScreen();
-    return true;
+    const lastResult = localStorage.getItem("last_result");
+    if (lastResult === "win" || lastResult === "lose") {
+      createBoard();
+      showLockedGameScreen();
+      return true;
+    }
+  } else {
+    // Different day, force clear old data
+    localStorage.removeItem("gameState");
+    localStorage.removeItem("last_result_grid");
   }
   return false;
 }
