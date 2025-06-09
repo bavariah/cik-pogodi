@@ -21,11 +21,20 @@ const wordList = [
   { word: "глумац", hint: "Особа која глуми у позоришту или филму" },
   { word: "писати", hint: "Радња уписивања речи" },
    { word: "свирач", hint: "Онај који свира инструмент" },
+  { word: "колачи", hint: "Слатки пекарски производ, често уз кафу" },
+{ word: "народи", hint: "Групе људи са заједничком културом или језиком" },
+{ word: "једном", hint: "Када се нешто деси само једанпут" },
+{ word: "замало", hint: "Скоро, али није сасвим" },
+{ word: "пустош", hint: "Место или област која је опустела или разрушена" },
+{ word: "камени", hint: "Направљен од камена" },
+{ word: "златно", hint: "Боја скупоценог метала, симбол успеха" },
+{ word: "сребро", hint: "Метал сребрне боје и симбол квалитета" },
   { word: "летети", hint: "Кретање кроз ваздух" },
  { word: "пекара", hint: "Место где се прави и продаје хлеб" },
   { word: "бркови", hint: "Длаке изнад горње усне" },
   { word: "трагач", hint: "Онај који нешто упорно тражи" },
 { word: "другар", hint: "Пријатељ" },
+  { word: "колико", hint: "Питање за број или количину" },
    { word: "грбови", hint: "Хералдички знаци породице или државе" },
   { word: "ратник", hint: "Борац у рату" },
 { word: "трошак", hint: "Потрошња ресурса или новца" },
@@ -176,7 +185,8 @@ let currentRow = 0;
 let currentGuess = "";
 const lockTime = 24 * 60 * 60 * 1000; // 24h
 // const START_TIME = new Date("2025-05-19T07:00:00Z").getTime();  09:00 Belgrade time
-const START_TIME = new Date("2025-05-19T21:55:00Z").getTime();
+const START_TIME = new Date("2025-05-19T21:05:00Z").getTime();
+// const START_TIME = new Date("2025-05-19T09:28:00Z").getTime();
 
 function getTodayWord() {
   const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
@@ -401,6 +411,64 @@ function submitGuess() {
   }, win ? 1200 : 0);
 }
 
+
+// Add this function at the top of your script.js file
+function resetBoardForNewDay() {
+  // Get current time window
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  
+  // Check if we have a saved game state
+  const savedState = localStorage.getItem("gameState");
+  if (savedState) {
+    try {
+      // Add a timestamp field to the saved game state if it doesn't exist
+      const gameState = JSON.parse(savedState);
+      
+      // If there's no timestamp in the saved state, it's old data - clear it
+      if (!gameState.timestamp) {
+        console.log("Found old game state without timestamp - clearing");
+        clearAllGameData();
+        return true;
+      }
+      
+      // Calculate the time window when the game state was saved
+      const savedTimeWindow = Math.floor((gameState.timestamp - START_TIME) / lockTime);
+      
+      console.log("Game state check - Current window:", currentTimeWindow, 
+                  "Saved window:", savedTimeWindow);
+      
+      // If the saved state is from a different day, clear it
+      if (savedTimeWindow !== currentTimeWindow) {
+        console.log("Game state is from a different day - clearing");
+        clearAllGameData();
+        return true;
+      }
+    } catch (e) {
+      console.error("Error parsing saved game state:", e);
+      clearAllGameData();
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Helper function to clear all game data
+function clearAllGameData() {
+  console.log("Clearing all game data");
+  localStorage.removeItem("gameState");
+  localStorage.removeItem("last_result_grid");
+  localStorage.removeItem("last_result");
+  localStorage.removeItem("last_attempt_row");
+  localStorage.removeItem("last_played_timeWindow");
+  
+  // Force reload the page to ensure a clean state
+  window.location.reload();
+}
+
+// Call this function immediately when the script loads
+const dayChanged = resetBoardForNewDay();
+
 // 
 function disableInput() {
   [...keyboard.children].forEach(key => key.disabled = true);
@@ -463,13 +531,26 @@ function renderStatsPopup() {
 
 function showCountdownToNextWord() {
   const timerEl = document.getElementById("timer");
+  
   function updateTimer() {
     const now = Date.now();
     const elapsed = now - START_TIME;
     const remainder = lockTime - (elapsed % lockTime);
-    const h = Math.floor(remainder / 3600000), m = Math.floor((remainder % 3600000) / 60000), s = Math.floor((remainder % 60000) / 1000);
+    
+    // Check if we're very close to reset time (within 2 seconds)
+    if (remainder < 2000 || remainder > lockTime - 2000) {
+      console.log("Very close to reset time, reloading page...");
+      window.location.reload();
+      return;
+    }
+    
+    const h = Math.floor(remainder / 3600000);
+    const m = Math.floor((remainder % 3600000) / 60000);
+    const s = Math.floor((remainder % 60000) / 1000);
+    
     timerEl.textContent = `Следећа реч за: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+  
   updateTimer();
   setInterval(updateTimer, 1000);
 }
@@ -560,8 +641,9 @@ function checkIfLocked() {
       showLockedGameScreen();
       return true;
     }
-  } else {
+  } else if (lastPlayed !== -1) {
     // Different day, force clear old data
+    console.log("Different day detected in checkIfLocked, clearing old data");
     localStorage.removeItem("gameState");
     localStorage.removeItem("last_result_grid");
   }
@@ -573,6 +655,7 @@ function saveGameState() {
   const gameState = {
     currentRow,
     currentGuess,
+    timestamp: Date.now(), // Add current timestamp
     boardState: []
   };
   
@@ -600,14 +683,33 @@ function saveGameState() {
 // Add this function to load saved game state
 function loadGameState() {
   const savedState = localStorage.getItem("gameState");
-  if (!savedState) return false;
+  if (!savedState) {
+    console.log("No saved game state found");
+    return false;
+  }
+  
+  console.log("Found saved game state, attempting to restore");
   
   const gameState = JSON.parse(savedState);
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || -1);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
   
-  // Only restore if it's the same word (same time window)
-  if (lastPlayed === currentTimeWindow) return false;
+  // Check if this is a completed game
+  const lastResult = localStorage.getItem("last_result");
+  const isCompleted = lastResult === "win" || lastResult === "lose";
+  
+  // Only restore if it's the same day AND not a completed game
+  if (lastPlayed !== -1 && lastPlayed !== currentTimeWindow) {
+    console.log("Not restoring - different day");
+    return false;
+  }
+  
+  if (isCompleted && lastPlayed === currentTimeWindow) {
+    console.log("Not restoring - game already completed today");
+    return false;
+  }
+  
+  console.log("Restoring game state");
   
   // First, restore all tiles and keyboard colors
   gameState.boardState.forEach((rowState, rowIndex) => {
@@ -633,10 +735,11 @@ function loadGameState() {
   });
   
   // Determine the correct current row
-  // Find the last row that has all colored tiles
+  // Find the last row that has all colored tiles (completed row)
   let lastCompletedRow = -1;
   for (let i = 0; i < gameState.boardState.length; i++) {
     const rowState = gameState.boardState[i];
+    // Check if this row is complete (all tiles have colors)
     const allColored = rowState.every(tile => tile.color);
     if (allColored) {
       lastCompletedRow = i;
@@ -645,21 +748,14 @@ function loadGameState() {
     }
   }
   
-  // Set currentRow to the row after the last completed row
+  // Set currentRow to the row AFTER the last completed row
   currentRow = lastCompletedRow + 1;
+  console.log("Setting current row to:", currentRow, "after finding last completed row:", lastCompletedRow);
   
-  // Set currentGuess based on the saved state
-  if (currentRow < gameState.boardState.length) {
-    // If there's an incomplete row, set currentGuess to its letters
-    currentGuess = gameState.boardState[currentRow]
-      .map(tile => tile.letter.toLowerCase())
-      .join('');
-  } else {
-    // Otherwise, start with an empty guess
-    currentGuess = "";
-  }
+  // Reset currentGuess since we're starting a new row
+  currentGuess = "";
   
-  // Update the board with the current guess
+  // Update the board with the current guess (which is empty)
   updateBoard();
   
   // Check if hint should be shown
@@ -701,7 +797,30 @@ function checkAndShowHint() {
   }
 }
 
-// Init
+// This IIFE runs immediately when the page loads
+(function forceResetOldGames() {
+  // Get current time window
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
+  
+  console.log("Checking for old game data. Current window:", currentTimeWindow, "Last played:", lastPlayed);
+  
+  // Only force reset if we detect data from a DIFFERENT day
+  if (lastPlayed !== -1 && lastPlayed !== currentTimeWindow) {
+    console.log("Forcing reset of old game data from previous day");
+    localStorage.removeItem("gameState");
+    localStorage.removeItem("last_result_grid");
+    localStorage.removeItem("last_result");
+    localStorage.removeItem("last_attempt_row");
+    localStorage.removeItem("last_played_timeWindow");
+    
+    // Force reload the page to ensure a clean state
+    window.location.reload();
+  } else {
+    console.log("Same day or first visit - preserving game state");
+  }
+})();
+
 if (!checkIfLocked()) {
   createBoard();
   createKeyboard();
@@ -1014,6 +1133,7 @@ function updateLeaderboard(username, score) {
     });
 }
 
+// Add this function to initialize the game properly
 function initGame() {
   // Clear the board first
   board.innerHTML = "";
@@ -1033,12 +1153,15 @@ function initGame() {
   // Get current time window
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
-  
-  // THIS IS THE KEY ADDITION: Clear saved state if it's a new day
-  if (lastPlayed !== currentTimeWindow) {
-    console.log("New day detected - clearing saved game state");
+
+  if (lastPlayed !== -1 && lastPlayed !== currentTimeWindow) {
+    console.log("Day change detected in initialization - clearing data");
     localStorage.removeItem("gameState");
     localStorage.removeItem("last_result_grid");
+    localStorage.removeItem("last_result");
+    localStorage.removeItem("last_attempt_row");
+    localStorage.removeItem("last_played_timeWindow");
+    window.location.reload();
   }
   
   // Create UI elements
