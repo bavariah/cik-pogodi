@@ -918,29 +918,86 @@ if (!localStorage.getItem("helpShown")) {
   }, 500);
 }
 
-// document.getElementById("openLeaderboardBtn").onclick = async () => {
-//   const { data, error } = await client
+// function loadLeaderboard(orderBy = "score") {
+//   client
 //     .from("scores")
 //     .select("*")
-//     .order("score", { ascending: false })
-//     .limit(10);
+//     .order(orderBy, { ascending: false })
+//     .limit(10)
+//     .then(({ data, error }) => {
+//       const container = document.getElementById("leaderboardContent");
+//       if (error) {
+//         container.innerHTML = "<p>Грешка при учитавању.</p>";
+//         return;
+//       }
 
-//   const container = document.getElementById("leaderboardContent");
-//   container.innerHTML = error ? "<p>Грешка при учитавању.</p>" : "";
-
-//   if (data) {
-//     data.forEach((entry, i) => {
-//       container.innerHTML += `<div>${i + 1}. <strong>${entry.username}</strong>  ${entry.score} поена</div>`;
+//       container.innerHTML = data
+//         .map((entry, i) => {
+//           const text =
+//             orderBy === "avg_score"
+//               ? `${(entry.avg_score || 0).toFixed(2)} просек (${entry.attempts})`
+//               : `${entry.score} поена (${entry.attempts})`;
+//           return `<div>${i + 1}. <strong>${entry.username}</strong>  ${text}</div>`;
+//         })
+//         .join("");
 //     });
-//   }
 
 //   document.getElementById("leaderboardModal").style.display = "flex";
+// }
+
+// // 🎯 Button handlers
+// document.getElementById("openLeaderboardBtn").onclick = () => {
+//   loadLeaderboard("score"); // default view
 // };
 
 // document.getElementById("closeLeaderboardBtn").onclick = () => {
 //   document.getElementById("leaderboardModal").style.display = "none";
 // };
-function loadLeaderboard(orderBy = "score") {
+
+// // Add this function to create fireworks effect
+// function createFireworks() {
+//   const firework = document.createElement('div');
+//   firework.className = 'firework';
+//   document.body.appendChild(firework);
+  
+//   // Create multiple particles
+//   for (let i = 0; i < 100; i++) {
+//     const particle = document.createElement('div');
+//     particle.className = 'firework-particle';
+    
+//     // Random position
+//     const x = window.innerWidth / 2;
+//     const y = window.innerHeight / 2;
+    
+//     // Random color
+//     const colors = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f'];
+//     const color = colors[Math.floor(Math.random() * colors.length)];
+    
+//     // Random direction
+//     const angle = Math.random() * Math.PI * 2;
+//     const distance = 50 + Math.random() * 100;
+//     const tx = Math.cos(angle) * distance;
+//     const ty = Math.sin(angle) * distance;
+    
+//     particle.style.left = `${x}px`;
+//     particle.style.top = `${y}px`;
+//     particle.style.backgroundColor = color;
+//     particle.style.setProperty('--tx', `${tx}px`);
+//     particle.style.setProperty('--ty', `${ty}px`);
+    
+//     firework.appendChild(particle);
+//   }
+  
+//   // Remove firework after animation completes
+//   setTimeout(() => {
+//     document.body.removeChild(firework);
+//   }, 1000);
+// }
+
+function loadLeaderboard(orderBy = "avg_score") {
+  // Add debug logging to see what ordering is being used
+  console.log("Loading leaderboard with ordering:", orderBy);
+  
   client
     .from("scores")
     .select("*")
@@ -969,7 +1026,7 @@ function loadLeaderboard(orderBy = "score") {
 
 // 🎯 Button handlers
 document.getElementById("openLeaderboardBtn").onclick = () => {
-  loadLeaderboard("score"); // default view
+  loadLeaderboard("avg_score"); // Explicitly pass avg_score
 };
 
 document.getElementById("closeLeaderboardBtn").onclick = () => {
