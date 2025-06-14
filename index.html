@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <title>Чик Погоди</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#538d4e" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -32,11 +35,117 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
+
+    <!-- 2) Initialize client, loader, and helper functions -->
+    <script defer>
+      // —————————————————————————————————————————————
+      // Supabase client & table names
       const client = supabase.createClient(
         "https://enhpbzexilgpphdmvfpo.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
       );
+      document.addEventListener("DOMContentLoaded", () => {
+        /** Show / hide the sign-in button and sync on auth changes */
+        client.auth.onAuthStateChange((event, session) => {
+          const btn = document.getElementById("signInBtn");
+          if (session?.user) {
+            btn.style.display = "none";
+            syncStats(session.user.id);
+          } else {
+            btn.style.display = "block";
+          }
+        });
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        /** Prompt for email + send magic link */
+        document.getElementById("signInBtn").onclick = async () => {
+          const email = prompt("Enter your email for a magic link:");
+          if (!email) return;
+          const { error } = await client.auth.signInWithOtp({ email });
+          if (error) console.error("Sign-in error:", error);
+          else alert("✅ Check your email for a magic link");
+        };
+      });
+      /**
+       * Read your localStorage stats and upsert into public.scores.
+       * Relies on: user_id uuid column + RLS policy you already created.
+       */
+      async function syncStats(user_id, stats) {
+        // calculate fields
+        const totalPlays = stats.total;
+        const totalWins = stats.wins;
+        const totalAttempts = stats.attempts.reduce((sum, n) => sum + n, 0);
+        const avg =
+          totalPlays > 0 ? parseFloat((totalWins / totalPlays).toFixed(2)) : 0;
+
+        const { error } = await client.from("scores").upsert(
+          {
+            user_id,
+            username: localStorage.getItem("username") || null,
+            score: totalWins,
+            attempts: totalAttempts,
+            avg_score: avg,
+            distribution: stats.attempts, // jsonb column accepts JS array
+          },
+          { onConflict: "user_id" }
+        );
+
+        if (error) console.error("syncStats failed", error);
+      }
+
+      const WORDS_TABLE = "words";
+      const SUBMISSIONS_TABLE = "submissions";
+
+      // —————————————————————————————————————————————
+      // Globals for in-game logic
+      let gameWords = []; // will hold the fetched list
+      let targetWord = ""; // today’s answer
+      let hintText = ""; // today’s hint
+
+      // Time-based index logic (reuse your lockTime & START_TIME from script.js)
+      //   const lockTime = 24 * 60 * 60 * 1000;
+      //   const START_TIME = new Date("2025-05-19T21:05:00Z").getTime();
+
+      // —————————————————————————————————————————————
+      // Fetch words, pick today’s entry, then start the game
+      async function loadWords() {
+        document.body.classList.add("loading");
+        const { data, error } = await client
+          .from(WORDS_TABLE)
+          .select("word,hint");
+        document.body.classList.remove("loading");
+
+        if (error) {
+          console.error("Error loading words:", error);
+          return;
+        }
+
+        // normalize & store
+        gameWords = data.map(({ word, hint }) => ({
+          word: word.trim().toLowerCase(),
+          hint: hint.trim(),
+        }));
+
+        // pick today’s word/hint into globals
+
+        ({ word: targetWord, hint: hintText } = getTodayWord());
+        // hand off to your master init function
+        initGame();
+      }
+
+      // —————————————————————————————————————————————
+      // Compute “today” index
+      function getTodayWord() {
+        const elapsed = Date.now() - START_TIME;
+        const timeWindow = Math.floor(elapsed / lockTime);
+        const index = timeWindow % gameWords.length;
+        return gameWords[index];
+      }
+
+      // —————————————————————————————————————————————
+      // Kick off loading as soon as DOM is ready
+      document.addEventListener("DOMContentLoaded", loadWords);
     </script>
   </head>
   <body>
@@ -60,10 +169,10 @@
       style="
         position: absolute;
         top: 15px;
-        right: 60px;
+        right: 39px;
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 22px;
         cursor: pointer;
       "
     >
@@ -75,14 +184,30 @@
       style="
         position: absolute;
         top: 15px;
-        right: 15px;
+        right: 2px;
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 22px;
         cursor: pointer;
       "
     >
       📊
+    </button>
+    <button
+      id="signInBtn"
+      style="
+        position: absolute;
+        top: 19px;
+        right: 85px;
+        display: block;
+        background: none;
+        outline: none;
+        font-size: 18px;
+        box-shadow: none;
+        border: none;
+      "
+    >
+      🔒
     </button>
     <h1 style="font-size: 28px">Чик Погоди</h1>
     <div id="board"></div>
@@ -249,8 +374,7 @@
         <h2 style="margin-bottom: 15px">🏆 Табела резултата</h2>
 
         <div style="margin-bottom: 15px">
-
-            <button
+          <button
             onclick="loadLeaderboard('avg_score')"
             style="
               padding: 6px 12px;
@@ -277,7 +401,6 @@
           >
             Највише поена
           </button>
-        
         </div>
 
         <div
@@ -548,19 +671,17 @@
           });
         }
       }
-
-      // leaderboard
-
-      // document.getElementById("closeLeaderboardBtn").onclick = () => {
-      //   document.getElementById("leaderboardModal").style.display = "none";
-      // };
-
-      // document.getElementById("openLeaderboardBtn").onclick = () => {
-      //   document.getElementById("leaderboardModal").style.display = "flex";
-      //   loadLeaderboard();
-      // };
     </script>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then(() => console.log("Service Worker registered"))
+          .catch((err) => console.error("SW registration failed:", err));
+      }
+    </script>
   </body>
 </html>

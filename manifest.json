@@ -1,0 +1,21 @@
+{
+    "name": "Чик Погоди",
+    "short_name": "ЧикПогоди",
+    "lang": "sr",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#000",
+    "theme_color": "#538d4e",
+    "icons": [
+        {
+            "src": "favicon-cik2.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "favicon-cik2.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
