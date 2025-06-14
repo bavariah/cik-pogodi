@@ -868,45 +868,38 @@ function endGame(win) {
 
 // Helper function to update leaderboard
 async function updateLeaderboard(username, score) {
-    const { data: { session }, error: sessErr } = await client.auth.getSession()
+    const { data: { session }, error: sessErr } = await client.auth.getSession();
     if (sessErr || !session) {
-        console.log('Not signed in – skipping leaderboard update')
-        return
+        console.log('Not signed in – skipping leaderboard update');
+        return;
     }
-    const uid = session.user.id
+    const uid = session.user.id;
 
-    // fetch their existing row, if any
-    const { data, error } = await client
+    // build the payload
+    const payload = {
+        user_id: uid,
+        username,            // upsert will match on this
+        score,               // points from *this* play
+        attempts: 1,        // always +1
+        avg_score: score     // interim
+    };
+
+    // 1) upsert by username
+    const { error: upsertErr } = await client
         .from('scores')
-        .select('*')
-        .eq('user_id', uid)
-        .single()
-
-    if (error && error.code !== 'PGRST116') {
-        console.error('Lookup error:', error)
-        return
+        .upsert([payload], { onConflict: 'username' });
+    if (upsertErr) {
+        console.error('Upsert failed', upsertErr);
+        return;
     }
 
-    if (data) {
-        // already have a row ⇒ update cumulatively
-        const newScore = data.score + score
-        const newAttempts = data.attempts + 1
-        const newAvg = parseFloat((newScore / newAttempts).toFixed(2))
-        await client
-            .from('scores')
-            .update({ score: newScore, attempts: newAttempts, avg_score: newAvg })
-            .eq('user_id', uid)
-    } else {
-        // first time ⇒ insert
-        await client
-            .from('scores')
-            .insert([{
-                user_id: uid,
-                username,
-                score,
-                attempts: 1,
-                avg_score: parseFloat(score.toFixed(2))
-            }])
+    // 2) call your new RPC to aggregate totals
+    const { error: aggErr } = await client.rpc('increment_score_and_attempts', {
+        p_username: username,
+        p_add_score: score
+    });
+    if (aggErr) {
+        console.error('Aggregation RPC failed', aggErr);
     }
   }
 
