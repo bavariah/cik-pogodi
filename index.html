@@ -62,7 +62,12 @@
         document.getElementById("signInBtn").onclick = async () => {
           const email = prompt("Enter your email for a magic link:");
           if (!email) return;
-          const { error } = await client.auth.signInWithOtp({ email });
+          const { error } = await client.auth.signInWithOtp({   email,
+  options: {
+    emailRedirectTo: 'https://bavariah.github.io/cik-pogodi/'
+  }
+});
+
           if (error) console.error("Sign-in error:", error);
           else alert("✅ Check your email for a magic link");
         };
