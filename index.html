@@ -88,7 +88,7 @@
             avg_score: avg,
             distribution: stats.attempts, // jsonb column accepts JS array
           },
-          { onConflict: "user_id" }
+          { onConflict: ["username"] }
         );
 
         if (error) console.error("syncStats failed", error);
