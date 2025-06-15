@@ -904,7 +904,7 @@ async function updateLeaderboard(username, score) {
   }
 
 // Add this function to initialize the game properly
-function initGame() {
+async function initGame() {
  // immediately pull+merge
   await loadStatsFromDB();
     // Check if game is locked (already played today)
@@ -954,7 +954,7 @@ function initGame() {
     loadGameState();
 
     // Start countdown timer
-    
+    showCountdownToNextWord();
 }
 
 
@@ -964,42 +964,42 @@ async function loadStatsFromDB() {
   if (!session?.user) return;
   const uid = session.user.id;
 
-  // 1) pull DB
-  const { data: db, error } = await client
-    .from('scores')
-    .select('distribution, score, attempts')
-    .eq('user_id', uid)
+  // 1) pull their existing row from DB
+  const { data: db, error: dbErr } = await client
+    .from("scores")
+    .select("distribution, score, attempts")
+    .eq("user_id", uid)
     .single();
-  if (error) {
-    console.error('Load DB stats failed', error);
+  if (dbErr) {
+    console.error("Load DB stats failed", dbErr);
     return;
   }
 
-  // 2) pull local
-  const local = JSON.parse(localStorage.getItem('stats')) || {
+  // 2) pull localStorage
+  const local = JSON.parse(localStorage.getItem("stats")) || {
     total: 0,
     wins: 0,
     attempts: [0,0,0,0,0,0,0]
   };
 
-  // ensure we have a 7-slot distribution array from DB
+  // 3) normalize DB distribution to 7 slots
   const dbDist = Array.isArray(db.distribution) && db.distribution.length === 7
     ? db.distribution
     : [0,0,0,0,0,0,0];
 
-  // 3) merge
+  // 4) merge
   const merged = {
     total: (db.attempts||0) + local.total,
-    wins:  (db.score||0)    + local.wins,
+    wins:  (db.score   ||0) + local.wins,
     attempts: dbDist.map((v,i) => v + (local.attempts[i]||0))
   };
 
-  // 4) write back to local
-  localStorage.setItem('stats', JSON.stringify(merged));
+  // 5) write merged back to localStorage
+  localStorage.setItem("stats", JSON.stringify(merged));
 
-  // 5) push merged back to DB in one shot
+  // 6) push merged up to DB (attaches user_id to old row via username)
   await syncStats(uid, merged);
 
-  // 6) update your UI
+  // 7) refresh your stats UI
   renderStatsPopup();
 }
