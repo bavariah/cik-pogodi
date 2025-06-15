@@ -966,14 +966,14 @@ async function loadStatsFromDB() {
 
   // 1) pull their existing row from DB
   const { data: db, error: dbErr } = await client
-    .from("scores")
-    .select("distribution, score, attempts")
-    .eq("user_id", uid)
-    .single();
-  if (dbErr) {
-    console.error("Load DB stats failed", dbErr);
-    return;
-  }
+  .from('scores')
+  .select('distribution, score, attempts')
+  .eq('user_id', uid)
+  .maybeSingle();  // <-- this will return null if 0 or >1 rows, instead of throwing
+if (!db) {
+  console.warn('No unique scores row for', uid);
+  return;
+}
 
   // 2) pull localStorage
   const local = JSON.parse(localStorage.getItem("stats")) || {
