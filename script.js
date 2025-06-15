@@ -905,7 +905,8 @@ async function updateLeaderboard(username, score) {
 
 // Add this function to initialize the game properly
 function initGame() {
-
+ // immediately pull+merge
+  await loadStatsFromDB();
     // Check if game is locked (already played today)
     if (checkIfLocked()) {
         // show the countdown even when the board is locked
@@ -960,24 +961,48 @@ function initGame() {
 }
 
 
+
 async function loadStatsFromDB() {
-    const { data: { session } } = await client.auth.getSession();
-    if (!session?.user) return;
-    const uid = session.user.id;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session?.user) return;
+  const uid = session.user.id;
 
-    const { data, error } = await client
-        .from('scores')
-        .select('distribution, score, attempts')
-        .eq('user_id', uid)
-        .single();
-
-    if (data) {
-        const stats = {
-            total: data.attempts,
-            wins: data.score,
-            attempts: data.distribution
-        };
-        localStorage.setItem('stats', JSON.stringify(stats));
-        renderStatsPopup();
-    }
+  // 1) pull DB
+  const { data: db, error } = await client
+    .from('scores')
+    .select('distribution, score, attempts')
+    .eq('user_id', uid)
+    .single();
+  if (error) {
+    console.error('Load DB stats failed', error);
+    return;
   }
+
+  // 2) pull local
+  const local = JSON.parse(localStorage.getItem('stats')) || {
+    total: 0,
+    wins: 0,
+    attempts: [0,0,0,0,0,0,0]
+  };
+
+  // ensure we have a 7-slot distribution array from DB
+  const dbDist = Array.isArray(db.distribution) && db.distribution.length === 7
+    ? db.distribution
+    : [0,0,0,0,0,0,0];
+
+  // 3) merge
+  const merged = {
+    total: (db.attempts||0) + local.total,
+    wins:  (db.score||0)    + local.wins,
+    attempts: dbDist.map((v,i) => v + (local.attempts[i]||0))
+  };
+
+  // 4) write back to local
+  localStorage.setItem('stats', JSON.stringify(merged));
+
+  // 5) push merged back to DB in one shot
+  await syncStats(uid, merged);
+
+  // 6) update your UI
+  renderStatsPopup();
+}
