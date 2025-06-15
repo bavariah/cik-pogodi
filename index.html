@@ -140,7 +140,7 @@
 loadStatsFromDB()
   .catch(console.error)
   // 2) once that’s done (or errored), fire your init
-  .finally(initGame);
+  .finally(() => initGame());
   
       }
 
