@@ -136,7 +136,12 @@
 
         ({ word: targetWord, hint: hintText } = getTodayWord());
         // hand off to your master init function
-        initGame();
+// 1) merge stats from DB + local
+loadStatsFromDB()
+  .catch(console.error)
+  // 2) once that’s done (or errored), fire your init
+  .finally(initGame);
+  
       }
 
       // —————————————————————————————————————————————
