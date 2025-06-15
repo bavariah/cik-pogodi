@@ -46,15 +46,23 @@
       );
       document.addEventListener("DOMContentLoaded", () => {
         /** Show / hide the sign-in button and sync on auth changes */
-        client.auth.onAuthStateChange((event, session) => {
-          const btn = document.getElementById("signInBtn");
-          if (session?.user) {
-            btn.style.display = "none";
-            syncStats(session.user.id);
-          } else {
-            btn.style.display = "block";
-          }
-        });
+      client.auth.onAuthStateChange((event, session) => {
+  const btn = document.getElementById("signInBtn");
+  if (session?.user) {
+    btn.style.display = "none";
+
+    // load whatever stats you’ve got locally (or zero‐out if nothing)
+    const stats = JSON.parse(localStorage.getItem("stats")) || {
+      total: 0,
+      wins:  0,
+      attempts: [0,0,0,0,0,0,0]
+    };
+    // now pass both user_id AND stats into syncStats
+    syncStats(session.user.id, stats);
+  } else {
+    btn.style.display = "block";
+  }
+});
       });
 
       document.addEventListener("DOMContentLoaded", () => {
