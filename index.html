@@ -76,28 +76,23 @@
        * Read your localStorage stats and upsert into public.scores.
        * Relies on: user_id uuid column + RLS policy you already created.
        */
-      async function syncStats(user_id, stats) {
-        // calculate fields
-        const totalPlays = stats.total;
-        const totalWins = stats.wins;
-        const totalAttempts = stats.attempts.reduce((sum, n) => sum + n, 0);
-        const avg =
-          totalPlays > 0 ? parseFloat((totalWins / totalPlays).toFixed(2)) : 0;
+   async function syncStats(user_id, stats) {
+  const { error } = await client
+    .from("scores")
+    .upsert(
+      {
+        user_id,
+        username: localStorage.getItem("username") || null,
+        score: stats.wins,
+        attempts: stats.attempts.reduce((sum,n)=>sum+n,0),
+        avg_score: stats.total>0 ? +(stats.wins/stats.total).toFixed(2) : 0,
+        distribution: stats.attempts
+      },
+      { onConflict: ["username"] }
+    );
 
-        const { error } = await client.from("scores").upsert(
-          {
-            user_id,
-            username: localStorage.getItem("username") || null,
-            score: totalWins,
-            attempts: totalAttempts,
-            avg_score: avg,
-            distribution: stats.attempts, // jsonb column accepts JS array
-          },
-          { onConflict: ["username"] }
-        );
-
-        if (error) console.error("syncStats failed", error);
-      }
+  if (error) console.error("syncStats failed", error);
+}
 
       const WORDS_TABLE = "words";
       const SUBMISSIONS_TABLE = "submissions";
