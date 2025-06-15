@@ -954,10 +954,7 @@ function initGame() {
     loadGameState();
 
     // Start countdown timer
-    showCountdownToNextWord();
-
-
-    loadStatsFromDB().catch(console.error);
+    
 }
 
 
