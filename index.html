@@ -79,7 +79,10 @@
         document.getElementById("sendMagicLinkBtn").disabled = true;
         document.getElementById("sendMagicLinkBtn").textContent = "Шаљем...";
 
-        const { error } = await client.auth.signInWithOtp({ email });
+        const { error } = await client.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: "https://bavariah.github.io/cik-pogodi/" }
+        });
         document.getElementById("sendMagicLinkBtn").disabled = false;
         document.getElementById("sendMagicLinkBtn").textContent = "Пошаљи линк";
 
