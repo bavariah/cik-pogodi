@@ -29,7 +29,7 @@
             btn.title = "Профил";
             btn.onclick = openProfileModal;
             const stats = JSON.parse(localStorage.getItem("stats"));
-            if (stats) syncStats(session.user.id, stats);
+            if (stats) syncStats(session.user.id, stats).catch(e => console.error("syncStats failed:", e));
           } else {
             btn.textContent = "🔒";
             btn.title = "Пријави се";
@@ -190,12 +190,27 @@
         document.getElementById("profileStreak").textContent = stats.currentStreak || 0;
         document.getElementById("profileMaxStreak").textContent = stats.maxStreak || 0;
 
-        const { data: currentSeasonData } = await client
+        let { data: currentSeasonData } = await client
           .from("scores")
           .select("score, attempts, avg_score")
           .eq("user_id", uid)
           .eq("season", season)
           .maybeSingle();
+
+        // If no DB row yet, sync local stats now and re-fetch
+        if (!currentSeasonData) {
+          const localStats = JSON.parse(localStorage.getItem("stats"));
+          if (localStats) {
+            await syncStats(uid, localStats).catch(console.error);
+            const { data: refetched } = await client
+              .from("scores")
+              .select("score, attempts, avg_score")
+              .eq("user_id", uid)
+              .eq("season", season)
+              .maybeSingle();
+            currentSeasonData = refetched;
+          }
+        }
 
         if (currentSeasonData) {
           document.getElementById("profileTotalScore").textContent = currentSeasonData.score || 0;
