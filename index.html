@@ -45,6 +45,15 @@
         document.getElementById("loginEmail").addEventListener("keydown", e => {
           if (e.key === "Enter") sendMagicLink();
         });
+        document.getElementById("verifyOtpBtn").onclick = verifyOtpCode;
+        document.getElementById("otpCode").addEventListener("keydown", e => {
+          if (e.key === "Enter") verifyOtpCode();
+        });
+        document.getElementById("resendCodeBtn").onclick = () => {
+          document.getElementById("loginConfirmation").style.display = "none";
+          document.getElementById("loginForm").style.display = "block";
+          document.getElementById("otpCode").value = "";
+        };
         document.getElementById("closeProfileBtn").onclick = () => {
           document.getElementById("profileModal").style.display = "none";
         };
@@ -91,6 +100,24 @@
         } else {
           document.getElementById("loginForm").style.display = "none";
           document.getElementById("loginConfirmation").style.display = "block";
+          setTimeout(() => document.getElementById("otpCode").focus(), 100);
+        }
+      }
+
+      async function verifyOtpCode() {
+        const code = document.getElementById("otpCode").value.trim();
+        const email = document.getElementById("loginEmail").value.trim();
+        if (code.length < 6) { showToast("Унеси 6-цифрени код"); return; }
+        const btn = document.getElementById("verifyOtpBtn");
+        btn.disabled = true;
+        btn.textContent = "Проверавам...";
+        const { error } = await client.auth.verifyOtp({ email, token: code, type: "email" });
+        btn.disabled = false;
+        btn.textContent = "Потврди";
+        if (error) {
+          showToast("Погрешан или истекли код. Покушај поново.");
+        } else {
+          document.getElementById("loginModal").style.display = "none";
         }
       }
 
@@ -318,10 +345,16 @@
           <button id="sendMagicLinkBtn" style="width:100%;padding:12px;background:#538d4e;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer;font-weight:bold;">Пошаљи линк</button>
           <p style="font-size:11px;color:#666;text-align:center;margin-top:10px;">Послаћемо ти магични линк на имејл — без лозинке.</p>
         </div>
-        <div id="loginConfirmation" style="display:none;text-align:center;padding:15px 0;">
-          <div style="font-size:40px;margin-bottom:10px;">📬</div>
-          <p style="font-size:16px;font-weight:bold;margin-bottom:8px;">Провери свој имејл!</p>
-          <p style="color:#aaa;font-size:13px;">Послали смо ти магични линк. Кликни на њега да би се пријавио.</p>
+        <div id="loginConfirmation" style="display:none;padding:5px 0;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div style="font-size:36px;margin-bottom:8px;">📬</div>
+            <p style="font-size:15px;font-weight:bold;margin-bottom:4px;">Провери свој имејл!</p>
+            <p style="color:#aaa;font-size:12px;">Унеси 6-цифрени код из имејла</p>
+          </div>
+          <input id="otpCode" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="123456" maxlength="6"
+            style="width:100%;padding:12px;border:1px solid #444;background:#333;color:#fff;border-radius:6px;font-size:24px;box-sizing:border-box;margin-bottom:12px;text-align:center;letter-spacing:8px;font-weight:bold;" />
+          <button id="verifyOtpBtn" style="width:100%;padding:12px;background:#538d4e;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer;font-weight:bold;">Потврди</button>
+          <button id="resendCodeBtn" style="width:100%;padding:8px;background:none;color:#666;border:none;font-size:12px;cursor:pointer;margin-top:6px;">Нисам добио код — пошаљи поново</button>
         </div>
       </div>
     </div>

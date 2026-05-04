@@ -430,12 +430,16 @@ body.loading::before {
 
 /* Tile flip animation */
 @keyframes tileFlip {
-  0%   { transform: rotateX(0deg); }
-  50%  { transform: rotateX(-90deg); }
-  100% { transform: rotateX(0deg); }
+  0%   { transform: rotateX(0deg) scale(1);     animation-timing-function: ease-in; }
+  50%  { transform: rotateX(-90deg) scale(0.96); animation-timing-function: ease-out; }
+  100% { transform: rotateX(0deg) scale(1); }
 }
 
 .tile.flipping {
-  animation: tileFlip 0.4s ease forwards;
+  animation: tileFlip 0.42s linear forwards;
   border-color: #666;
 }
+
+.tile.green  { border-color: #538d4e; }
+.tile.orange { border-color: #b59f3b; }
+.tile.grey   { border-color: #3a3a3c; }
