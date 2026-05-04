@@ -6,7 +6,7 @@
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#538d4e" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" type="image/png" href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
@@ -257,12 +257,18 @@
     </script>
   </head>
   <body>
-    <button id="hintIconBtn" style="position:absolute;top:15px;left:15px;font-size:20px;background:none;border:none;cursor:pointer;">❓</button>
-    <button id="openLeaderboardBtn" title="Leaderboard" style="position:absolute;top:15px;right:39px;background:none;border:none;font-size:22px;cursor:pointer;">🏆</button>
-    <button id="openStatsBtn" title="Statistika" style="position:absolute;top:15px;right:2px;background:none;border:none;font-size:22px;cursor:pointer;">📊</button>
-    <button id="signInBtn" style="position:absolute;top:19px;right:85px;display:block;background:none;outline:none;font-size:18px;box-shadow:none;border:none;">🔒</button>
-
-    <h1 style="font-size:28px">Чик Погоди</h1>
+    <div id="topBar" style="position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:max(14px,env(safe-area-inset-top)) 10px 8px;background:#121213;z-index:200;border-bottom:1px solid #2a2a2a;">
+      <div style="display:flex;align-items:center;">
+        <button id="hintIconBtn" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;display:none;">❓</button>
+        <button id="helpBtn" title="Правила игре" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">ℹ️</button>
+      </div>
+      <div style="display:flex;align-items:center;">
+        <button id="signInBtn" style="background:none;outline:none;font-size:20px;box-shadow:none;border:none;cursor:pointer;padding:4px 8px;line-height:1;">🔒</button>
+        <button id="openLeaderboardBtn" title="Leaderboard" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">🏆</button>
+        <button id="openStatsBtn" title="Statistika" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">📊</button>
+      </div>
+    </div>
+    <h1 style="font-size:28px;margin-top:calc(max(14px,env(safe-area-inset-top)) + 52px)">Чик Погоди</h1>
     <div id="board"></div>
     <div id="keyboard"></div>
     <div id="hintWrapper" style="display:none;margin-top:10px">
@@ -362,8 +368,6 @@
     </div>
 
     <!-- Help Button -->
-    <button id="helpBtn" title="Правила игре" style="position:absolute;top:15px;left:60px;background:none;border:none;font-size:24px;cursor:pointer;">ℹ️</button>
-
     <!-- Help Modal -->
     <div id="helpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1000;font-family:sans-serif;">
       <div style="background:#222;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;color:#fff;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.4);">

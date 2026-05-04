@@ -10,6 +10,7 @@ const resultGrid = document.getElementById("resultGrid");
 
 let currentRow = 0;
 let currentGuess = "";
+let isFlipping = false;
 
 // ─── Season helpers ───────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ function createKeyboard() {
 }
 
 function handleKey(letter) {
+  if (isFlipping) return;
   if (currentGuess.length < 6) {
     currentGuess += letter.toLowerCase();
     updateBoard();
@@ -92,6 +94,7 @@ function updateBoard() {
 }
 
 function deleteLetter() {
+  if (isFlipping) return;
   if (currentGuess.length > 0) {
     const row = board.children[currentRow];
     row.classList.add("row-delete-animate");
@@ -155,6 +158,7 @@ function checkAndRecordMiss(gameState, savedTimeWindow) {
 // ─── Submit guess ─────────────────────────────────────────────────────────────
 
 async function submitGuess() {
+  if (isFlipping) return;
   if (currentGuess.length !== 6) {
     const row = board.children[currentRow];
     row.classList.add("shake");
@@ -178,30 +182,46 @@ async function submitGuess() {
     }
   }
 
+  const flipDuration = 400;
+  const flipDelay = 100;
+  isFlipping = true;
+
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
-    tile.classList.add(tileStatus[i]);
-    const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
-    if (key) {
-      if (!key.classList.contains("green")) {
+
+    setTimeout(() => {
+      tile.classList.add("flipping");
+    }, i * flipDelay);
+
+    setTimeout(() => {
+      tile.classList.add(tileStatus[i]);
+      tile.classList.remove("flipping");
+
+      const key = [...document.querySelectorAll(".key")].find(k => k.textContent === letter.toUpperCase());
+      if (key && !key.classList.contains("green")) {
         if (tileStatus[i] === "green") { key.classList.remove("orange", "grey"); key.classList.add("green"); }
-        else if (tileStatus[i] === "orange" && !key.classList.contains("green")) { key.classList.remove("grey"); key.classList.add("orange"); }
-        else if (!key.classList.contains("orange") && !key.classList.contains("green")) { key.classList.add("grey"); }
+        else if (tileStatus[i] === "orange") { key.classList.remove("grey"); key.classList.add("orange"); }
+        else if (!key.classList.contains("orange")) { key.classList.add("grey"); }
       }
-    }
+    }, i * flipDelay + flipDuration / 2);
   });
 
-  try {
-    await client.from("submissions").insert([{
-      username: localStorage.getItem("username") || "anon",
-      word: targetWord, guess: currentGuess,
-      attempt: currentRow + 1, correct: (currentGuess === targetWord),
-      played_at: new Date().toISOString()
-    }]).throwOnError();
-  } catch (e) { console.error("Failed to log submission:", e); }
+  const totalFlipTime = (guessArr.length - 1) * flipDelay + flipDuration;
 
-  if (currentGuess === targetWord) return endGame(true);
-  if (currentRow === 6) return endGame(false);
+  client.from("submissions").insert([{
+    username: localStorage.getItem("username") || "anon",
+    word: targetWord, guess: currentGuess,
+    attempt: currentRow + 1, correct: (currentGuess === targetWord),
+    played_at: new Date().toISOString()
+  }]).then(({ error }) => { if (error) console.error("Failed to log submission:", error); });
+
+  const isWin = currentGuess === targetWord;
+  const isLose = !isWin && currentRow === 6;
+
+  await new Promise(resolve => setTimeout(resolve, totalFlipTime));
+  isFlipping = false;
+
+  if (isWin || isLose) { endGame(isWin); return; }
 
   saveGameState();
   currentRow++;
