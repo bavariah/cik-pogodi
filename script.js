@@ -595,12 +595,12 @@ async function loadLeaderboard(orderBy = "avg_score") {
     container.innerHTML = seasons.map(season => {
       const players = data.filter(r => r.season === season);
       const rows = players.map(p => `
-        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #333;font-size:13px;">
-          <span>${p.rank <= 3 ? ["🥇","🥈","🥉"][p.rank-1] : p.rank + "."} <strong>${p.username}</strong></span>
-          <span style="color:#aaa">${p.score} пт · ${(p.avg_score||0).toFixed(1)} просек</span>
+        <div style="display:flex;flex-direction:column;padding:7px 0;border-bottom:1px solid #333;">
+          <div style="font-size:14px;">${p.rank <= 3 ? ["🥇","🥈","🥉"][p.rank-1] : "<span style='color:#aaa;font-size:12px;margin-right:4px;'>" + p.rank + ".</span>"} <strong>${p.username}</strong></div>
+          <div style="font-size:12px;color:#aaa;margin-top:3px;padding-left:4px;">${p.score} пт &nbsp;·&nbsp; ${(p.avg_score||0).toFixed(1)} пт/игри &nbsp;·&nbsp; ${p.attempts} игара</div>
         </div>`).join("");
-      return `<div style="margin-bottom:16px;">
-        <div style="font-size:12px;color:#ffd700;margin-bottom:6px;font-weight:bold;">🏅 ${getSeasonLabel(season)}</div>
+      return `<div style="margin-bottom:20px;">
+        <div style="font-size:12px;color:#ffd700;margin-bottom:8px;font-weight:bold;letter-spacing:0.5px;">🏅 ${getSeasonLabel(season)}</div>
         ${rows}
       </div>`;
     }).join("");

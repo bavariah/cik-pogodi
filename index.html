@@ -99,9 +99,14 @@
         if (!stats) return;
         const season = getCurrentSeason();
         const username = localStorage.getItem("username") || "Играч";
+        const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+        const dist = stats.attempts || [0, 0, 0, 0, 0, 0, 0];
+        const backfilledScore = dist.reduce((total, wins, i) => total + wins * (scoreMap[i] || 0), 0);
+        const backfilledAttempts = dist.reduce((a, b) => a + b, 0);
+        const backfilledAvg = backfilledAttempts > 0 ? parseFloat((backfilledScore / backfilledAttempts).toFixed(2)) : 0;
         const metadata = {
           username,
-          distribution: stats.attempts || [0, 0, 0, 0, 0, 0, 0],
+          distribution: dist,
           misses: stats.misses || 0,
           current_streak: stats.currentStreak || 0,
           max_streak: stats.maxStreak || 0,
@@ -109,19 +114,20 @@
 
         const { data } = await client
           .from("scores")
-          .select("id")
+          .select("id, score, attempts")
           .eq("user_id", user_id)
           .eq("season", season)
           .maybeSingle();
 
         if (data) {
-          await client.from("scores").update(metadata).eq("id", data.id);
+          const updatePayload = { ...metadata };
+          if (backfilledScore > (data.score || 0) && backfilledAttempts > 0) {
+            updatePayload.score = backfilledScore;
+            updatePayload.attempts = backfilledAttempts;
+            updatePayload.avg_score = backfilledAvg;
+          }
+          await client.from("scores").update(updatePayload).eq("id", data.id);
         } else {
-          const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-          const dist = stats.attempts || [0, 0, 0, 0, 0, 0, 0];
-          const backfilledScore = dist.reduce((total, wins, i) => total + wins * (scoreMap[i] || 0), 0);
-          const backfilledAttempts = dist.reduce((a, b) => a + b, 0);
-          const backfilledAvg = backfilledAttempts > 0 ? parseFloat((backfilledScore / backfilledAttempts).toFixed(2)) : 0;
           await client.from("scores").insert([{
             user_id, ...metadata, score: backfilledScore,
             attempts: backfilledAttempts, avg_score: backfilledAvg, season
