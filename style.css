@@ -200,20 +200,6 @@ div#stats > * {
     box-shadow: 0 0 10px 10px #0000003d;
         min-height: 300px;
 }
-#leaderboardContent > div {
-display: flex;
-flex-direction: column;
-}
-#leaderboardContent > div strong {
-        margin-left: 15px;
-    margin-right: auto;
-}
-#leaderboardContent > div:nth-child(odd) {
-    color: #4CAF50;
-}
-#leaderboardContent > div:nth-child(even) {
-    color: #ce9429;
-}
 @media only screen and (max-width: 768px) {
     #keyboard {
     flex-wrap: wrap;
