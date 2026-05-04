@@ -202,6 +202,7 @@ div#stats > * {
 }
 #leaderboardContent > div {
 display: flex;
+flex-direction: column;
 }
 #leaderboardContent > div strong {
         margin-left: 15px;

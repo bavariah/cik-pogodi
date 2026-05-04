@@ -602,7 +602,8 @@ async function loadLeaderboard(orderBy = "avg_score") {
   if (orderBy === "hof") {
     const { data, error } = await client
       .from("hall_of_fame")
-      .select("season, username, rank, score, avg_score, attempts")
+      .select("season, username, rank")
+      .like("season", "2025%")
       .order("season", { ascending: false })
       .order("rank", { ascending: true });
 
@@ -615,9 +616,8 @@ async function loadLeaderboard(orderBy = "avg_score") {
     container.innerHTML = seasons.map(season => {
       const players = data.filter(r => r.season === season);
       const rows = players.map(p => `
-        <div style="display:flex;flex-direction:column;padding:7px 0;border-bottom:1px solid #333;">
-          <div style="font-size:14px;">${p.rank <= 3 ? ["🥇","🥈","🥉"][p.rank-1] : "<span style='color:#aaa;font-size:12px;margin-right:4px;'>" + p.rank + ".</span>"} <strong>${p.username}</strong></div>
-          <div style="font-size:12px;color:#aaa;margin-top:3px;padding-left:4px;">${p.score} пт &nbsp;·&nbsp; ${(p.avg_score||0).toFixed(1)} пт/игри &nbsp;·&nbsp; ${p.attempts} игара</div>
+        <div style="padding:7px 0;border-bottom:1px solid #333;font-size:14px;">
+          ${p.rank <= 3 ? ["🥇","🥈","🥉"][p.rank-1] : "<span style='color:#aaa;font-size:12px;margin-right:4px;'>" + p.rank + ".</span>"} <strong>${p.username}</strong>
         </div>`).join("");
       return `<div style="margin-bottom:20px;">
         <div style="font-size:12px;color:#ffd700;margin-bottom:8px;font-weight:bold;letter-spacing:0.5px;">🏅 ${getSeasonLabel(season)}</div>

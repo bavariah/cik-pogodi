@@ -25,7 +25,7 @@
         client.auth.onAuthStateChange((event, session) => {
           const btn = document.getElementById("signInBtn");
           if (session?.user) {
-            btn.textContent = "✅";
+            btn.textContent = "👤";
             btn.title = "Профил";
             btn.onclick = openProfileModal;
             const stats = JSON.parse(localStorage.getItem("stats"));
