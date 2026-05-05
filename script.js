@@ -815,9 +815,11 @@ async function loadStatsFromDB() {
 
   if (localStorage.getItem("pending_miss_sync")) {
     localStorage.removeItem("pending_miss_sync");
-    const localStats = JSON.parse(localStorage.getItem("stats"));
-    if (localStats) await syncStats(uid, localStats).catch(() => {});
   }
+
+  // Always push local stats to DB on load — recovers from any failed writes
+  const localStats = JSON.parse(localStorage.getItem("stats"));
+  if (localStats) await syncStats(uid, localStats).catch(() => {});
 
   await checkAndArchiveSeason();
 
