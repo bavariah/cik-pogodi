@@ -846,6 +846,8 @@ async function loadStatsFromDB() {
 // ─── Game init ────────────────────────────────────────────────────────────────
 
 function initGame() {
+  loadStatsFromDB().catch(console.error);
+
   if (checkIfLocked()) {
     document.getElementById("timer").style.display = "block";
     showCountdownToNextWord();
