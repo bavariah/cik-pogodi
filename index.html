@@ -136,7 +136,7 @@
         const season = getCurrentSeason();
         const username = localStorage.getItem("username") || "Играч";
         const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-        const dist = stats.attempts || [0, 0, 0, 0, 0, 0, 0];
+        const dist = Array.isArray(stats.attempts) ? stats.attempts : [0, 0, 0, 0, 0, 0, 0];
         const backfilledScore = dist.reduce((total, wins, i) => total + wins * (scoreMap[i] || 0), 0);
         const backfilledAttempts = dist.reduce((a, b) => a + b, 0);
         const backfilledAvg = backfilledAttempts > 0 ? parseFloat((backfilledScore / backfilledAttempts).toFixed(2)) : 0;
@@ -206,8 +206,8 @@
           .eq("season", season)
           .maybeSingle();
 
-        // If no DB row yet, sync local stats now and re-fetch
-        if (!currentSeasonData) {
+        // If no DB row yet, or row has score=0 but local stats exist, sync now and re-fetch
+        if (!currentSeasonData || currentSeasonData.score === 0) {
           const localStats = JSON.parse(localStorage.getItem("stats"));
           if (localStats) {
             await syncStats(uid, localStats).catch(console.error);
