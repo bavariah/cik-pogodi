@@ -21,6 +21,15 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
       );
 
+      function getCurrentSeason() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() < 6 ? "S1" : "S2"}`;
+      }
+      function getSeasonLabel(s) {
+        const [year, half] = s.split("-");
+        return `${year} ${half === "S1" ? "Јануар–Јун" : "Јул–Децембар"}`;
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         client.auth.onAuthStateChange((event, session) => {
           const btn = document.getElementById("signInBtn");
