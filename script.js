@@ -594,35 +594,51 @@ document.addEventListener("keydown", (e) => {
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
+function colorFromStr(str) {
+  const colors = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e91e63"];
+  let hash = 0;
+  for (let i = 0; i < (str || "").length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  return colors[Math.abs(hash) % colors.length];
+}
+
 async function loadLeaderboard(orderBy = "avg_score") {
+  document.querySelectorAll(".lb-tab").forEach(b => b.classList.remove("active"));
+  const activeTab = document.querySelector(`.lb-tab[data-tab="${orderBy}"]`);
+  if (activeTab) activeTab.classList.add("active");
+
   document.getElementById("leaderboardModal").style.display = "flex";
   const container = document.getElementById("leaderboardContent");
-  container.innerHTML = "<p style='color:#aaa;text-align:center;'>Учитавање...</p>";
+  container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Учитавање...</p>";
+
+  const currentUsername = localStorage.getItem("username");
+  const medals = ["🥇","🥈","🥉"];
 
   if (orderBy === "hof") {
     const { data, error } = await client
       .from("hall_of_fame")
       .select("season, username, rank")
-      .like("season", "2025%")
       .order("season", { ascending: false })
       .order("rank", { ascending: true });
 
     if (error || !data || data.length === 0) {
-      container.innerHTML = "<p style='color:#aaa;text-align:center;'>Нема података о претходним сезонама.</p>";
+      container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Нема података о претходним сезонама.</p>";
       return;
     }
-
     const seasons = [...new Set(data.map(r => r.season))];
     container.innerHTML = seasons.map(season => {
       const players = data.filter(r => r.season === season);
-      const rows = players.map(p => `
-        <div style="padding:7px 0;border-bottom:1px solid #333;font-size:14px;">
-          ${p.rank <= 3 ? ["🥇","🥈","🥉"][p.rank-1] : "<span style='color:#aaa;font-size:12px;margin-right:4px;'>" + p.rank + ".</span>"} <strong>${p.username}</strong>
-        </div>`).join("");
-      return `<div style="margin-bottom:20px;">
-        <div style="font-size:12px;color:#ffd700;margin-bottom:8px;font-weight:bold;letter-spacing:0.5px;">🏅 ${getSeasonLabel(season)}</div>
-        ${rows}
-      </div>`;
+      const rows = players.map(p => {
+        const isYou = p.username === currentUsername;
+        const rankEl = p.rank <= 3
+          ? `<span style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${medals[p.rank - 1]}</span>`
+          : `<span class="lb-rank-num">${p.rank}.</span>`;
+        return `<div class="lb-row${isYou ? " lb-you" : ""}">
+          ${rankEl}
+          <span class="lb-avatar" style="background:${colorFromStr(p.username)}">${(p.username || "?").slice(0, 2).toUpperCase()}</span>
+          <span class="lb-name${isYou ? " lb-name-you" : ""}">${p.username}${isYou ? " ★" : ""}</span>
+        </div>`;
+      }).join("");
+      return `<div class="lb-hof-season">🏅 ${getSeasonLabel(season)}</div>${rows}`;
     }).join("");
     return;
   }
@@ -631,19 +647,40 @@ async function loadLeaderboard(orderBy = "avg_score") {
     .from("scores")
     .select("username, score, avg_score, attempts")
     .eq("season", getCurrentSeason())
+    .gt("score", 0)
     .order(orderBy, { ascending: false })
-    .limit(10);
+    .limit(20);
 
-  if (error) { container.innerHTML = "<p>Грешка при учитавању.</p>"; return; }
+  if (error) { container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Грешка при учитавању.</p>"; return; }
+  if (!data || data.length === 0) { container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Нема резултата за ову сезону.</p>"; return; }
 
-  const seasonLabel = getSeasonLabel(getCurrentSeason());
-  container.innerHTML = `<div style="font-size:11px;color:#aaa;margin-bottom:10px;text-align:center;">${seasonLabel}</div>`
-    + data.map((entry, i) => {
-      const text = orderBy === "avg_score"
-        ? `${(entry.avg_score || 0).toFixed(1)} пт/игри (${entry.attempts || 0} игара)`
-        : `${entry.score || 0} поена (${entry.attempts || 0} игара)`;
-      return `<div style="padding:6px 0;border-bottom:1px solid #333;">${i + 1}. <strong>${entry.username || "Анон"}</strong>  ${text}</div>`;
-    }).join("");
+  let yourRank = -1;
+  const rows = data.map((entry, i) => {
+    const isYou = entry.username === currentUsername;
+    if (isYou) yourRank = i + 1;
+    const rankEl = i < 3
+      ? `<span style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${medals[i]}</span>`
+      : `<span class="lb-rank-num">${i + 1}.</span>`;
+    const rowClass = ["lb-top1","lb-top2","lb-top3"][i] || "";
+    const scoreVal = orderBy === "avg_score"
+      ? (entry.avg_score || 0).toFixed(1)
+      : (entry.score || 0);
+    const scoreUnit = orderBy === "avg_score" ? " пт/игри" : " пт";
+    const scoreSub = orderBy === "avg_score"
+      ? `${entry.attempts || 0} игара`
+      : `${(entry.avg_score || 0).toFixed(1)} просек`;
+    return `<div class="lb-row${rowClass ? " " + rowClass : ""}${isYou ? " lb-you" : ""}">
+      ${rankEl}
+      <span class="lb-avatar" style="background:${colorFromStr(entry.username)}">${(entry.username || "?").slice(0, 2).toUpperCase()}</span>
+      <span class="lb-name${isYou ? " lb-name-you" : ""}">${entry.username || "Анон"}${isYou ? " ★" : ""}</span>
+      <span class="lb-score"><strong>${scoreVal}<small>${scoreUnit}</small></strong>${scoreSub}</span>
+    </div>`;
+  }).join("");
+
+  const yourRankEl = yourRank === -1 && currentUsername
+    ? `<div class="lb-your-rank">Твој ранг није у топ 20</div>` : "";
+
+  container.innerHTML = `<div class="lb-season-label">${getSeasonLabel(getCurrentSeason())}</div>${rows}${yourRankEl}`;
 }
 
 document.getElementById("openLeaderboardBtn").onclick = () => loadLeaderboard("avg_score");
