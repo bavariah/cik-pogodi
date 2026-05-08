@@ -454,3 +454,19 @@ body.loading::before {
 .lb-your-rank { margin-top:12px;padding:8px;background:#1a2e1a;border-radius:8px;font-size:13px;color:#6abf69;text-align:center; }
 .lb-hof-season { font-size:11px;font-weight:bold;color:#ffd700;letter-spacing:0.5px;padding:12px 0 6px;border-bottom:1px solid #333;margin-bottom:4px; }
 .lb-hof-season:first-child { padding-top:0; }
+
+/* ── Keyboard action buttons ──────────────────────────── */
+.key-enter { background:#538d4e !important;color:#fff !important; }
+.key-enter:active { background:#3a6b3a !important; }
+.key-delete { background:#3d1f1f !important;color:#ff7b7b !important; }
+.key-delete:active { background:#2a1010 !important; }
+
+/* ── Modal close button ───────────────────────────────── */
+.modal-close { position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:#bbb;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,color 0.15s; }
+.modal-close:hover { background:rgba(255,255,255,0.2);color:#fff; }
+
+/* ── Emoji avatar picker ──────────────────────────────── */
+.emoji-picker-grid { display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:8px 4px 4px; }
+.emoji-opt { font-size:22px;padding:5px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color 0.1s,background 0.1s;line-height:1; }
+.emoji-opt:hover,.emoji-opt.selected { border-color:#538d4e;background:#1a2e1a; }
+.profile-avatar { cursor:pointer; }

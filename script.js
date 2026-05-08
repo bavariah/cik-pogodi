@@ -62,12 +62,12 @@ function createKeyboard() {
   bottomRow.classList.add("keyboard-row");
   const enter = document.createElement("button");
   enter.textContent = "⏎";
-  enter.classList.add("key", "wide");
+  enter.classList.add("key", "wide", "key-enter");
   enter.style.width = "50%";
   enter.onclick = submitGuess;
   const del = document.createElement("button");
   del.textContent = "⌫";
-  del.classList.add("key", "wide");
+  del.classList.add("key", "wide", "key-delete");
   del.style.width = "50%";
   del.onclick = deleteLetter;
   bottomRow.appendChild(enter);
@@ -611,6 +611,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
   container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Учитавање...</p>";
 
   const currentUsername = localStorage.getItem("username");
+  const currentEmoji = localStorage.getItem("avatar_emoji");
   const medals = ["🥇","🥈","🥉"];
 
   if (orderBy === "hof") {
@@ -671,7 +672,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
       : `${(entry.avg_score || 0).toFixed(1)} просек`;
     return `<div class="lb-row${rowClass ? " " + rowClass : ""}${isYou ? " lb-you" : ""}">
       ${rankEl}
-      <span class="lb-avatar" style="background:${colorFromStr(entry.username)}">${(entry.username || "?").slice(0, 2).toUpperCase()}</span>
+      <span class="lb-avatar" style="background:${isYou && currentEmoji ? "#333" : colorFromStr(entry.username)};font-size:${isYou && currentEmoji ? "18px" : "11px"}">${isYou && currentEmoji ? currentEmoji : (entry.username || "?").slice(0, 2).toUpperCase()}</span>
       <span class="lb-name${isYou ? " lb-name-you" : ""}">${entry.username || "Анон"}${isYou ? " ★" : ""}</span>
       <span class="lb-score"><strong>${scoreVal}<small>${scoreUnit}</small></strong>${scoreSub}</span>
     </div>`;
@@ -854,30 +855,44 @@ async function loadStatsFromDB() {
     localStorage.removeItem("pending_miss_sync");
   }
 
-  // Always push local stats to DB on load — recovers from any failed writes
   const localStats = JSON.parse(localStorage.getItem("stats"));
   if (localStats) await syncStats(uid, localStats).catch(() => {});
 
   await checkAndArchiveSeason();
 
-  const { data } = await client.from("scores")
-    .select("distribution, score, attempts, misses, current_streak, max_streak")
-    .eq("user_id", uid).eq("season", getCurrentSeason()).maybeSingle();
+  // Aggregate ALL seasons to build full career stats
+  const { data: allRows } = await client
+    .from("scores")
+    .select("attempts, misses, distribution, current_streak, max_streak")
+    .eq("user_id", uid)
+    .order("season", { ascending: false });
 
-  if (data) {
-    const local = JSON.parse(localStorage.getItem("stats")) || {};
-    const dist = data.distribution || local.attempts || [0, 0, 0, 0, 0, 0, 0];
-    const merged = {
-      total: Math.max(data.attempts || 0, local.total || 0),
-      wins: dist.reduce((a, b) => a + b, 0),
-      attempts: dist,
-      misses: Math.max(data.misses || 0, local.misses || 0),
-      currentStreak: data.current_streak || local.currentStreak || 0,
-      maxStreak: Math.max(data.max_streak || 0, local.maxStreak || 0)
-    };
-    localStorage.setItem("stats", JSON.stringify(merged));
-    renderStatsPopup();
-  }
+  if (!allRows || allRows.length === 0) return;
+
+  const dbWins   = allRows.reduce((s, r) => s + (r.attempts || 0), 0);
+  const dbMisses = allRows.reduce((s, r) => s + (r.misses   || 0), 0);
+  const dbTotal  = dbWins + dbMisses;
+  const local    = JSON.parse(localStorage.getItem("stats")) || {};
+
+  if (dbTotal <= (local.total || 0)) return; // local already up to date
+
+  const dbDist = allRows.reduce((acc, r) => {
+    const d = Array.isArray(r.distribution) ? r.distribution : [0,0,0,0,0,0,0];
+    return acc.map((v, i) => v + (d[i] || 0));
+  }, [0,0,0,0,0,0,0]);
+
+  const dbMaxStreak     = allRows.reduce((m, r) => Math.max(m, r.max_streak     || 0), 0);
+  const dbCurrentStreak = allRows[0]?.current_streak || 0; // most recent season first
+
+  localStorage.setItem("stats", JSON.stringify({
+    total: dbTotal,
+    wins: dbWins,
+    misses: dbMisses,
+    attempts: dbDist,
+    currentStreak: dbCurrentStreak,
+    maxStreak: dbMaxStreak
+  }));
+  renderStatsPopup();
 }
 
 // ─── Game init ────────────────────────────────────────────────────────────────

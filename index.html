@@ -156,13 +156,19 @@
           .maybeSingle();
 
         if (data) {
-          const updatePayload = { ...metadata };
+          const updatePayload = {};
+          // Only update metadata if local has at least as many wins as DB (prevent new-browser blank from overwriting real data)
+          if (backfilledAttempts >= (data.attempts || 0)) {
+            Object.assign(updatePayload, metadata);
+          }
           if (backfilledScore > (data.score || 0) && backfilledAttempts > 0) {
             updatePayload.score = backfilledScore;
             updatePayload.attempts = backfilledAttempts;
             updatePayload.avg_score = backfilledAvg;
           }
-          await client.from("scores").update(updatePayload).eq("id", data.id);
+          if (Object.keys(updatePayload).length > 0) {
+            await client.from("scores").update(updatePayload).eq("id", data.id);
+          }
         } else {
           await client.from("scores").insert([{
             user_id, ...metadata, score: backfilledScore,
@@ -178,6 +184,29 @@
         return colors[Math.abs(hash) % colors.length];
       }
 
+      const AVATAR_EMOJIS = ["🐶","🐱","🦊","🐺","🦁","🐯","🐸","🐵","🦅","🦋","🌟","⚡","🔥","💎","🎯","🏆","🎲","🚀","🌈","🎸","🦄","🍀","👾","🐉"];
+
+      function buildEmojiPicker(currentEmoji) {
+        const grid = document.getElementById("emojiGrid");
+        grid.innerHTML = AVATAR_EMOJIS.map(e =>
+          `<span class="emoji-opt${e === currentEmoji ? " selected" : ""}" data-emoji="${e}" onclick="selectEmoji('${e}')">${e}</span>`
+        ).join("");
+      }
+
+      function toggleEmojiPicker() {
+        const picker = document.getElementById("emojiPicker");
+        picker.style.display = picker.style.display === "none" ? "block" : "none";
+      }
+
+      function selectEmoji(emoji) {
+        localStorage.setItem("avatar_emoji", emoji);
+        document.getElementById("profileAvatarText").textContent = emoji;
+        document.getElementById("profileAvatarText").style.fontSize = "26px";
+        document.getElementById("profileAvatar").style.background = "#333";
+        document.querySelectorAll(".emoji-opt").forEach(e => e.classList.toggle("selected", e.dataset.emoji === emoji));
+        document.getElementById("emojiPicker").style.display = "none";
+      }
+
       async function openProfileModal() {
         const { data: { session } } = await client.auth.getSession();
         if (!session?.user) { openLoginModal(); return; }
@@ -187,8 +216,12 @@
         const stats = JSON.parse(localStorage.getItem("stats")) || { total: 0, wins: 0, currentStreak: 0, maxStreak: 0 };
         const season = getCurrentSeason();
 
-        document.getElementById("profileAvatar").style.background = getAvatarColor(uid);
-        document.getElementById("profileAvatarText").textContent = username.slice(0, 2).toUpperCase();
+        const savedEmoji = localStorage.getItem("avatar_emoji");
+        document.getElementById("profileAvatar").style.background = savedEmoji ? "#333" : getAvatarColor(uid);
+        document.getElementById("profileAvatarText").textContent = savedEmoji || username.slice(0, 2).toUpperCase();
+        document.getElementById("profileAvatarText").style.fontSize = savedEmoji ? "26px" : "";
+        document.getElementById("emojiPicker").style.display = "none";
+        buildEmojiPicker(savedEmoji);
         document.getElementById("profileUsernameDisplay").textContent = username;
         document.getElementById("profileUsernameInput").value = username;
         document.getElementById("profileEditSection").style.display = "none";
@@ -341,7 +374,7 @@
     <!-- Stats Modal -->
     <div id="statsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
       <div style="background:#222;padding:20px;border-radius:8px;width:300px;max-width:90%;position:relative;">
-        <button id="closeStatsBtn" style="position:absolute;top:5px;right:10px;background:none;border:none;font-size:20px;cursor:pointer;">✖️</button>
+        <button id="closeStatsBtn" class="modal-close">✕</button>
         <h3 style="margin-bottom:15px">📈 Статистика</h3>
         <div id="statsContent"></div>
       </div>
@@ -350,7 +383,7 @@
     <!-- Hint Modal -->
     <div id="hintModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1000;">
       <div style="background:#222;padding:25px;border-radius:10px;max-width:300px;text-align:center;position:relative;min-width:290px;min-height:60px;">
-        <button id="closeHintBtn" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:18px;cursor:pointer;color:#fff;">✖</button>
+        <button id="closeHintBtn" class="modal-close">✕</button>
         <p id="hintModalText" style="margin:0">Hint text here</p>
       </div>
     </div>
@@ -358,7 +391,7 @@
     <!-- Login Modal -->
     <div id="loginModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1001;font-family:sans-serif;">
       <div style="background:#222;padding:25px;border-radius:12px;max-width:320px;width:90%;color:#fff;position:relative;">
-        <button id="closeLoginBtn" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:18px;cursor:pointer;color:#fff;">✖</button>
+        <button id="closeLoginBtn" class="modal-close">✕</button>
         <h3 style="margin-bottom:5px;text-align:center;">🔑 Пријави се</h3>
         <p style="font-size:12px;color:#888;text-align:center;margin-bottom:15px;">Рангирај се на табели резултата</p>
         <div id="loginForm">
@@ -387,8 +420,11 @@
     <!-- Profile Modal -->
     <div id="profileModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1001;font-family:sans-serif;">
       <div style="background:#222;padding:25px;border-radius:12px;max-width:320px;width:90%;color:#fff;position:relative;max-height:90vh;overflow-y:auto;">
-        <button id="closeProfileBtn" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:18px;cursor:pointer;color:#fff;">✖</button>
-        <div id="profileAvatar" class="profile-avatar"><span id="profileAvatarText">??</span></div>
+        <button id="closeProfileBtn" class="modal-close">✕</button>
+        <div id="profileAvatar" class="profile-avatar" onclick="toggleEmojiPicker()"><span id="profileAvatarText">??</span></div>
+        <div id="emojiPicker" style="display:none;margin-bottom:8px;">
+          <div class="emoji-picker-grid" id="emojiGrid"></div>
+        </div>
         <div style="text-align:center;margin-bottom:5px;">
           <span id="profileUsernameDisplay" style="font-size:18px;font-weight:bold;"></span>
           <button id="profileEditBtn" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;margin-left:5px;">✏️</button>
@@ -414,7 +450,7 @@
     <!-- Leaderboard Modal -->
     <div id="leaderboardModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1000;font-family:sans-serif;">
       <div style="background:#222;padding:20px 20px 30px 20px;border-radius:12px;width:100%;max-width:500px;color:#fff;text-align:center;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
-        <button id="closeLeaderboardBtn" style="position:absolute;top:10px;right:10px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">✖</button>
+        <button id="closeLeaderboardBtn" class="modal-close">✕</button>
         <h2 style="margin-bottom:15px">🏆 Табела резултата</h2>
         <div style="margin-bottom:15px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
           <button class="lb-tab active" data-tab="avg_score" onclick="loadLeaderboard('avg_score')">Најбољи просек</button>
@@ -428,8 +464,8 @@
     <!-- Help Button -->
     <!-- Help Modal -->
     <div id="helpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1000;font-family:sans-serif;">
-      <div style="background:#222;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;color:#fff;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
-        <button id="closeHelpBtn" style="position:absolute;top:20px;right:10px;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">✖</button>
+      <div style="background:#222;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:75vh;overflow-y:auto;color:#fff;position:relative;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+        <button id="closeHelpBtn" class="modal-close">✕</button>
         <h2 style="margin-bottom:15px;text-align:center">Како играти</h2>
         <div style="margin-bottom:20px">
           <p>Погодите реч од 6 слова у 7 покушаја.</p>
