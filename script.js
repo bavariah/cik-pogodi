@@ -208,12 +208,15 @@ async function submitGuess() {
 
   const totalFlipTime = (guessArr.length - 1) * flipDelay + flipDuration;
 
-  client.from("submissions").insert([{
-    username: localStorage.getItem("username") || "anon",
-    word: targetWord, guess: currentGuess,
-    attempt: currentRow + 1, correct: (currentGuess === targetWord),
-    played_at: new Date().toISOString()
-  }]).then(({ error }) => { if (error) console.error("Failed to log submission:", error); });
+  client.auth.getSession().then(({ data: { session } }) => {
+    client.from("submissions").insert([{
+      username: localStorage.getItem("username") || "anon",
+      user_id: session?.user?.id || null,
+      word: targetWord, guess: currentGuess,
+      attempt: currentRow + 1, correct: (currentGuess === targetWord),
+      played_at: new Date().toISOString()
+    }]).then(({ error }) => { if (error) console.error("Failed to log submission:", error); });
+  });
 
   const isWin = currentGuess === targetWord;
   const isLose = !isWin && currentRow === 6;
@@ -897,13 +900,39 @@ async function loadStatsFromDB() {
 
 // ─── Game init ────────────────────────────────────────────────────────────────
 
-function initGame() {
+function showDBLockedScreen() {
+  disableInput();
+  resultTitle.innerHTML = "Данас сте већ играли 🎮";
+  resultGrid.innerHTML = "";
+  const msg = document.createElement("div");
+  msg.style.cssText = "margin-top:10px;color:#aaa;text-align:center;font-size:14px;";
+  msg.innerHTML = "<p>Играли сте данас из другог прегледача.</p><p>Нова реч долази ускоро!</p>";
+  resultScreen.insertBefore(msg, resultScreen.firstChild);
+  resultScreen.style.display = "block";
+  document.getElementById("timer").style.display = "block";
+  showCountdownToNextWord();
+}
+
+async function initGame() {
   loadStatsFromDB().catch(console.error);
 
   if (checkIfLocked()) {
     document.getElementById("timer").style.display = "block";
     showCountdownToNextWord();
     return;
+  }
+
+  // DB lock check — prevents replaying on a new browser if already played today
+  const { data: { session } } = await client.auth.getSession();
+  if (session?.user && targetWord) {
+    const { count } = await client.from("submissions")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", session.user.id)
+      .eq("word", targetWord);
+    if (count > 0) {
+      showDBLockedScreen();
+      return;
+    }
   }
 
   board.innerHTML = "";

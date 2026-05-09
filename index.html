@@ -39,10 +39,12 @@
             btn.onclick = openProfileModal;
             const stats = JSON.parse(localStorage.getItem("stats"));
             if (stats) syncStats(session.user.id, stats).catch(e => console.error("syncStats failed:", e));
+            if (event === "SIGNED_IN") window.location.reload();
           } else {
             btn.textContent = "🔒";
             btn.title = "Пријави се";
             btn.onclick = openLoginModal;
+            if (event === "SIGNED_OUT") window.location.reload();
           }
         });
 
@@ -321,20 +323,35 @@
 
       async function loadWords() {
         document.body.classList.add("loading");
-        const { data, error } = await client.from(WORDS_TABLE).select("word,hint");
+        const [wordsRes, sessionRes] = await Promise.all([
+          client.from(WORDS_TABLE).select("word,hint"),
+          client.auth.getSession()
+        ]);
         document.body.classList.remove("loading");
-        if (error) { console.error("Error loading words:", error); return; }
-        gameWords = data.map(({ word, hint }) => ({
+        if (wordsRes.error) { console.error("Error loading words:", wordsRes.error); return; }
+        gameWords = wordsRes.data.map(({ word, hint }) => ({
           word: word.trim().toLowerCase(),
           hint: hint.trim(),
         }));
-        ({ word: targetWord, hint: hintText } = getTodayWord());
+        const isLoggedIn = !!sessionRes.data?.session?.user;
+        if (isLoggedIn) {
+          ({ word: targetWord, hint: hintText } = getTodayWord());
+          document.getElementById("guestBanner").style.display = "none";
+        } else {
+          ({ word: targetWord, hint: hintText } = getYesterdayWord());
+          document.getElementById("guestBanner").style.display = "block";
+        }
         initGame();
       }
 
       function getTodayWord() {
         const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
         return gameWords[timeWindow % gameWords.length];
+      }
+
+      function getYesterdayWord() {
+        const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+        return gameWords[((timeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
       }
 
       document.addEventListener("DOMContentLoaded", loadWords);
@@ -353,6 +370,9 @@
       </div>
     </div>
     <h1 style="font-size:28px;margin-top:calc(max(14px,env(safe-area-inset-top)) + 52px)">Чик Погоди</h1>
+    <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border:1px solid #333;border-radius:6px;margin:0 16px 8px;line-height:1.6;">
+      Гледаш јучерашњу реч — <button onclick="openLoginModal()" style="background:none;border:none;color:#538d4e;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">пријави се</button> за данашњу
+    </div>
     <div id="board"></div>
     <div id="keyboard"></div>
     <div id="hintWrapper" style="display:none;margin-top:10px">
