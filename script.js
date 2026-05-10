@@ -922,16 +922,22 @@ async function initGame() {
     return;
   }
 
-  // DB lock check — prevents replaying on a new browser if already played today
+  // DB lock check — only triggers when there's no local game progress
+  // (prevents replaying on a NEW browser, but allows resuming on the same browser)
   const { data: { session } } = await client.auth.getSession();
   if (session?.user && targetWord) {
-    const { count } = await client.from("submissions")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", session.user.id)
-      .eq("word", targetWord);
-    if (count > 0) {
-      showDBLockedScreen();
-      return;
+    const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+    const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
+    const hasLocalProgress = !!localStorage.getItem("gameState") && lastPlayed === currentTimeWindow;
+    if (!hasLocalProgress) {
+      const { count } = await client.from("submissions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .eq("word", targetWord);
+      if (count > 0) {
+        showDBLockedScreen();
+        return;
+      }
     }
   }
 
