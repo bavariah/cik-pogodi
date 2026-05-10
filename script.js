@@ -995,5 +995,4 @@ async function initGame() {
   createKeyboard();
   loadGameState();
   showCountdownToNextWord();
-  loadStatsFromDB().catch(console.error);
 }
