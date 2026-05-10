@@ -675,7 +675,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
       : `${(entry.avg_score || 0).toFixed(1)} просек`;
     return `<div class="lb-row${rowClass ? " " + rowClass : ""}${isYou ? " lb-you" : ""}">
       ${rankEl}
-      <span class="lb-avatar" style="background:${entry.avatar_emoji ? "#333" : colorFromStr(entry.username)};font-size:${entry.avatar_emoji ? "18px" : "11px"}">${entry.avatar_emoji || (entry.username || "?").slice(0, 2).toUpperCase()}</span>
+      <span class="lb-avatar" style="background:${(entry.avatar_emoji || (isYou ? currentEmoji : null)) ? "#333" : colorFromStr(entry.username)};font-size:${(entry.avatar_emoji || (isYou ? currentEmoji : null)) ? "18px" : "11px"}">${entry.avatar_emoji || (isYou ? currentEmoji : null) || (entry.username || "?").slice(0, 2).toUpperCase()}</span>
       <span class="lb-name${isYou ? " lb-name-you" : ""}">${entry.username || "Анон"}${isYou ? " ★" : ""}</span>
       <span class="lb-score"><strong>${scoreVal}<small>${scoreUnit}</small></strong>${scoreSub}</span>
     </div>`;
