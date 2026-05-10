@@ -148,6 +148,7 @@
           misses: stats.misses || 0,
           current_streak: stats.currentStreak || 0,
           max_streak: stats.maxStreak || 0,
+          avatar_emoji: localStorage.getItem("avatar_emoji") || null,
         };
 
         const { data } = await client
@@ -358,10 +359,18 @@
     </script>
   </head>
   <body>
-    <div id="topBar" style="position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:max(14px,env(safe-area-inset-top)) 10px 8px;background:#121213;z-index:200;border-bottom:1px solid #2a2a2a;">
-      <div style="display:flex;align-items:center;">
-        <button id="hintIconBtn" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;display:none;">❓</button>
-        <button id="helpBtn" title="Правила игре" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">ℹ️</button>
+    <div id="topBar" style="display:flex;align-items:center;justify-content:space-between;padding:max(10px,env(safe-area-inset-top)) 10px 8px;background:#121213;border-bottom:1px solid #2a2a2a;">
+      <div style="display:flex;align-items:center;gap:2px;">
+        <div style="display:flex;align-items:center;gap:5px;margin-right:4px;">
+          <div style="display:flex;gap:2px;">
+            <div style="width:18px;height:18px;background:#538d4e;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:#fff;line-height:1;">Ч</div>
+            <div style="width:18px;height:18px;background:#b59f3b;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:#fff;line-height:1;">И</div>
+            <div style="width:18px;height:18px;background:#3a3a3c;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:#fff;line-height:1;">К</div>
+          </div>
+          <span style="font-size:13px;font-weight:bold;color:#fff;letter-spacing:1px;">ПОГОДИ</span>
+        </div>
+        <button id="hintIconBtn" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 6px;line-height:1;display:none;">❓</button>
+        <button id="helpBtn" title="Правила игре" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 6px;line-height:1;">ℹ️</button>
       </div>
       <div style="display:flex;align-items:center;">
         <button id="signInBtn" style="background:none;outline:none;font-size:20px;box-shadow:none;border:none;cursor:pointer;padding:4px 8px;line-height:1;">🔒</button>
@@ -369,8 +378,7 @@
         <button id="openStatsBtn" title="Statistika" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;">📊</button>
       </div>
     </div>
-    <h1 style="font-size:28px;margin-top:calc(max(14px,env(safe-area-inset-top)) + 52px)">Чик Погоди</h1>
-    <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border:1px solid #333;border-radius:6px;margin:0 16px 8px;line-height:1.6;">
+    <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border-bottom:1px solid #333;line-height:1.6;width:100%;box-sizing:border-box;">
       Гледаш јучерашњу реч — <button onclick="openLoginModal()" style="background:none;border:none;color:#538d4e;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">пријави се</button> за данашњу
     </div>
     <div id="board"></div>
