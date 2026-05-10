@@ -922,14 +922,17 @@ async function initGame() {
     return;
   }
 
-  // DB lock check — only triggers when there's no local game progress
-  // (prevents replaying on a NEW browser, but allows resuming on the same browser)
+  // DB lock check — only triggers when no same-browser activity exists for today
+  // Same browser = gameState timestamp falls in current time window
   const { data: { session } } = await client.auth.getSession();
   if (session?.user && targetWord) {
     const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-    const lastPlayed = parseInt(localStorage.getItem("last_played_timeWindow") || "-1");
-    const hasLocalProgress = !!localStorage.getItem("gameState") && lastPlayed === currentTimeWindow;
-    if (!hasLocalProgress) {
+    const savedState = localStorage.getItem("gameState");
+    const gameStateWindow = savedState
+      ? Math.floor((JSON.parse(savedState).timestamp - START_TIME) / lockTime)
+      : -1;
+    const isSameBrowser = gameStateWindow === currentTimeWindow;
+    if (!isSameBrowser) {
       const { count } = await client.from("submissions")
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
