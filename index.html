@@ -39,12 +39,18 @@
             btn.onclick = openProfileModal;
             const stats = JSON.parse(localStorage.getItem("stats"));
             if (stats) syncStats(session.user.id, stats).catch(e => console.error("syncStats failed:", e));
-            if (event === "SIGNED_IN") window.location.reload();
+            if (event === "SIGNED_IN" && !sessionStorage.getItem("auth_reloaded")) {
+              sessionStorage.setItem("auth_reloaded", "1");
+              window.location.reload();
+            }
           } else {
             btn.textContent = "🔒";
             btn.title = "Пријави се";
             btn.onclick = openLoginModal;
-            if (event === "SIGNED_OUT") window.location.reload();
+            if (event === "SIGNED_OUT") {
+              sessionStorage.removeItem("auth_reloaded");
+              window.location.reload();
+            }
           }
         });
 
