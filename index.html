@@ -201,13 +201,18 @@
         picker.style.display = picker.style.display === "none" ? "block" : "none";
       }
 
-      function selectEmoji(emoji) {
+      async function selectEmoji(emoji) {
         localStorage.setItem("avatar_emoji", emoji);
         document.getElementById("profileAvatarText").textContent = emoji;
         document.getElementById("profileAvatarText").style.fontSize = "26px";
         document.getElementById("profileAvatar").style.background = "#333";
         document.querySelectorAll(".emoji-opt").forEach(e => e.classList.toggle("selected", e.dataset.emoji === emoji));
         document.getElementById("emojiPicker").style.display = "none";
+        const { data: { session } } = await client.auth.getSession();
+        if (session?.user) {
+          const stats = JSON.parse(localStorage.getItem("stats"));
+          syncStats(session.user.id, stats).catch(console.error);
+        }
       }
 
       async function openProfileModal() {
