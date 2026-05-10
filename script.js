@@ -898,6 +898,35 @@ async function loadStatsFromDB() {
   renderStatsPopup();
 }
 
+// ─── Abandoned game detection ─────────────────────────────────────────────────
+
+async function recordAbandonedGameIfNeeded() {
+  const savedState = localStorage.getItem("gameState");
+  if (!savedState) return;
+
+  const gameState = JSON.parse(savedState);
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  const gameStateWindow = Math.floor((gameState.timestamp - START_TIME) / lockTime);
+
+  if (gameStateWindow >= currentTimeWindow) return; // still current game, not abandoned
+
+  // Game from a previous window was never completed — count as loss
+  const stats = JSON.parse(localStorage.getItem("stats")) || {
+    total: 0, wins: 0, misses: 0, currentStreak: 0, maxStreak: 0,
+    attempts: [0, 0, 0, 0, 0, 0, 0]
+  };
+  stats.total = (stats.total || 0) + 1;
+  stats.misses = (stats.misses || 0) + 1;
+  stats.currentStreak = 0;
+  localStorage.setItem("stats", JSON.stringify(stats));
+  localStorage.removeItem("gameState");
+
+  const { data: { session } } = await client.auth.getSession();
+  if (session?.user) {
+    await syncStats(session.user.id, stats).catch(console.error);
+  }
+}
+
 // ─── Game init ────────────────────────────────────────────────────────────────
 
 function showDBLockedScreen() {
@@ -914,6 +943,7 @@ function showDBLockedScreen() {
 }
 
 async function initGame() {
+  await recordAbandonedGameIfNeeded();
   loadStatsFromDB().catch(console.error);
 
   if (checkIfLocked()) {
