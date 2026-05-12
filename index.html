@@ -338,14 +338,19 @@
       let targetWord = "";
       let hintText = "";
 
+      function hideLoadingScreen() {
+        const el = document.getElementById("loadingScreen");
+        if (!el) return;
+        el.classList.add("fade-out");
+        setTimeout(() => { el.style.display = "none"; }, 450);
+      }
+
       async function loadWords() {
-        document.body.classList.add("loading");
         const [wordsRes, sessionRes] = await Promise.all([
           client.from(WORDS_TABLE).select("word,hint"),
           client.auth.getSession()
         ]);
-        document.body.classList.remove("loading");
-        if (wordsRes.error) { console.error("Error loading words:", wordsRes.error); return; }
+        if (wordsRes.error) { console.error("Error loading words:", wordsRes.error); hideLoadingScreen(); return; }
         gameWords = wordsRes.data.map(({ word, hint }) => ({
           word: word.trim().toLowerCase(),
           hint: hint.trim(),
@@ -358,6 +363,7 @@
           ({ word: targetWord, hint: hintText } = getYesterdayWord());
           document.getElementById("guestBanner").style.display = "block";
         }
+        hideLoadingScreen();
         initGame();
       }
 
@@ -375,6 +381,21 @@
     </script>
   </head>
   <body>
+    <!-- Loading screen -->
+    <div id="loadingScreen">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div class="loading-tile" style="background:#538d4e;animation-delay:0s;">Ч</div>
+        <div class="loading-tile" style="background:#b59f3b;animation-delay:0.18s;">И</div>
+        <div class="loading-tile" style="background:#3a3a3c;animation-delay:0.36s;">К</div>
+      </div>
+      <div style="font-size:15px;font-weight:bold;letter-spacing:4px;color:#fff;opacity:0;animation:loadingTileIn 0.5s ease 0.6s forwards;">ПОГОДИ</div>
+      <div style="display:flex;gap:7px;margin-top:24px;">
+        <div class="loading-dot" style="animation-delay:0s;"></div>
+        <div class="loading-dot" style="animation-delay:0.2s;"></div>
+        <div class="loading-dot" style="animation-delay:0.4s;"></div>
+      </div>
+    </div>
+
     <div id="topBar" style="display:flex;align-items:center;justify-content:space-between;padding:max(10px,env(safe-area-inset-top)) 10px 8px;background:#121213;border-bottom:1px solid #2a2a2a;">
       <div style="display:flex;align-items:center;gap:2px;">
         <div style="display:flex;align-items:center;gap:5px;margin-right:4px;">
@@ -466,6 +487,7 @@
       <div style="background:#222;padding:25px;border-radius:12px;max-width:320px;width:90%;color:#fff;position:relative;max-height:90vh;overflow-y:auto;">
         <button id="closeProfileBtn" class="modal-close">✕</button>
         <div id="profileAvatar" class="profile-avatar" onclick="toggleEmojiPicker()"><span id="profileAvatarText">??</span></div>
+        <div onclick="toggleEmojiPicker()" style="text-align:center;font-size:11px;color:#666;margin:-4px 0 8px;cursor:pointer;user-select:none;">✏️ Кликни за промену</div>
         <div id="emojiPicker" style="display:none;margin-bottom:8px;">
           <div class="emoji-picker-grid" id="emojiGrid"></div>
         </div>
@@ -539,6 +561,14 @@
             <li>1. ред: 50 поена</li><li>2. ред: 25 поена</li><li>3. ред: 10 поена</li>
             <li>4. ред: 8 поена</li><li>5. ред: 5 поена</li><li>6. ред: 2 поена</li>
             <li>7. ред: 1 поен</li>
+          </ul>
+        </div>
+        <div style="margin-bottom:20px;background:#1a0f0f;border-left:3px solid #c0392b;padding:12px 14px;border-radius:0 8px 8px 0;">
+          <h3 style="margin:0 0 8px;color:#ff7b7b;">⚠️ Казне — 0 поена</h3>
+          <p style="margin:0 0 6px;">Добијате <strong>0 поена</strong> и губите низ победа у два случаја:</p>
+          <ul style="padding-left:18px;margin:0;line-height:2;">
+            <li>Нисте погодили реч ни у 7 покушаја</li>
+            <li>Почели сте игру, али нисте завршили пре следеће речи</li>
           </ul>
         </div>
         <div>
