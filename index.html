@@ -16,6 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
+      const _loadingStartTime = Date.now();
+
       const client = supabase.createClient(
         "https://enhpbzexilgpphdmvfpo.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHBiemV4aWxncHBoZG12ZnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5MjIyNjEsImV4cCI6MjA2MzQ5ODI2MX0.geTPR2XSHDEq3hxHZKUIw3HPB3FxDpFAsRGyCI_k_AE"
@@ -341,8 +343,14 @@
       function hideLoadingScreen() {
         const el = document.getElementById("loadingScreen");
         if (!el) return;
-        el.classList.add("fade-out");
-        setTimeout(() => { el.style.display = "none"; }, 450);
+        // Animation completes at ~1.1s (ПОГОДИ text: 0.6s delay + 0.5s duration)
+        // Wait the remainder so the full animation is always visible
+        const elapsed = Date.now() - _loadingStartTime;
+        const wait = Math.max(0, 1300 - elapsed);
+        setTimeout(() => {
+          el.classList.add("fade-out");
+          setTimeout(() => { el.style.display = "none"; }, 450);
+        }, wait);
       }
 
       async function loadWords() {
