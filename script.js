@@ -764,6 +764,87 @@ function playSuccessSound() {
   } catch (e) {}
 }
 
+// ─── Day Hero ─────────────────────────────────────────────────────────────────
+
+async function loadDayHero() {
+  const el = document.getElementById("dayHeroSection");
+  if (!el || !gameWords || gameWords.length === 0) return;
+
+  const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+  if (currentTimeWindow === 0) return;
+  const yesterdayEntry = gameWords[((currentTimeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
+  if (!yesterdayEntry?.word) return;
+
+  const { data, error } = await client
+    .from("submissions")
+    .select("username, attempt, played_at, user_id")
+    .eq("word", yesterdayEntry.word)
+    .eq("correct", true)
+    .order("attempt", { ascending: true })
+    .order("played_at", { ascending: true })
+    .limit(1);
+
+  if (error || !data || data.length === 0) return;
+  const hero = data[0];
+  if (!hero.username || hero.username === "anon") return;
+
+  let avatarEmoji = null;
+  if (hero.user_id) {
+    const { data: scoreRow } = await client
+      .from("scores")
+      .select("avatar_emoji")
+      .eq("user_id", hero.user_id)
+      .maybeSingle();
+    avatarEmoji = scoreRow?.avatar_emoji || null;
+  }
+
+  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+  const score = scoreMap[(hero.attempt || 1) - 1] || 1;
+  const attemptLabel = ["првог", "другог", "трећег", "четвртог", "петог", "шестог", "седмог"][hero.attempt - 1] || `${hero.attempt}.`;
+  const isYou = hero.username === localStorage.getItem("username");
+
+  // Count consecutive days this hero has been on top
+  let streak = 1;
+  if (hero.user_id) {
+    for (let daysBack = 2; daysBack <= 14; daysBack++) {
+      const tw = currentTimeWindow - daysBack;
+      if (tw < 0) break;
+      const pastWord = gameWords[((tw) % gameWords.length + gameWords.length) % gameWords.length];
+      if (!pastWord?.word) break;
+      const { data: prev } = await client
+        .from("submissions")
+        .select("user_id")
+        .eq("word", pastWord.word)
+        .eq("correct", true)
+        .order("attempt", { ascending: true })
+        .order("played_at", { ascending: true })
+        .limit(1);
+      if (!prev || prev.length === 0 || prev[0].user_id !== hero.user_id) break;
+      streak++;
+    }
+  }
+
+  const avatarBg = avatarEmoji ? "#333" : "#7a5200";
+  const avatarContent = avatarEmoji || (hero.username || "?").slice(0, 2).toUpperCase();
+  const avatarFontSize = avatarEmoji ? "20px" : "12px";
+  const streakBadge = streak > 1 ? `<div class="day-hero-streak">🔥 ${streak} дана</div>` : "";
+
+  el.innerHTML = `
+    <div class="day-hero-card">
+      <div class="day-hero-label">💎 Вауу дана · <span style="color:#888;font-size:11px;">${yesterdayEntry.word.toUpperCase()}</span></div>
+      <div class="day-hero-body">
+        <div class="day-hero-avatar" style="background:${avatarBg};font-size:${avatarFontSize};">${avatarContent}</div>
+        <div class="day-hero-info">
+          <div class="day-hero-name">${hero.username}${isYou ? " · то си ти! ⭐" : ""}</div>
+          <div class="day-hero-sub">из <strong>${attemptLabel}</strong> покушаја · ${score} поена</div>
+          ${streakBadge}
+        </div>
+        <div class="day-hero-score">${score}<small>пт</small></div>
+      </div>
+    </div>`;
+  el.style.display = "block";
+}
+
 // ─── Game end ─────────────────────────────────────────────────────────────────
 
 function endGame(win) {
@@ -789,6 +870,7 @@ function endGame(win) {
     showResultGrid(win);
     showYesterdayWord();
     loadDailyStats().catch(console.error);
+    loadDayHero().catch(console.error);
   }, win ? 1200 : 0);
 }
 
@@ -995,4 +1077,5 @@ async function initGame() {
   createKeyboard();
   loadGameState();
   showCountdownToNextWord();
+  loadDayHero().catch(console.error);
 }

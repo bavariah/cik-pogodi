@@ -462,6 +462,61 @@ div#stats > * {
 .tile.orange { border-color: #b59f3b; }
 .tile.grey   { border-color: #3a3a3c; }
 
+/* ── Day Hero ────────────────────────────────────────── */
+#dayHeroSection { padding: 8px 12px 4px; width: 100%; box-sizing: border-box; max-width: 360px; margin: 0 auto; }
+
+.day-hero-card {
+  background: linear-gradient(135deg, #1f1800 0%, #2a2000 100%);
+  border: 1px solid #ffd70033;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 0 12px rgba(255,215,0,0.08);
+}
+.day-hero-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #ffd700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.day-hero-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.day-hero-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  flex-shrink: 0;
+  border: 1px solid #ffd70044;
+}
+.day-hero-info { flex: 1; min-width: 0; }
+.day-hero-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.day-hero-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+.day-hero-score {
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffd700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.day-hero-score small { font-size: 10px; color: #aaa; font-weight: normal; display: block; text-align: center; }
+.day-hero-streak { font-size: 11px; color: #ff9500; margin-top: 4px; font-weight: bold; }
+
 /* ── Leaderboard ──────────────────────────────────────── */
 .lb-tab { padding:6px 14px;border:none;border-radius:20px;cursor:pointer;font-size:13px;background:#333;color:#aaa;transition:background 0.15s,color 0.15s; }
 .lb-tab.active { background:#538d4e;color:#fff;font-weight:bold; }
