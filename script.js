@@ -1027,6 +1027,7 @@ function showDBLockedScreen() {
 async function initGame() {
   await recordAbandonedGameIfNeeded();
   loadStatsFromDB().catch(console.error);
+  loadDayHero().catch(console.error);
 
   if (checkIfLocked()) {
     document.getElementById("timer").style.display = "block";
@@ -1077,5 +1078,4 @@ async function initGame() {
   createKeyboard();
   loadGameState();
   showCountdownToNextWord();
-  loadDayHero().catch(console.error);
 }
