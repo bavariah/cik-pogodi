@@ -825,22 +825,17 @@ async function loadDayHero() {
     }
   }
 
-  const avatarBg = avatarEmoji ? "#333" : "#7a5200";
-  const avatarContent = avatarEmoji || (hero.username || "?").slice(0, 2).toUpperCase();
-  const avatarFontSize = avatarEmoji ? "20px" : "12px";
-  const streakBadge = streak > 1 ? `<div class="day-hero-streak">🔥 ${streak} дана</div>` : "";
+  const streakBadge = streak > 1 ? `<div class="day-hero-streak">🔥 ${streak} дана заредом</div>` : "";
 
   el.innerHTML = `
     <div class="day-hero-card">
-      <div class="day-hero-label">💎 Вауу дана · <span style="color:#888;font-size:11px;">${yesterdayEntry.word.toUpperCase()}</span></div>
+      <div class="day-hero-label">💎 ВАУУУ ЈУЧЕРАШЊЕГ ДАНА</div>
       <div class="day-hero-body">
-        <div class="day-hero-avatar" style="background:${avatarBg};font-size:${avatarFontSize};">${avatarContent}</div>
         <div class="day-hero-info">
-          <div class="day-hero-name">${hero.username}${isYou ? " · то си ти! ⭐" : ""}</div>
-          <div class="day-hero-sub">из <strong>${attemptLabel}</strong> покушаја · ${score} поена</div>
+          <div class="day-hero-name">${hero.username}${isYou ? " ⭐" : ""}</div>
+          <div class="day-hero-sub">из <strong>${attemptLabel}</strong> покушаја</div>
           ${streakBadge}
         </div>
-        <div class="day-hero-score">${score}<small>пт</small></div>
       </div>
     </div>`;
   el.style.display = "block";
