@@ -463,7 +463,7 @@ div#stats > * {
 .tile.grey   { border-color: #3a3a3c; }
 
 /* ── Day Hero ────────────────────────────────────────── */
-#dayHeroSection { padding: 8px 12px 4px; width: 100%; box-sizing: border-box; max-width: 360px; margin: 0 auto; }
+#dayHeroSection { padding: 4px 12px 8px; width: 100%; box-sizing: border-box; max-width: 360px; margin: 0 auto; }
 
 .day-hero-card {
   background: linear-gradient(135deg, #1f1800 0%, #2a2000 100%);

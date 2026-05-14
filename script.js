@@ -424,6 +424,7 @@ function showLockedGameScreen() {
 
   showYesterdayWord();
   loadDailyStats().catch(console.error);
+  loadDayHero().catch(console.error);
 }
 
 function checkIfLocked() {
