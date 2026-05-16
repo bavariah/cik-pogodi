@@ -771,6 +771,11 @@ async function loadDayHero() {
   const el = document.getElementById("dayHeroSection");
   if (!el || !gameWords || gameWords.length === 0) return;
 
+  // Only show to users who solved today's word in 4 or fewer attempts
+  const lastResult = localStorage.getItem("last_result");
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") ?? "-1");
+  if (lastResult !== "win" || lastAttemptRow > 3) return;
+
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
   const yesterdayEntry = gameWords[((currentTimeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
