@@ -771,11 +771,6 @@ async function loadDayHero() {
   const el = document.getElementById("dayHeroSection");
   if (!el || !gameWords || gameWords.length === 0) return;
 
-  // Only show to users who solved today's word in 4 or fewer attempts
-  const lastResult = localStorage.getItem("last_result");
-  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") ?? "-1");
-  if (lastResult !== "win" || lastAttemptRow > 3) return;
-
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
   const yesterdayEntry = gameWords[((currentTimeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
@@ -794,6 +789,15 @@ async function loadDayHero() {
   const hero = data[0];
   if (!hero.username || hero.username === "anon") return;
 
+  const currentUsername = localStorage.getItem("username");
+  const isYou = hero.username === currentUsername;
+
+  // Show if: current user won today in ≤4 attempts, OR current user IS the hero
+  const lastResult = localStorage.getItem("last_result");
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") ?? "-1");
+  const wonTodayEarly = lastResult === "win" && lastAttemptRow <= 3;
+  if (!wonTodayEarly && !isYou) return;
+
   let avatarEmoji = null;
   if (hero.user_id) {
     const { data: scoreRow } = await client
@@ -807,7 +811,6 @@ async function loadDayHero() {
   const scoreMap = [50, 25, 10, 8, 5, 2, 1];
   const score = scoreMap[(hero.attempt || 1) - 1] || 1;
   const attemptLabel = ["првог", "другог", "трећег", "четвртог", "петог", "шестог", "седмог"][hero.attempt - 1] || `${hero.attempt}.`;
-  const isYou = hero.username === localStorage.getItem("username");
 
   // Count consecutive days this hero has been on top
   let streak = 1;
