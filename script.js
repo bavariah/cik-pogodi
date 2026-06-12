@@ -709,7 +709,7 @@ async function checkAndArchiveSeason() {
 
       const { data: topPlayers } = await client.from("scores")
         .select("user_id, username, score, avg_score, attempts")
-        .eq("season", season).order("score", { ascending: false }).limit(10);
+        .eq("season", season).order("score", { ascending: false });
 
       if (topPlayers && topPlayers.length > 0) {
         await client.from("hall_of_fame").insert(
