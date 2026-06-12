@@ -581,6 +581,8 @@ if (!localStorage.getItem("helpShown")) {
 
 document.addEventListener("keydown", (e) => {
   if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
   const map = {
     q:"Љ", w:"Њ", e:"Е", r:"Р", t:"Т", z:"З", u:"У", i:"И", o:"О", p:"П", "[":"Ш",
     a:"А", s:"С", d:"Д", f:"Ф", g:"Г", h:"Х", j:"Ј", k:"К", l:"Л", ";":"Ч", "'":"Ћ",
