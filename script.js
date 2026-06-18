@@ -12,6 +12,15 @@ let currentRow = 0;
 let currentGuess = "";
 let isFlipping = false;
 
+function getTimeWindowBounds(offset = 0) {
+  const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime) + offset;
+  return {
+    timeWindow,
+    start: new Date(START_TIME + timeWindow * lockTime).toISOString(),
+    end: new Date(START_TIME + (timeWindow + 1) * lockTime).toISOString()
+  };
+}
+
 // ─── Season helpers ───────────────────────────────────────────────────────────
 
 function getCurrentSeason() {
@@ -777,12 +786,16 @@ async function loadDayHero() {
   if (currentTimeWindow === 0) return;
   const yesterdayEntry = gameWords[((currentTimeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
   if (!yesterdayEntry?.word) return;
+  const { start, end } = getTimeWindowBounds(-1);
 
   const { data, error } = await client
     .from("submissions")
     .select("username, attempt, played_at, user_id")
     .eq("word", yesterdayEntry.word)
     .eq("correct", true)
+    .not("user_id", "is", null)
+    .gte("played_at", start)
+    .lt("played_at", end)
     .order("attempt", { ascending: true })
     .order("played_at", { ascending: true })
     .limit(1);
@@ -822,11 +835,15 @@ async function loadDayHero() {
       if (tw < 0) break;
       const pastWord = gameWords[((tw) % gameWords.length + gameWords.length) % gameWords.length];
       if (!pastWord?.word) break;
+      const { start: pastStart, end: pastEnd } = getTimeWindowBounds(-daysBack);
       const { data: prev } = await client
         .from("submissions")
         .select("user_id")
         .eq("word", pastWord.word)
         .eq("correct", true)
+        .not("user_id", "is", null)
+        .gte("played_at", pastStart)
+        .lt("played_at", pastEnd)
         .order("attempt", { ascending: true })
         .order("played_at", { ascending: true })
         .limit(1);
@@ -927,9 +944,12 @@ function showYesterdayWord() {
 async function loadDailyStats() {
   const el = document.getElementById("dailyStatsBar");
   if (!el || !targetWord) return;
+  const { start, end } = getTimeWindowBounds();
   const { count, error } = await client.from("submissions")
     .select("*", { count: "exact", head: true })
-    .eq("word", targetWord).eq("correct", true);
+    .eq("word", targetWord).eq("correct", true)
+    .gte("played_at", start)
+    .lt("played_at", end);
   if (error || !count) return;
   el.textContent = `Данас је ${count} ${count === 1 ? "играч" : "играча"} погодило реч`;
   el.style.display = "block";
@@ -1052,10 +1072,13 @@ async function initGame() {
       : -1;
     const isSameBrowser = gameStateWindow === currentTimeWindow;
     if (!isSameBrowser) {
+      const { start, end } = getTimeWindowBounds();
       const { count } = await client.from("submissions")
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
-        .eq("word", targetWord);
+        .eq("word", targetWord)
+        .gte("played_at", start)
+        .lt("played_at", end);
       if (count > 0) {
         showDBLockedScreen();
         return;
