@@ -77,7 +77,7 @@
         const seasonAttempts = seasonRow?.attempts || 0;
 
         if ((stats.maxStreak || 0) >= 10) return "Шампион низа";
-        if (seasonAttempts >= 5 && seasonAvg >= 25) return "Мајстор просека";
+        if (seasonAttempts >= 5 && seasonAvg >= 10) return "Мајстор просека";
         if (seasonScore >= 250) return "Ловац на поене";
         if (total >= 10 && winRate >= 80) return "Сигурна рука";
         if ((stats.currentStreak || 0) >= 3) return "У добром низу";
