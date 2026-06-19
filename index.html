@@ -55,6 +55,54 @@
         localStorage.setItem(getSeasonStatsKey(season), JSON.stringify(stats));
       }
 
+      function getSeasonEndDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        return now.getMonth() < 6 ? new Date(year, 6, 1) : new Date(year + 1, 0, 1);
+      }
+
+      function getSeasonCountdownText() {
+        const daysLeft = Math.max(0, Math.ceil((getSeasonEndDate() - new Date()) / (24 * 60 * 60 * 1000)));
+        if (daysLeft === 0) return "Последњи дан сезоне";
+        if (daysLeft === 1) return "Сезона се завршава сутра";
+        return `Сезона се завршава за ${daysLeft} дана`;
+      }
+
+      function getProfileTitle(stats, seasonRow) {
+        const total = stats.total || 0;
+        const wins = stats.wins || 0;
+        const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+        const seasonScore = seasonRow?.score || 0;
+        const seasonAvg = seasonRow?.avg_score || 0;
+        const seasonAttempts = seasonRow?.attempts || 0;
+
+        if ((stats.maxStreak || 0) >= 10) return "Шампион низа";
+        if (seasonAttempts >= 5 && seasonAvg >= 25) return "Мајстор просека";
+        if (seasonScore >= 250) return "Ловац на поене";
+        if (total >= 10 && winRate >= 80) return "Сигурна рука";
+        if ((stats.currentStreak || 0) >= 3) return "У добром низу";
+        if (wins >= 25) return "Искусни играч";
+        if (total > 0) return "Успон у току";
+        return "Нови изазивач";
+      }
+
+      function getRankMedal(rank) {
+        return ["🥇", "🥈", "🥉"][rank - 1] || "";
+      }
+
+      function renderProfileTrophies(scoreRank, avgRank) {
+        const trophyEl = document.getElementById("profileTrophies");
+        const trophies = [];
+        if (scoreRank && scoreRank <= 3) {
+          trophies.push(`${getRankMedal(scoreRank)} #${scoreRank} Највише поена`);
+        }
+        if (avgRank && avgRank <= 3) {
+          trophies.push(`${getRankMedal(avgRank)} #${avgRank} Најбољи просек`);
+        }
+        trophyEl.innerHTML = trophies.map(t => `<span>${t}</span>`).join("");
+        trophyEl.style.display = trophies.length ? "flex" : "none";
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         client.auth.onAuthStateChange((event, session) => {
           const btn = document.getElementById("signInBtn");
@@ -287,14 +335,30 @@
         if (currentSeasonData) {
           document.getElementById("profileTotalScore").textContent = currentSeasonData.score || 0;
           document.getElementById("profileAvgScore").textContent = (currentSeasonData.avg_score || 0).toFixed(1);
-          const { count } = await client.from("scores").select("*", { count: "exact", head: true })
-            .eq("season", season).gt("score", currentSeasonData.score || 0);
-          document.getElementById("profileRank").textContent = "Ранг: #" + ((count || 0) + 1) + " · " + getSeasonLabel(season);
+          let scoreRank = null;
+          let avgRank = null;
+          if ((currentSeasonData.score || 0) > 0) {
+            const { count } = await client.from("scores").select("*", { count: "exact", head: true })
+              .eq("season", season).gt("score", currentSeasonData.score || 0);
+            scoreRank = (count || 0) + 1;
+          }
+          if ((currentSeasonData.attempts || 0) > 0 && (currentSeasonData.avg_score || 0) > 0) {
+            const { count } = await client.from("scores").select("*", { count: "exact", head: true })
+              .eq("season", season).gt("avg_score", currentSeasonData.avg_score || 0);
+            avgRank = (count || 0) + 1;
+          }
+          document.getElementById("profileRank").textContent = scoreRank
+            ? "Ранг: #" + scoreRank + " · " + getSeasonLabel(season)
+            : getSeasonLabel(season);
+          renderProfileTrophies(scoreRank, avgRank);
         } else {
           document.getElementById("profileTotalScore").textContent = 0;
           document.getElementById("profileAvgScore").textContent = "0.0";
           document.getElementById("profileRank").textContent = getSeasonLabel(season);
+          renderProfileTrophies(null, null);
         }
+        document.getElementById("profileTitle").textContent = getProfileTitle(stats, currentSeasonData);
+        document.getElementById("profileSeasonCountdown").textContent = getSeasonCountdownText();
 
         // Season history
         const histEl = document.getElementById("profileSeasonHistory");
@@ -563,11 +627,14 @@
           <span id="profileUsernameDisplay" style="font-size:18px;font-weight:bold;"></span>
           <button id="profileEditBtn" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;margin-left:5px;">✏️</button>
         </div>
+        <div id="profileTitle" class="profile-title"></div>
         <div id="profileEditSection" style="display:none;margin-bottom:12px;">
           <input id="profileUsernameInput" type="text" maxlength="20" style="width:100%;padding:8px;border:1px solid #444;background:#333;color:#fff;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;" />
           <button id="profileSaveBtn" style="width:100%;padding:8px;background:#538d4e;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">Сачувај надимак</button>
         </div>
         <div id="profileRank" style="text-align:center;margin-bottom:12px;font-size:13px;color:#777;"></div>
+        <div id="profileSeasonCountdown" class="profile-season-countdown"></div>
+        <div id="profileTrophies" class="profile-trophies" style="display:none;"></div>
         <div class="profile-stats-grid">
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileGames">–</div><div class="profile-stat-label">Одиграно</div></div>
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileWinRate">–</div><div class="profile-stat-label">Победе</div></div>

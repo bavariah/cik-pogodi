@@ -33,6 +33,19 @@ function getSeasonLabel(s) {
   return `${year} ${half === "S1" ? "Јануар–Јун" : "Јул–Децембар"}`;
 }
 
+function getSeasonEndDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  return now.getMonth() < 6 ? new Date(year, 6, 1) : new Date(year + 1, 0, 1);
+}
+
+function getSeasonCountdownText() {
+  const daysLeft = Math.max(0, Math.ceil((getSeasonEndDate() - new Date()) / (24 * 60 * 60 * 1000)));
+  if (daysLeft === 0) return "Последњи дан сезоне";
+  if (daysLeft === 1) return "Сезона се завршава сутра";
+  return `Сезона се завршава за ${daysLeft} дана`;
+}
+
 // ─── Board & keyboard ─────────────────────────────────────────────────────────
 
 function createBoard() {
@@ -710,8 +723,13 @@ async function loadLeaderboard(orderBy = "avg_score") {
     .order(orderBy, { ascending: false })
     .limit(20);
 
+  const seasonHeader = `<div class="lb-season-label">${getSeasonLabel(getCurrentSeason())}</div><div class="lb-season-countdown">${getSeasonCountdownText()}</div>`;
+
   if (error) { container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Грешка при учитавању.</p>"; return; }
-  if (!data || data.length === 0) { container.innerHTML = "<p style='color:#aaa;text-align:center;padding:20px 0'>Нема резултата за ову сезону.</p>"; return; }
+  if (!data || data.length === 0) {
+    container.innerHTML = `${seasonHeader}<p style='color:#aaa;text-align:center;padding:20px 0'>Нема резултата за ову сезону.</p>`;
+    return;
+  }
 
   let yourRank = -1;
   const rows = data.map((entry, i) => {
@@ -739,7 +757,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
   const yourRankEl = yourRank === -1 && currentUsername
     ? `<div class="lb-your-rank">Твој ранг није у топ 20</div>` : "";
 
-  container.innerHTML = `<div class="lb-season-label">${getSeasonLabel(getCurrentSeason())}</div>${rows}${yourRankEl}`;
+  container.innerHTML = `${seasonHeader}${rows}${yourRankEl}`;
 }
 
 document.getElementById("openLeaderboardBtn").onclick = () => loadLeaderboard("avg_score");
