@@ -32,6 +32,29 @@
         return `${year} ${half === "S1" ? "Јануар–Јун" : "Јул–Децембар"}`;
       }
 
+      function getEmptyStats() {
+        return {
+          total: 0, wins: 0, attempts: [0, 0, 0, 0, 0, 0, 0],
+          misses: 0, currentStreak: 0, maxStreak: 0
+        };
+      }
+
+      function getSeasonStatsKey(season = getCurrentSeason()) {
+        return `season_stats_${season}`;
+      }
+
+      function getSeasonStats(season = getCurrentSeason()) {
+        try {
+          return JSON.parse(localStorage.getItem(getSeasonStatsKey(season))) || null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function saveSeasonStats(stats, season = getCurrentSeason()) {
+        localStorage.setItem(getSeasonStatsKey(season), JSON.stringify(stats));
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         client.auth.onAuthStateChange((event, session) => {
           const btn = document.getElementById("signInBtn");
@@ -39,8 +62,7 @@
             btn.textContent = "👤";
             btn.title = "Профил";
             btn.onclick = openProfileModal;
-            const stats = JSON.parse(localStorage.getItem("stats"));
-            if (stats) syncStats(session.user.id, stats).catch(e => console.error("syncStats failed:", e));
+            syncStats(session.user.id).catch(e => console.error("syncStats failed:", e));
             if (event === "SIGNED_IN" && !sessionStorage.getItem("auth_reloaded")) {
               sessionStorage.setItem("auth_reloaded", "1");
               window.location.reload();
@@ -140,16 +162,12 @@
         }
       }
 
-      async function syncStats(user_id, stats) {
-        if (!stats) stats = JSON.parse(localStorage.getItem("stats"));
-        if (!stats) return;
+      async function syncStats(user_id) {
         const season = getCurrentSeason();
+        const stats = getSeasonStats(season) || getEmptyStats();
         const username = localStorage.getItem("username") || "Играч";
-        const scoreMap = [50, 25, 10, 8, 5, 2, 1];
         const dist = Array.isArray(stats.attempts) ? stats.attempts : [0, 0, 0, 0, 0, 0, 0];
-        const backfilledScore = dist.reduce((total, wins, i) => total + wins * (scoreMap[i] || 0), 0);
-        const backfilledAttempts = dist.reduce((a, b) => a + b, 0);
-        const backfilledAvg = backfilledAttempts > 0 ? parseFloat((backfilledScore / backfilledAttempts).toFixed(2)) : 0;
+        const seasonAttempts = dist.reduce((a, b) => a + b, 0);
         const metadata = {
           username,
           distribution: dist,
@@ -169,21 +187,16 @@
         if (data) {
           const updatePayload = {};
           // Only update metadata if local has at least as many wins as DB (prevent new-browser blank from overwriting real data)
-          if (backfilledAttempts >= (data.attempts || 0)) {
+          if (seasonAttempts >= (data.attempts || 0)) {
             Object.assign(updatePayload, metadata);
-          }
-          if (backfilledScore > (data.score || 0) && backfilledAttempts > 0) {
-            updatePayload.score = backfilledScore;
-            updatePayload.attempts = backfilledAttempts;
-            updatePayload.avg_score = backfilledAvg;
           }
           if (Object.keys(updatePayload).length > 0) {
             await client.from("scores").update(updatePayload).eq("id", data.id);
           }
         } else {
           await client.from("scores").insert([{
-            user_id, ...metadata, score: backfilledScore,
-            attempts: backfilledAttempts, avg_score: backfilledAvg, season
+            user_id, ...metadata, score: 0,
+            attempts: 0, avg_score: 0, season
           }]);
         }
       }
@@ -223,8 +236,7 @@
         document.getElementById("emojiPicker").style.display = "none";
         const { data: { session } } = await client.auth.getSession();
         if (session?.user) {
-          const stats = JSON.parse(localStorage.getItem("stats"));
-          syncStats(session.user.id, stats).catch(console.error);
+          syncStats(session.user.id).catch(console.error);
         }
       }
 
@@ -260,19 +272,16 @@
           .eq("season", season)
           .maybeSingle();
 
-        // If no DB row yet, or row has score=0 but local stats exist, sync now and re-fetch
+        // If no DB row yet, or row has score=0, sync current-season stats and re-fetch
         if (!currentSeasonData || currentSeasonData.score === 0) {
-          const localStats = JSON.parse(localStorage.getItem("stats"));
-          if (localStats) {
-            await syncStats(uid, localStats).catch(console.error);
-            const { data: refetched } = await client
-              .from("scores")
-              .select("score, attempts, avg_score")
-              .eq("user_id", uid)
-              .eq("season", season)
-              .maybeSingle();
-            currentSeasonData = refetched;
-          }
+          await syncStats(uid).catch(console.error);
+          const { data: refetched } = await client
+            .from("scores")
+            .select("score, attempts, avg_score")
+            .eq("user_id", uid)
+            .eq("season", season)
+            .maybeSingle();
+          currentSeasonData = refetched;
         }
 
         if (currentSeasonData) {

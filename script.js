@@ -176,13 +176,7 @@ function checkAndRecordMiss(gameState, savedTimeWindow) {
   const hasGuesses = gameState.boardState.some(row => row.some(tile => tile.color));
   if (!hasGuesses) return;
 
-  let stats = JSON.parse(localStorage.getItem("stats")) || {
-    total: 0, wins: 0, attempts: [0, 0, 0, 0, 0, 0, 0], misses: 0, currentStreak: 0, maxStreak: 0
-  };
-  stats.total++;
-  stats.misses = (stats.misses || 0) + 1;
-  stats.currentStreak = 0;
-  localStorage.setItem("stats", JSON.stringify(stats));
+  recordStatsResult(null);
   localStorage.setItem("pending_miss_sync", "1");
 }
 
@@ -260,7 +254,7 @@ async function submitGuess() {
   await new Promise(resolve => setTimeout(resolve, totalFlipTime));
   isFlipping = false;
 
-  if (isWin || isLose) { endGame(isWin); return; }
+  if (isWin || isLose) { await endGame(isWin); return; }
 
   saveGameState();
   currentRow++;
@@ -307,14 +301,20 @@ function disableInput() {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
-async function updateStats(rowSolved) {
-  let stats = JSON.parse(localStorage.getItem("stats")) || {
-    total: 0, wins: 0, attempts: [0, 0, 0, 0, 0, 0, 0], misses: 0, currentStreak: 0, maxStreak: 0
-  };
-  stats.misses = stats.misses || 0;
-  stats.currentStreak = stats.currentStreak || 0;
-  stats.maxStreak = stats.maxStreak || 0;
+function normalizeStats(stats) {
+  const normalized = Object.assign(getEmptyStats(), stats || {});
+  normalized.attempts = Array.isArray(normalized.attempts)
+    ? normalized.attempts.slice(0, 7).concat([0, 0, 0, 0, 0, 0, 0]).slice(0, 7)
+    : [0, 0, 0, 0, 0, 0, 0];
+  normalized.total = normalized.total || 0;
+  normalized.wins = normalized.wins || 0;
+  normalized.misses = normalized.misses || 0;
+  normalized.currentStreak = normalized.currentStreak || 0;
+  normalized.maxStreak = normalized.maxStreak || 0;
+  return normalized;
+}
 
+function applyStatsResult(stats, rowSolved) {
   stats.total++;
   if (rowSolved !== null) {
     stats.wins++;
@@ -322,13 +322,29 @@ async function updateStats(rowSolved) {
     stats.currentStreak++;
     if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
   } else {
+    stats.misses++;
     stats.currentStreak = 0;
   }
-  localStorage.setItem("stats", JSON.stringify(stats));
+  return stats;
+}
+
+function recordStatsResult(rowSolved) {
+  const allStats = applyStatsResult(
+    normalizeStats(JSON.parse(localStorage.getItem("stats"))),
+    rowSolved
+  );
+  const seasonStats = applyStatsResult(normalizeStats(getSeasonStats()), rowSolved);
+  localStorage.setItem("stats", JSON.stringify(allStats));
+  saveSeasonStats(seasonStats);
+  return { allStats, seasonStats };
+}
+
+async function updateStats(rowSolved) {
+  recordStatsResult(rowSolved);
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user) {
-    syncStats(session.user.id, stats).catch(e => console.error("syncStats failed", e));
+    syncStats(session.user.id).catch(e => console.error("syncStats failed", e));
   }
 }
 
@@ -897,13 +913,13 @@ async function loadDayHero() {
 
 // ─── Game end ─────────────────────────────────────────────────────────────────
 
-function endGame(win) {
+async function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
   saveResultGrid();
   disableInput();
-  updateStats(win ? currentRow : null);
+  await updateStats(win ? currentRow : null);
 
   if (win) {
     const row = board.children[currentRow];
@@ -913,7 +929,7 @@ function endGame(win) {
     playSuccessSound();
     setTimeout(() => createFireworks(), 600);
     const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-    updateLeaderboard(localStorage.getItem("username"), scoreMap[currentRow] || 0);
+    await updateLeaderboard(localStorage.getItem("username"), scoreMap[currentRow] || 0);
   }
 
   setTimeout(() => {
@@ -993,8 +1009,7 @@ async function loadStatsFromDB() {
     localStorage.removeItem("pending_miss_sync");
   }
 
-  const localStats = JSON.parse(localStorage.getItem("stats"));
-  if (localStats) await syncStats(uid, localStats).catch(() => {});
+  await syncStats(uid).catch(() => {});
 
   await checkAndArchiveSeason();
 
@@ -1046,19 +1061,12 @@ async function recordAbandonedGameIfNeeded() {
   if (gameStateWindow >= currentTimeWindow) return; // still current game, not abandoned
 
   // Game from a previous window was never completed — count as loss
-  const stats = JSON.parse(localStorage.getItem("stats")) || {
-    total: 0, wins: 0, misses: 0, currentStreak: 0, maxStreak: 0,
-    attempts: [0, 0, 0, 0, 0, 0, 0]
-  };
-  stats.total = (stats.total || 0) + 1;
-  stats.misses = (stats.misses || 0) + 1;
-  stats.currentStreak = 0;
-  localStorage.setItem("stats", JSON.stringify(stats));
+  recordStatsResult(null);
   localStorage.removeItem("gameState");
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user) {
-    await syncStats(session.user.id, stats).catch(console.error);
+    await syncStats(session.user.id).catch(console.error);
   }
 }
 
