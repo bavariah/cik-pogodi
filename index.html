@@ -335,8 +335,11 @@
       }
 
       const WORDS_TABLE = "words";
+      const WORD_ORDER_COLUMN = "sort_order";
       const SUBMISSIONS_TABLE = "submissions";
       let gameWords = [];
+      let gameWordCount = 0;
+      const gameWordCache = new Map();
       let targetWord = "";
       let hintText = "";
 
@@ -353,36 +356,83 @@
         }, wait);
       }
 
+      function normalizeWordRow(row) {
+        if (!row?.word) return null;
+        return {
+          word: row.word.trim().toLowerCase(),
+          hint: (row.hint || "").trim(),
+        };
+      }
+
+      async function loadLegacyWords() {
+        const { data, error } = await client.from(WORDS_TABLE).select("word,hint");
+        if (error) throw error;
+        gameWords = data.map(normalizeWordRow).filter(Boolean);
+        gameWordCount = gameWords.length;
+        gameWords.forEach((entry, index) => gameWordCache.set(index, entry));
+      }
+
+      async function ensureGameWordCount() {
+        if (gameWordCount > 0) return gameWordCount;
+        const { count, error } = await client
+          .from(WORDS_TABLE)
+          .select("*", { count: "exact", head: true });
+        if (error) throw error;
+        gameWordCount = count || 0;
+        return gameWordCount;
+      }
+
+      async function getWordByTimeWindow(timeWindow) {
+        const count = await ensureGameWordCount();
+        if (!count) return null;
+        const index = ((timeWindow % count) + count) % count;
+        if (gameWordCache.has(index)) return gameWordCache.get(index);
+
+        const { data, error } = await client
+          .from(WORDS_TABLE)
+          .select("word,hint")
+          .order(WORD_ORDER_COLUMN, { ascending: true })
+          .range(index, index)
+          .maybeSingle();
+
+        if (error) {
+          if (gameWords.length === 0) await loadLegacyWords();
+          return gameWords[index] || null;
+        }
+
+        const entry = normalizeWordRow(data);
+        if (entry) gameWordCache.set(index, entry);
+        return entry;
+      }
+
       async function loadWords() {
-        const [wordsRes, sessionRes] = await Promise.all([
-          client.from(WORDS_TABLE).select("word,hint"),
-          client.auth.getSession()
-        ]);
-        if (wordsRes.error) { console.error("Error loading words:", wordsRes.error); hideLoadingScreen(); return; }
-        gameWords = wordsRes.data.map(({ word, hint }) => ({
-          word: word.trim().toLowerCase(),
-          hint: hint.trim(),
-        }));
+        const sessionRes = await client.auth.getSession();
         const isLoggedIn = !!sessionRes.data?.session?.user;
         if (isLoggedIn) {
-          ({ word: targetWord, hint: hintText } = getTodayWord());
+          ({ word: targetWord, hint: hintText } = await getTodayWord());
           document.getElementById("guestBanner").style.display = "none";
         } else {
-          ({ word: targetWord, hint: hintText } = getYesterdayWord());
+          ({ word: targetWord, hint: hintText } = await getYesterdayWord());
           document.getElementById("guestBanner").style.display = "block";
         }
+        if (!targetWord) { console.error("No word available for today"); hideLoadingScreen(); return; }
         hideLoadingScreen();
         initGame();
       }
 
-      function getTodayWord() {
+      async function getTodayWord() {
         const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-        return gameWords[timeWindow % gameWords.length];
+        return getWordByTimeWindow(timeWindow);
       }
 
-      function getYesterdayWord() {
+      async function getYesterdayWord() {
         const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-        return gameWords[((timeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
+        return getWordByTimeWindow(timeWindow - 1);
+      }
+
+      async function getGameWordForOffset(offset = 0) {
+        const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
+        return getWordByTimeWindow(timeWindow + offset);
       }
 
       document.addEventListener("DOMContentLoaded", loadWords);

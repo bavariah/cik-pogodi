@@ -125,6 +125,28 @@ function showToast(msg) {
   toast._timer = setTimeout(() => toast.classList.remove("show"), 2500);
 }
 
+function shakeCurrentRow() {
+  const row = board.children[currentRow];
+  if (!row) return;
+  row.classList.add("shake");
+  setTimeout(() => row.classList.remove("shake"), 350);
+}
+
+async function isKnownWord(word) {
+  const normalized = word.trim().toLowerCase();
+  const { data, error } = await client
+    .from(WORDS_TABLE)
+    .select("word")
+    .eq("word", normalized)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error("Word validation failed:", error);
+    return false;
+  }
+  return !!data;
+}
+
 // ─── Result grid save ─────────────────────────────────────────────────────────
 
 function saveResultGrid() {
@@ -169,10 +191,16 @@ function checkAndRecordMiss(gameState, savedTimeWindow) {
 async function submitGuess() {
   if (isFlipping) return;
   if (currentGuess.length !== 6) {
-    const row = board.children[currentRow];
-    row.classList.add("shake");
-    setTimeout(() => row.classList.remove("shake"), 350);
+    shakeCurrentRow();
     showToast("Реч мора имати 6 слова");
+    return;
+  }
+  isFlipping = true;
+
+  if (!(await isKnownWord(currentGuess))) {
+    isFlipping = false;
+    shakeCurrentRow();
+    showToast("Реч није у речнику");
     return;
   }
 
@@ -193,7 +221,6 @@ async function submitGuess() {
 
   const flipDuration = 400;
   const flipDelay = 100;
-  isFlipping = true;
 
   guessArr.forEach((letter, i) => {
     const tile = row.children[i];
@@ -431,7 +458,7 @@ function showLockedGameScreen() {
     });
   }
 
-  showYesterdayWord();
+  showYesterdayWord().catch(console.error);
   loadDailyStats().catch(console.error);
   loadDayHero().catch(console.error);
 }
@@ -780,11 +807,11 @@ function playSuccessSound() {
 
 async function loadDayHero() {
   const el = document.getElementById("dayHeroSection");
-  if (!el || !gameWords || gameWords.length === 0) return;
+  if (!el || typeof getGameWordForOffset !== "function") return;
 
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
-  const yesterdayEntry = gameWords[((currentTimeWindow - 1) % gameWords.length + gameWords.length) % gameWords.length];
+  const yesterdayEntry = await getGameWordForOffset(-1);
   if (!yesterdayEntry?.word) return;
   const { start, end } = getTimeWindowBounds(-1);
 
@@ -833,7 +860,7 @@ async function loadDayHero() {
     for (let daysBack = 2; daysBack <= 14; daysBack++) {
       const tw = currentTimeWindow - daysBack;
       if (tw < 0) break;
-      const pastWord = gameWords[((tw) % gameWords.length + gameWords.length) % gameWords.length];
+      const pastWord = await getGameWordForOffset(-daysBack);
       if (!pastWord?.word) break;
       const { start: pastStart, end: pastEnd } = getTimeWindowBounds(-daysBack);
       const { data: prev } = await client
@@ -891,7 +918,7 @@ function endGame(win) {
 
   setTimeout(() => {
     showResultGrid(win);
-    showYesterdayWord();
+    showYesterdayWord().catch(console.error);
     loadDailyStats().catch(console.error);
     loadDayHero().catch(console.error);
   }, win ? 1200 : 0);
@@ -928,11 +955,11 @@ async function updateLeaderboard(username, score) {
 
 // ─── After-game info ──────────────────────────────────────────────────────────
 
-function showYesterdayWord() {
-  if (!gameWords || gameWords.length === 0) return;
+async function showYesterdayWord() {
+  if (typeof getGameWordForOffset !== "function") return;
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
-  const yesterdayEntry = gameWords[(currentTimeWindow - 1) % gameWords.length];
+  const yesterdayEntry = await getGameWordForOffset(-1);
   if (!yesterdayEntry) return;
   const el = document.getElementById("yesterdaySection");
   if (el) {
