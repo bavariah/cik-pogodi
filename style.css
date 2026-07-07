@@ -446,6 +446,20 @@ div#stats > * {
   gap: 10px;
   margin: 12px 0;
 }
+.profile-stats-grid--career {
+  grid-template-columns: 1fr 1fr;
+}
+.profile-stats-grid--season {
+  grid-template-columns: 1fr 1fr;
+}
+.profile-stats-heading {
+  color: #aaa;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  margin: 12px 0 -5px;
+  text-transform: uppercase;
+}
 .profile-stat-item {
   background: #333;
   border-radius: 8px;

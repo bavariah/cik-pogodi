@@ -210,6 +210,107 @@
         }
       }
 
+      function normalizeCareerStats(stats) {
+        const value = stats || {};
+        const distribution = Array.isArray(value.attempts)
+          ? value.attempts.slice(0, 7).concat([0, 0, 0, 0, 0, 0, 0]).slice(0, 7)
+          : [0, 0, 0, 0, 0, 0, 0];
+        return {
+          total: value.total || 0,
+          wins: value.wins || 0,
+          attempts: distribution,
+          misses: value.misses || 0,
+          currentStreak: value.currentStreak || 0,
+          maxStreak: value.maxStreak || 0
+        };
+      }
+
+      function careerStatsFromRow(row) {
+        return normalizeCareerStats({
+          total: row?.total,
+          wins: row?.wins,
+          attempts: row?.distribution,
+          misses: row?.misses,
+          currentStreak: row?.current_streak,
+          maxStreak: row?.max_streak
+        });
+      }
+
+      function isMoreCompleteStats(candidate, baseline) {
+        if (candidate.total !== baseline.total) return candidate.total > baseline.total;
+        if (candidate.wins !== baseline.wins) return candidate.wins > baseline.wins;
+        const candidateDistribution = candidate.attempts.reduce((sum, value) => sum + value, 0);
+        const baselineDistribution = baseline.attempts.reduce((sum, value) => sum + value, 0);
+        return candidateDistribution > baselineDistribution;
+      }
+
+      function mergeCareerStats(primary, ...sources) {
+        const values = [primary, ...sources.filter(Boolean)].map(normalizeCareerStats);
+        const merged = normalizeCareerStats(primary);
+        merged.attempts = merged.attempts.map((value, index) =>
+          Math.max(value, ...values.map(stats => stats.attempts[index] || 0))
+        );
+        const distributedWins = merged.attempts.reduce((sum, value) => sum + value, 0);
+        merged.wins = Math.max(distributedWins, ...values.map(stats => stats.wins));
+        merged.misses = Math.max(...values.map(stats => stats.misses));
+        merged.total = Math.max(merged.wins + merged.misses, ...values.map(stats => stats.total));
+        merged.maxStreak = Math.max(...values.map(stats => stats.maxStreak));
+        return merged;
+      }
+
+      function careerStatsDiffer(left, right) {
+        return JSON.stringify(normalizeCareerStats(left)) !== JSON.stringify(normalizeCareerStats(right));
+      }
+
+      function careerStatsPayload(userId, stats) {
+        return {
+          user_id: userId,
+          total: stats.total,
+          wins: stats.wins,
+          distribution: stats.attempts,
+          misses: stats.misses,
+          current_streak: stats.currentStreak,
+          max_streak: stats.maxStreak,
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      async function reconcileCareerStats(userId, scoreAggregate) {
+        const localStats = normalizeCareerStats(JSON.parse(localStorage.getItem("stats") || "null"));
+        const fallbackStats = normalizeCareerStats(scoreAggregate);
+        const { data: storedRow, error: readError } = await client
+          .from("career_stats")
+          .select("total, wins, distribution, misses, current_streak, max_streak")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (readError && readError.code !== "PGRST116") throw readError;
+
+        const storedStats = storedRow ? careerStatsFromRow(storedRow) : null;
+        let canonicalStats = storedStats || fallbackStats;
+        if (isMoreCompleteStats(localStats, canonicalStats)) canonicalStats = localStats;
+        if (!storedStats && isMoreCompleteStats(fallbackStats, canonicalStats)) canonicalStats = fallbackStats;
+        canonicalStats = mergeCareerStats(canonicalStats, storedStats, localStats, fallbackStats);
+
+        if (!storedStats || careerStatsDiffer(canonicalStats, storedStats)) {
+          const { error: writeError } = await client
+            .from("career_stats")
+            .upsert(careerStatsPayload(userId, canonicalStats), { onConflict: "user_id" });
+          if (writeError) throw writeError;
+        }
+
+        localStorage.setItem("stats", JSON.stringify(canonicalStats));
+        return canonicalStats;
+      }
+
+      async function persistCareerStats(userId) {
+        const stats = normalizeCareerStats(JSON.parse(localStorage.getItem("stats") || "null"));
+        const { error } = await client
+          .from("career_stats")
+          .upsert(careerStatsPayload(userId, stats), { onConflict: "user_id" });
+        if (error) throw error;
+      }
+
       async function syncStats(user_id) {
         const season = getCurrentSeason();
         const stats = getSeasonStats(season) || getEmptyStats();
@@ -225,12 +326,16 @@
           avatar_emoji: localStorage.getItem("avatar_emoji") || null,
         };
 
-        const { data } = await client
+        const { data, error: lookupError } = await client
           .from("scores")
           .select("id, score, attempts")
           .eq("user_id", user_id)
           .eq("season", season)
           .maybeSingle();
+
+        if (lookupError && lookupError.code !== "PGRST116") {
+          throw lookupError;
+        }
 
         if (data) {
           const updatePayload = {};
@@ -239,13 +344,15 @@
             Object.assign(updatePayload, metadata);
           }
           if (Object.keys(updatePayload).length > 0) {
-            await client.from("scores").update(updatePayload).eq("id", data.id);
+            const { error: updateError } = await client.from("scores").update(updatePayload).eq("id", data.id);
+            if (updateError) throw updateError;
           }
         } else {
-          await insertCurrentSeasonScore({
+          const inserted = await insertCurrentSeasonScore({
             user_id, ...metadata, score: 0,
             attempts: 0, avg_score: 0, season
           }, true);
+          if (!inserted) throw new Error("Could not create the seasonal stats row");
         }
       }
 
@@ -354,6 +461,7 @@
         if (!session?.user) { openLoginModal(); return; }
 
         const uid = session.user.id;
+        await loadStatsFromDB().catch(console.error);
         const username = localStorage.getItem("username") || "Играч";
         const stats = JSON.parse(localStorage.getItem("stats")) || { total: 0, wins: 0, currentStreak: 0, maxStreak: 0 };
         const season = getCurrentSeason();
@@ -376,7 +484,7 @@
 
         let { data: currentSeasonData } = await client
           .from("scores")
-          .select("score, attempts, avg_score")
+          .select("score, attempts, avg_score, misses")
           .eq("user_id", uid)
           .eq("season", season)
           .maybeSingle();
@@ -386,7 +494,7 @@
           await syncStats(uid).catch(console.error);
           const { data: refetched } = await client
             .from("scores")
-            .select("score, attempts, avg_score")
+            .select("score, attempts, avg_score, misses")
             .eq("user_id", uid)
             .eq("season", season)
             .maybeSingle();
@@ -394,6 +502,12 @@
         }
 
         if (currentSeasonData) {
+          const seasonGames = (currentSeasonData.attempts || 0) + (currentSeasonData.misses || 0);
+          const seasonWinRate = seasonGames > 0
+            ? Math.round(((currentSeasonData.attempts || 0) / seasonGames) * 100)
+            : 0;
+          document.getElementById("profileSeasonGames").textContent = seasonGames;
+          document.getElementById("profileSeasonWinRate").textContent = seasonWinRate + "%";
           document.getElementById("profileTotalScore").textContent = currentSeasonData.score || 0;
           document.getElementById("profileAvgScore").textContent = (currentSeasonData.avg_score || 0).toFixed(1);
           let scoreRank = null;
@@ -413,6 +527,8 @@
             : getSeasonLabel(season);
           renderProfileTrophies(scoreRank, avgRank);
         } else {
+          document.getElementById("profileSeasonGames").textContent = 0;
+          document.getElementById("profileSeasonWinRate").textContent = "0%";
           document.getElementById("profileTotalScore").textContent = 0;
           document.getElementById("profileAvgScore").textContent = "0.0";
           document.getElementById("profileRank").textContent = getSeasonLabel(season);
@@ -426,7 +542,7 @@
         histEl.innerHTML = "";
         const { data: allSeasons } = await client
           .from("scores")
-          .select("season, score, avg_score, attempts")
+          .select("season, score, avg_score, attempts, misses")
           .eq("user_id", uid)
           .order("season", { ascending: false });
 
@@ -438,7 +554,8 @@
           allSeasons.forEach(row => {
             const el = document.createElement("div");
             el.style.cssText = "display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #333;";
-            el.innerHTML = `<span style="color:#aaa">${getSeasonLabel(row.season)}</span><span>${row.score || 0} пт · ${(row.avg_score || 0).toFixed(1)} просек (${row.attempts || 0} игара)</span>`;
+            const seasonGames = (row.attempts || 0) + (row.misses || 0);
+            el.innerHTML = `<span style="color:#aaa">${getSeasonLabel(row.season)}</span><span>${row.score || 0} пт · ${(row.avg_score || 0).toFixed(1)} просек (${seasonGames} игара)</span>`;
             histEl.appendChild(el);
           });
         }
@@ -697,11 +814,17 @@
         <div id="profileRank" style="text-align:center;margin-bottom:12px;font-size:13px;color:#777;"></div>
         <div id="profileSeasonCountdown" class="profile-season-countdown"></div>
         <div id="profileTrophies" class="profile-trophies" style="display:none;"></div>
-        <div class="profile-stats-grid">
+        <div class="profile-stats-heading">Каријера</div>
+        <div class="profile-stats-grid profile-stats-grid--career">
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileGames">–</div><div class="profile-stat-label">Одиграно</div></div>
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileWinRate">–</div><div class="profile-stat-label">Победе</div></div>
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileStreak">–</div><div class="profile-stat-label">Тренутни низ</div></div>
           <div class="profile-stat-item"><div class="profile-stat-value" id="profileMaxStreak">–</div><div class="profile-stat-label">Макс. низ</div></div>
+        </div>
+        <div class="profile-stats-heading">Ова сезона</div>
+        <div class="profile-stats-grid profile-stats-grid--season">
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileSeasonGames">–</div><div class="profile-stat-label">Одиграно</div></div>
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileSeasonWinRate">–</div><div class="profile-stat-label">Победе</div></div>
           <div class="profile-stat-item profile-stat-item--points"><div class="profile-stat-value" id="profileTotalScore">–</div><div class="profile-stat-label">Поена (сезона)</div></div>
           <div class="profile-stat-item profile-stat-item--average"><div class="profile-stat-value" id="profileAvgScore">–</div><div class="profile-stat-label">Просек пт/игри</div></div>
         </div>

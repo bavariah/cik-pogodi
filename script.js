@@ -380,7 +380,10 @@ async function updateStats(rowSolved) {
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user) {
-    syncStats(session.user.id).catch(e => console.error("syncStats failed", e));
+    await Promise.all([
+      syncStats(session.user.id),
+      persistCareerStats(session.user.id)
+    ]).catch(e => console.error("stats sync failed", e));
   }
 }
 
@@ -408,7 +411,7 @@ function renderStatsPopup() {
 
   const distTitle = document.createElement("div");
   distTitle.style.cssText = "font-size:13px;color:#aaa;margin-bottom:8px;";
-  distTitle.textContent = "Расподела погодака";
+  distTitle.textContent = "Расподела погодака — каријера";
   statsContent.appendChild(distTitle);
 
   const maxVal = Math.max(...stats.attempts, 1);
@@ -1071,37 +1074,60 @@ async function loadStatsFromDB() {
   await checkAndArchiveSeason();
 
   // Aggregate ALL seasons to build full career stats
-  const { data: allRows } = await client
-    .from("scores")
-    .select("attempts, misses, distribution, current_streak, max_streak")
-    .eq("user_id", uid)
-    .order("season", { ascending: false });
+  const [{ data: allRows }, { data: correctSubmissions }] = await Promise.all([
+    client
+      .from("scores")
+      .select("season, attempts, misses, distribution, current_streak, max_streak")
+      .eq("user_id", uid)
+      .order("season", { ascending: false }),
+    client
+      .from("submissions")
+      .select("attempt")
+      .eq("user_id", uid)
+      .eq("correct", true)
+      .limit(1000)
+  ]);
 
-  if (!allRows || allRows.length === 0) return;
+  const scoreRows = allRows || [];
 
-  const dbWins   = allRows.reduce((s, r) => s + (r.attempts || 0), 0);
-  const dbMisses = allRows.reduce((s, r) => s + (r.misses   || 0), 0);
+  const currentSeasonRow = scoreRows.find(row => row.season === getCurrentSeason());
+  if (currentSeasonRow) {
+    const serverSeasonStats = normalizeStats({
+      total: (currentSeasonRow.attempts || 0) + (currentSeasonRow.misses || 0),
+      wins: currentSeasonRow.attempts || 0,
+      misses: currentSeasonRow.misses || 0,
+      attempts: currentSeasonRow.distribution,
+      currentStreak: currentSeasonRow.current_streak || 0,
+      maxStreak: currentSeasonRow.max_streak || 0
+    });
+    saveSeasonStats(serverSeasonStats);
+  }
+
+  const dbWins   = scoreRows.reduce((s, r) => s + (r.attempts || 0), 0);
+  const dbMisses = scoreRows.reduce((s, r) => s + (r.misses   || 0), 0);
   const dbTotal  = dbWins + dbMisses;
-  const local    = JSON.parse(localStorage.getItem("stats")) || {};
-
-  if (dbTotal <= (local.total || 0)) return; // local already up to date
-
-  const dbDist = allRows.reduce((acc, r) => {
+  const seasonalDist = scoreRows.reduce((acc, r) => {
     const d = Array.isArray(r.distribution) ? r.distribution : [0,0,0,0,0,0,0];
     return acc.map((v, i) => v + (d[i] || 0));
   }, [0,0,0,0,0,0,0]);
+  const submissionDist = (correctSubmissions || []).reduce((distribution, submission) => {
+    const index = Number(submission.attempt) - 1;
+    if (index >= 0 && index < 7) distribution[index]++;
+    return distribution;
+  }, [0,0,0,0,0,0,0]);
+  const dbDist = seasonalDist.map((value, index) => Math.max(value, submissionDist[index]));
 
-  const dbMaxStreak     = allRows.reduce((m, r) => Math.max(m, r.max_streak     || 0), 0);
-  const dbCurrentStreak = allRows[0]?.current_streak || 0; // most recent season first
+  const dbMaxStreak     = scoreRows.reduce((m, r) => Math.max(m, r.max_streak     || 0), 0);
+  const dbCurrentStreak = scoreRows[0]?.current_streak || 0; // most recent season first
 
-  localStorage.setItem("stats", JSON.stringify({
+  await reconcileCareerStats(uid, {
     total: dbTotal,
     wins: dbWins,
     misses: dbMisses,
     attempts: dbDist,
     currentStreak: dbCurrentStreak,
     maxStreak: dbMaxStreak
-  }));
+  });
   renderStatsPopup();
 }
 
@@ -1123,7 +1149,10 @@ async function recordAbandonedGameIfNeeded() {
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user) {
-    await syncStats(session.user.id).catch(console.error);
+    await Promise.all([
+      syncStats(session.user.id),
+      persistCareerStats(session.user.id)
+    ]).catch(console.error);
   }
 }
 
@@ -1144,7 +1173,7 @@ function showDBLockedScreen() {
 
 async function initGame() {
   await recordAbandonedGameIfNeeded();
-  loadStatsFromDB().catch(console.error);
+  await loadStatsFromDB().catch(console.error);
   loadDayHero().catch(console.error);
 
   if (checkIfLocked()) {
