@@ -148,7 +148,7 @@ function shakeCurrentRow() {
 async function isKnownWord(word) {
   const normalized = word.trim().toLowerCase();
   const { data, error } = await client
-    .from(WORDS_TABLE)
+    .from(ACCEPTED_WORDS_TABLE)
     .select("word")
     .eq("word", normalized)
     .limit(1)
