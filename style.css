@@ -17,6 +17,43 @@ button {
     margin: 0 0 20px 0;
 }
 
+.row--unused {
+    display: none !important;
+}
+
+#keyboard.keyboard--finished {
+    display: none;
+}
+
+#resultScreen {
+    margin-top: 12px;
+}
+
+#resultScreen.result-screen--locked {
+    margin-top: 6px;
+}
+
+#resultTitle {
+    margin: 8px 12px 12px;
+    font-size: 22px;
+}
+
+.played-status {
+    color: #aaa !important;
+    font-size: 13px;
+    margin: 0 auto 8px !important;
+    padding: 6px 12px;
+    max-width: 340px;
+}
+
+.played-status h2 {
+    display: none;
+}
+
+.played-status p {
+    margin: 0;
+}
+
 .row {
     display: grid;
     grid-template-columns: repeat(6, 52px);

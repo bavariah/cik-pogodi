@@ -160,12 +160,20 @@ async function isKnownWord(word) {
   return !!data;
 }
 
+function recordRejectedGuess(word) {
+  const normalized = word.trim().toLowerCase();
+  client.rpc("record_rejected_guess", { p_guess: normalized })
+    .then(({ error }) => {
+      if (error) console.error("Failed to record rejected guess:", error);
+    });
+}
+
 // ─── Result grid save ─────────────────────────────────────────────────────────
 
-function saveResultGrid() {
+function saveResultGrid(rowCount = 7) {
   const resultData = [];
   const rows = document.querySelectorAll(".row");
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < rowCount; i++) {
     const rowData = [];
     for (let tile of rows[i].children) {
       let color = "";
@@ -177,6 +185,20 @@ function saveResultGrid() {
     resultData.push(rowData);
   }
   localStorage.setItem("last_result_grid", JSON.stringify(resultData));
+}
+
+function getCompletedResultGrid() {
+  const grid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  if (localStorage.getItem("last_result") !== "win") return grid.slice(0, 7);
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
+  return grid.slice(0, lastAttemptRow + 1);
+}
+
+function compactCompletedGame(rowCount) {
+  [...board.children].forEach((row, index) => {
+    row.classList.toggle("row--unused", index >= rowCount);
+  });
+  keyboard.classList.add("keyboard--finished");
 }
 
 // ─── Miss tracking ────────────────────────────────────────────────────────────
@@ -205,6 +227,7 @@ async function submitGuess() {
   isFlipping = true;
 
   if (!(await isKnownWord(currentGuess))) {
+    recordRejectedGuess(currentGuess);
     isFlipping = false;
     shakeCurrentRow();
     showToast("Реч није у речнику");
@@ -435,7 +458,7 @@ function showLockedGameScreen() {
   disableInput();
   const win = localStorage.getItem("last_result") === "win";
   const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
-  const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+  const savedGrid = getCompletedResultGrid();
 
   resultGrid.innerHTML = "";
   savedGrid.forEach(rowData => {
@@ -462,7 +485,9 @@ function showLockedGameScreen() {
   }
 
   resultScreen.style.display = "block";
+  resultScreen.classList.add("result-screen--locked");
   const msg = document.createElement("div");
+  msg.className = "played-status";
   msg.style.marginTop = "20px";
   msg.style.color = "#fff";
   msg.innerHTML = "<h2 style='margin-bottom:10px;'>Већ сте играли ову игру 😊</h2><p>Сачекајте за следећу реч.</p>";
@@ -472,7 +497,7 @@ function showLockedGameScreen() {
   if (shareBtn) {
     shareBtn.onclick = () => {
       const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-      const grid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+      const grid = getCompletedResultGrid();
       const shareText = grid.map(row => row.map(tile => emojiMap[tile.color] || "⬛").join("")).join("\n")
         + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
       if (navigator.share) {
@@ -672,6 +697,16 @@ function colorFromStr(str) {
   return colors[Math.abs(hash) % colors.length];
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[character]);
+}
+
 async function loadLeaderboard(orderBy = "avg_score") {
   document.querySelectorAll(".lb-tab").forEach(b => b.classList.remove("active"));
   const activeTab = document.querySelector(`.lb-tab[data-tab="${orderBy}"]`);
@@ -701,13 +736,15 @@ async function loadLeaderboard(orderBy = "avg_score") {
       const players = data.filter(r => r.season === season);
       const rows = players.map(p => {
         const isYou = p.username === currentUsername;
+        const safeUsername = escapeHtml(p.username || "Анон");
+        const safeInitials = escapeHtml((p.username || "?").slice(0, 2).toUpperCase());
         const rankEl = p.rank <= 3
           ? `<span style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${medals[p.rank - 1]}</span>`
           : `<span class="lb-rank-num">${p.rank}.</span>`;
         return `<div class="lb-row${isYou ? " lb-you" : ""}">
           ${rankEl}
-          <span class="lb-avatar" style="background:${colorFromStr(p.username)}">${(p.username || "?").slice(0, 2).toUpperCase()}</span>
-          <span class="lb-name${isYou ? " lb-name-you" : ""}">${p.username}${isYou ? " ★" : ""}</span>
+          <span class="lb-avatar" style="background:${colorFromStr(p.username)}">${safeInitials}</span>
+          <span class="lb-name${isYou ? " lb-name-you" : ""}">${safeUsername}${isYou ? " ★" : ""}</span>
         </div>`;
       }).join("");
       return `<div class="lb-hof-season">🏅 ${getSeasonLabel(season)}</div>${rows}`;
@@ -734,6 +771,9 @@ async function loadLeaderboard(orderBy = "avg_score") {
   let yourRank = -1;
   const rows = data.map((entry, i) => {
     const isYou = entry.username === currentUsername;
+    const safeUsername = escapeHtml(entry.username || "Анон");
+    const avatarValue = entry.avatar_emoji || (isYou ? currentEmoji : null);
+    const safeAvatar = escapeHtml(avatarValue || (entry.username || "?").slice(0, 2).toUpperCase());
     if (isYou) yourRank = i + 1;
     const rankEl = i < 3
       ? `<span style="font-size:20px;width:30px;text-align:center;flex-shrink:0">${medals[i]}</span>`
@@ -748,8 +788,8 @@ async function loadLeaderboard(orderBy = "avg_score") {
       : `${(entry.avg_score || 0).toFixed(1)} просек`;
     return `<div class="lb-row${rowClass ? " " + rowClass : ""}${isYou ? " lb-you" : ""}">
       ${rankEl}
-      <span class="lb-avatar" style="background:${(entry.avatar_emoji || (isYou ? currentEmoji : null)) ? "#333" : colorFromStr(entry.username)};font-size:${(entry.avatar_emoji || (isYou ? currentEmoji : null)) ? "18px" : "11px"}">${entry.avatar_emoji || (isYou ? currentEmoji : null) || (entry.username || "?").slice(0, 2).toUpperCase()}</span>
-      <span class="lb-name${isYou ? " lb-name-you" : ""}">${entry.username || "Анон"}${isYou ? " ★" : ""}</span>
+      <span class="lb-avatar" style="background:${avatarValue ? "#333" : colorFromStr(entry.username)};font-size:${avatarValue ? "18px" : "11px"}">${safeAvatar}</span>
+      <span class="lb-name${isYou ? " lb-name-you" : ""}">${safeUsername}${isYou ? " ★" : ""}</span>
       <span class="lb-score"><strong>${scoreVal}<small>${scoreUnit}</small></strong>${scoreSub}</span>
     </div>`;
   }).join("");
@@ -867,12 +907,7 @@ async function loadDayHero() {
 
   const currentUsername = localStorage.getItem("username");
   const isYou = hero.username === currentUsername;
-
-  // Show if: current user won today in ≤4 attempts, OR current user IS the hero
-  const lastResult = localStorage.getItem("last_result");
-  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") ?? "-1");
-  const wonTodayEarly = lastResult === "win" && lastAttemptRow <= 3;
-  if (!wonTodayEarly && !isYou) return;
+  const safeHeroUsername = escapeHtml(hero.username);
 
   let avatarEmoji = null;
   if (hero.user_id) {
@@ -880,6 +915,8 @@ async function loadDayHero() {
       .from("scores")
       .select("avatar_emoji")
       .eq("user_id", hero.user_id)
+      .order("season", { ascending: false })
+      .limit(1)
       .maybeSingle();
     avatarEmoji = scoreRow?.avatar_emoji || null;
   }
@@ -920,7 +957,7 @@ async function loadDayHero() {
       <div class="day-hero-label">💎 ВАУУУ ЈУЧЕРАШЊЕГ ДАНА</div>
       <div class="day-hero-body">
         <div class="day-hero-info">
-          <div class="day-hero-name">${hero.username}${isYou ? " ⭐" : ""}</div>
+          <div class="day-hero-name">${safeHeroUsername}${isYou ? " ⭐" : ""}</div>
           <div class="day-hero-sub">из <strong>${attemptLabel}</strong> покушаја</div>
           ${streakBadge}
         </div>
@@ -935,7 +972,9 @@ async function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
-  saveResultGrid();
+  const completedRows = win ? currentRow + 1 : 7;
+  saveResultGrid(completedRows);
+  compactCompletedGame(completedRows);
   disableInput();
   await updateStats(win ? currentRow : null);
 
@@ -1011,7 +1050,7 @@ async function loadDailyStats() {
     .eq("word", targetWord).eq("correct", true)
     .gte("played_at", start)
     .lt("played_at", end);
-  if (error || !count) return;
+  if (error || count === null) return;
   el.textContent = `Данас је ${count} ${count === 1 ? "играч" : "играча"} погодило реч`;
   el.style.display = "block";
 }
@@ -1141,6 +1180,8 @@ async function initGame() {
 
   board.innerHTML = "";
   keyboard.innerHTML = "";
+  keyboard.classList.remove("keyboard--finished");
+  resultScreen.classList.remove("result-screen--locked");
   currentRow = 0;
   currentGuess = "";
 

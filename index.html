@@ -618,7 +618,7 @@
       <p id="hintText" style="display:none;margin-top:10px"></p>
     </div>
 
-    <div id="resultScreen" style="display:none;margin-top:20px;text-align:center">
+    <div id="resultScreen" style="display:none;text-align:center">
       <h2 id="resultTitle"></h2>
       <div id="resultGrid"></div>
       <button id="shareImageBtn" style="margin-top:15px">Подели резултат</button>
@@ -795,7 +795,8 @@
           resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
         }
 
-        for (let r = 0; r < 7; r++) {
+        const completedRows = win ? currentRow + 1 : 7;
+        for (let r = 0; r < completedRows; r++) {
           const rowClone = boardRows[r].cloneNode(true);
           rowClone.style.marginBottom = "5px";
           [...rowClone.children].forEach(tile => { tile.textContent = ""; });
@@ -809,7 +810,7 @@
         if (shareBtn) {
           shareBtn.onclick = () => {
             const emojiMap = { green: "🟩", orange: "🟧", grey: "⬛" };
-            const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+            const savedGrid = getCompletedResultGrid();
             const shareText = savedGrid.map(row => row.map(tile => emojiMap[tile.color] || "⬛").join("")).join("\n")
               + "\nПогледај игру: https://bavariah.github.io/cik-pogodi/";
             if (navigator.share) {
