@@ -980,10 +980,10 @@ async function updateLeaderboard(username, score) {
       avg_score: parseFloat((newScore / newAttempts).toFixed(2))
     }).eq("id", data.id);
   } else {
-    await client.from("scores").insert([{
+    await insertCurrentSeasonScore({
       user_id: uid, username: username || "Анон",
       score, attempts: 1, avg_score: score, season
-    }]);
+    });
   }
 }
 

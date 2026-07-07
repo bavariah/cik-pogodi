@@ -242,11 +242,72 @@
             await client.from("scores").update(updatePayload).eq("id", data.id);
           }
         } else {
-          await client.from("scores").insert([{
+          await insertCurrentSeasonScore({
             user_id, ...metadata, score: 0,
             attempts: 0, avg_score: 0, season
-          }]);
+          }, true);
         }
+      }
+
+      async function insertCurrentSeasonScore(payload, preserveCurrentScore = false) {
+        const { error: insertError } = await client.from("scores").insert([payload]);
+        if (!insertError) return true;
+
+        if (insertError.code !== "23505") {
+          console.error("scores insert failed", insertError);
+          return false;
+        }
+
+        // A concurrent sync may have created this season already.
+        const { data: currentRow, error: currentError } = await client
+          .from("scores")
+          .select("id")
+          .eq("user_id", payload.user_id)
+          .eq("season", payload.season)
+          .maybeSingle();
+
+        if (currentError && currentError.code !== "PGRST116") {
+          console.error("scores rollover lookup failed", currentError);
+          return false;
+        }
+
+        if (currentRow) {
+          const currentPayload = preserveCurrentScore
+            ? {
+                username: payload.username,
+                distribution: payload.distribution,
+                misses: payload.misses,
+                current_streak: payload.current_streak,
+                max_streak: payload.max_streak,
+                avatar_emoji: payload.avatar_emoji,
+              }
+            : payload;
+          const { error } = await client.from("scores").update(currentPayload).eq("id", currentRow.id);
+          if (error) console.error("scores concurrent sync failed", error);
+          return !error;
+        }
+
+        // Legacy deployments allowed only one row per user. Move that row into
+        // the current season until the versioned schema migration is deployed.
+        const { data: legacyRow, error: legacyLookupError } = await client
+          .from("scores")
+          .select("id")
+          .eq("user_id", payload.user_id)
+          .order("season", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (legacyLookupError || !legacyRow) {
+          console.error("scores legacy rollover lookup failed", legacyLookupError || insertError);
+          return false;
+        }
+
+        const { error: rolloverError } = await client
+          .from("scores")
+          .update(payload)
+          .eq("id", legacyRow.id);
+        if (rolloverError) console.error("scores season rollover failed", rolloverError);
+        return !rolloverError;
       }
 
       function getAvatarColor(uid) {
