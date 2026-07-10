@@ -467,10 +467,10 @@ async function updateWeeklyLauncher() {
   card.classList.toggle("weekly-card--completed", isCompleted);
   card.classList.toggle("weekly-card--available", !isCompleted);
 
-  if (title) title.textContent = isCompleted ? "Недељни резултат је спреман" : "Недељна реч од 4 слова";
+  if (title) title.textContent = isCompleted ? "Недељни изазов" : "Недељна реч од 4 слова";
   if (detail) {
     detail.textContent = isCompleted
-      ? (displayState.result === "win" ? `Освојено ${displayState.points || 0} бонус поена` : `Нова реч стиже: ${next}`)
+      ? `Нова реч стиже: ${next}`
       : `5 покушаја · бонус поени · важи до: ${next}`;
   }
   if (prompt) {

@@ -725,6 +725,7 @@ div#stats > * {
   padding: 5px 9px;
   font-size: 11px;
   font-weight: 700;
+  margin-left: auto;
   text-align: right;
   white-space: nowrap;
 }
@@ -1160,15 +1161,18 @@ div#stats > * {
     grid-template-columns: 1fr;
     gap: 6px;
   }
+  .weekly-card--completed .weekly-card__body {
+    display: none;
+  }
   .weekly-card__aside {
-    align-items: flex-start;
+    align-items: flex-end;
     min-width: 0;
   }
   .weekly-card__prompt {
-    text-align: left;
+    text-align: right;
   }
   .weekly-card__countdown {
-    text-align: left;
+    text-align: right;
   }
   .weekly-card__meta {
     white-space: normal;
