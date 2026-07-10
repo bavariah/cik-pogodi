@@ -1,0 +1,19 @@
+{
+  "pdf": "C:\\Users\\TozaMan\\Desktop\\Мирослав Николић (ed.) - Речник српскога језика (Rečnik srpskoga jezika)-Матица српска (2011).pdf",
+  "totalPages": 1530,
+  "totalUniqueCandidates": 3821,
+  "suggestedAnswers": 109,
+  "byConfidence": {
+    "high": 1163,
+    "medium": 206,
+    "low": 2452
+  },
+  "byStatus": {
+    "needs_review": 3821
+  },
+  "outputs": {
+    "fullCsv": "output\\words\\serbian-four-letter-candidates-review.csv",
+    "highCsv": "output\\words\\serbian-four-letter-candidates-high-review.csv",
+    "suggestedWeeklyAnswersCsv": "output\\words\\serbian-four-letter-suggested-weekly-answers.csv"
+  }
+}

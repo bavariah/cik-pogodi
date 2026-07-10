@@ -305,10 +305,7 @@
 
       async function persistCareerStats(userId) {
         const stats = normalizeCareerStats(JSON.parse(localStorage.getItem("stats") || "null"));
-        const { error } = await client
-          .from("career_stats")
-          .upsert(careerStatsPayload(userId, stats), { onConflict: "user_id" });
-        if (error) throw error;
+        return reconcileCareerStats(userId, stats);
       }
 
       async function syncStats(user_id) {
@@ -536,6 +533,9 @@
         }
         document.getElementById("profileTitle").textContent = getProfileTitle(stats, currentSeasonData);
         document.getElementById("profileSeasonCountdown").textContent = getSeasonCountdownText();
+        if (typeof refreshWeeklyProfileStats === "function") {
+          await refreshWeeklyProfileStats(uid).catch(console.error);
+        }
 
         // Season history
         const histEl = document.getElementById("profileSeasonHistory");
@@ -728,6 +728,13 @@
     <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border-bottom:1px solid #333;line-height:1.6;width:100%;box-sizing:border-box;">
       Гледаш јучерашњу реч — <button onclick="openLoginModal()" style="background:none;border:none;color:#538d4e;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">пријави се</button> за данашњу
     </div>
+    <button id="weeklyChallengeCard" class="weekly-card" type="button">
+      <span class="weekly-card__body">
+        <strong id="weeklyCardTitle">Недељна реч од 4 слова</strong>
+        <small id="weeklyCardDetail">5 покушаја · бонус поени · одвојено од дневне игре</small>
+      </span>
+      <span class="weekly-card__meta" id="weeklyCardSolved">Отвори</span>
+    </button>
     <div id="board"></div>
     <div id="keyboard"></div>
     <div id="hintWrapper" style="display:none;margin-top:10px">
@@ -828,6 +835,11 @@
           <div class="profile-stat-item profile-stat-item--points"><div class="profile-stat-value" id="profileTotalScore">–</div><div class="profile-stat-label">Поена (сезона)</div></div>
           <div class="profile-stat-item profile-stat-item--average"><div class="profile-stat-value" id="profileAvgScore">–</div><div class="profile-stat-label">Просек пт/игри</div></div>
         </div>
+        <div class="profile-stats-heading">Недељни изазови</div>
+        <div class="profile-stats-grid profile-stats-grid--weekly">
+          <div class="profile-stat-item profile-stat-item--weekly"><div class="profile-stat-value" id="profileWeeklySolved">–</div><div class="profile-stat-label">Решено</div></div>
+          <div class="profile-stat-item profile-stat-item--weekly"><div class="profile-stat-value" id="profileWeeklyPoints">–</div><div class="profile-stat-label">Бонус поена</div></div>
+        </div>
         <div id="profileSeasonHistory"></div>
         <button id="profileSignOutBtn" style="width:100%;padding:10px;background:#4a1a1a;color:#ff6b6b;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin-top:10px;">Одјави се</button>
       </div>
@@ -899,6 +911,25 @@
       </div>
     </div>
 
+    <!-- Weekly Challenge Modal -->
+    <div id="weeklyModal" class="weekly-modal" style="display:none;">
+      <div class="weekly-modal__panel">
+        <button id="closeWeeklyBtn" class="modal-close">✕</button>
+        <div class="weekly-modal__header">
+          <div>
+            <div class="weekly-modal__eyebrow">Недељни изазов</div>
+            <h2>4 слова, 5 покушаја</h2>
+          </div>
+          <div class="weekly-modal__points">+20</div>
+        </div>
+        <div id="weeklyMeta" class="weekly-meta"></div>
+        <div id="weeklyStatus" class="weekly-status">Учитавање...</div>
+        <div id="weeklyBoard" class="weekly-board"></div>
+        <div id="weeklyKeyboard" class="weekly-keyboard"></div>
+        <div id="weeklyResult" class="weekly-result" style="display:none;"></div>
+      </div>
+    </div>
+
     <script>
       function showResultGrid(win) {
         const boardRows = document.querySelectorAll(".row");
@@ -952,6 +983,7 @@
 
     <div id="toast"></div>
     <script src="script.js" defer></script>
+    <script src="weekly.js" defer></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")
