@@ -668,6 +668,18 @@ div#stats > * {
   gap: 16px;
   text-align: left;
   box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+.weekly-card:hover,
+.weekly-card:focus-visible {
+  border-color: #f4d879;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.26), 0 0 0 1px rgba(244,216,121,0.25);
+  transform: translateY(-1px);
+}
+.weekly-card:focus-visible {
+  outline: 2px solid #f4d879;
+  outline-offset: 3px;
 }
 .weekly-card__body {
   display: flex;
@@ -684,12 +696,34 @@ div#stats > * {
   font-size: 12px;
   line-height: 1.35;
 }
+.weekly-card__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  min-width: 118px;
+}
+.weekly-card__prompt {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: right;
+}
 .weekly-card__meta {
-  color: #f4d879;
+  color: #121212;
+  background: #f4d879;
+  border-radius: 999px;
+  padding: 5px 9px;
   font-size: 11px;
   font-weight: 700;
   text-align: right;
   white-space: nowrap;
+}
+.weekly-card--completed .weekly-card__meta {
+  color: #f4d879;
+  background: rgba(244,216,121,0.1);
+  border: 1px solid rgba(244,216,121,0.36);
 }
 .weekly-modal {
   position: fixed;
@@ -1117,6 +1151,13 @@ div#stats > * {
   .weekly-card {
     grid-template-columns: 1fr;
     gap: 6px;
+  }
+  .weekly-card__aside {
+    align-items: flex-start;
+    min-width: 0;
+  }
+  .weekly-card__prompt {
+    text-align: left;
   }
   .weekly-card__meta {
     white-space: normal;

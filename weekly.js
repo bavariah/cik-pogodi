@@ -1,6 +1,6 @@
 const WEEKLY_WORDS_TABLE = "weekly_words";
 const WEEKLY_ACCEPTED_WORDS_TABLE = "weekly_accepted_words";
-const WEEKLY_RESULT_SCORE = [20, 12, 8, 5, 3];
+const WEEKLY_RESULT_SCORE = [20, 15, 10, 8, 6];
 const WEEKLY_ANCHOR_SATURDAY = new Date(2026, 0, 3);
 const WEEKLY_ROW_COUNT = 5;
 const WEEKLY_WORD_LENGTH = 4;
@@ -425,23 +425,53 @@ async function updateWeeklyLauncher() {
   if (!card) return;
   const { key, end } = getWeeklyWindow();
   const state = JSON.parse(localStorage.getItem(getWeeklyStateKey()) || "null");
+  let displayState = state?.completed ? state : null;
   const title = document.getElementById("weeklyCardTitle");
   const detail = document.getElementById("weeklyCardDetail");
+  const prompt = document.getElementById("weeklyCardPrompt");
+  const solved = document.getElementById("weeklyCardSolved");
   const next = end.toLocaleDateString("sr-RS", { weekday: "long" });
-  if (title) title.textContent = state?.completed ? "Недељни резултат је спреман" : "Недељна реч од 4 слова";
+
+  const { data: { session } } = await client.auth.getSession();
+  if (!displayState && session?.user) {
+    const { data: existing } = await client
+      .from("weekly_results")
+      .select("correct, points")
+      .eq("user_id", session.user.id)
+      .eq("week_key", key)
+      .maybeSingle();
+    if (existing) {
+      displayState = {
+        completed: true,
+        result: existing.correct ? "win" : "lose",
+        points: existing.points || 0
+      };
+    }
+  }
+
+  const isCompleted = Boolean(displayState?.completed);
+  card.classList.toggle("weekly-card--completed", isCompleted);
+  card.classList.toggle("weekly-card--available", !isCompleted);
+
+  if (title) title.textContent = isCompleted ? "Недељни резултат је спреман" : "Недељна реч од 4 слова";
   if (detail) {
-    detail.textContent = state?.completed
-      ? (state.result === "win" ? `Освојено ${state.points || 0} бонус поена` : `Нова реч стиже: ${next}`)
+    detail.textContent = isCompleted
+      ? (displayState.result === "win" ? `Освојено ${displayState.points || 0} бонус поена` : `Нова реч стиже: ${next}`)
       : `5 покушаја · бонус поени · важи до: ${next}`;
   }
+  if (prompt) {
+    prompt.textContent = isCompleted
+      ? (displayState.result === "win" ? "Rešio si ove nedelje" : "Odigrao si ove nedelje")
+      : "Nova reč je dostupna";
+  }
+  if (solved) solved.textContent = isCompleted ? "Pogledaj rezultat" : "Klikni ovde";
 
   const { count } = await client
     .from("weekly_results")
     .select("*", { count: "exact", head: true })
     .eq("week_key", key)
     .eq("correct", true);
-  const solved = document.getElementById("weeklyCardSolved");
-  if (solved && count !== null) solved.textContent = `${count} решило ове недеље`;
+  if (solved && count !== null && isCompleted) solved.textContent = `${count} решило ове недеље`;
 }
 
 async function refreshWeeklyProfileStats(userId) {
