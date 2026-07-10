@@ -30,6 +30,19 @@ function getWeeklyStateKey() {
   return `weekly_challenge_${getWeeklyWindow().key}`;
 }
 
+function getWeeklyCountdownText(end, isCompleted) {
+  const diff = end.getTime() - Date.now();
+  const prefix = isCompleted ? "Nova reč za" : "Dostupno još";
+  if (diff <= 0) return isCompleted ? "Nova reč uskoro" : "Još malo vremena";
+
+  const totalHours = Math.max(1, Math.ceil(diff / (60 * 60 * 1000)));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  if (days && hours) return `${prefix} ${days}d ${hours}h`;
+  if (days) return `${prefix} ${days}d`;
+  return `${prefix} ${hours}h`;
+}
+
 function escapeWeeklyHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -429,6 +442,7 @@ async function updateWeeklyLauncher() {
   const title = document.getElementById("weeklyCardTitle");
   const detail = document.getElementById("weeklyCardDetail");
   const prompt = document.getElementById("weeklyCardPrompt");
+  const countdown = document.getElementById("weeklyCardCountdown");
   const solved = document.getElementById("weeklyCardSolved");
   const next = end.toLocaleDateString("sr-RS", { weekday: "long" });
 
@@ -461,9 +475,10 @@ async function updateWeeklyLauncher() {
   }
   if (prompt) {
     prompt.textContent = isCompleted
-      ? (displayState.result === "win" ? "Rešio si ove nedelje" : "Odigrao si ove nedelje")
+      ? (displayState.result === "win" ? "Rešena reč za ovu nedelju" : "Izazov odigran za ovu nedelju")
       : "Nova reč je dostupna";
   }
+  if (countdown) countdown.textContent = getWeeklyCountdownText(end, isCompleted);
   if (solved) solved.textContent = isCompleted ? "Pogledaj rezultat" : "Klikni ovde";
 
   const { count } = await client

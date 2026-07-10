@@ -710,6 +710,14 @@ div#stats > * {
   line-height: 1.15;
   text-align: right;
 }
+.weekly-card__countdown {
+  color: #c9c2a8;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: right;
+  white-space: nowrap;
+}
 .weekly-card__meta {
   color: #121212;
   background: #f4d879;
@@ -1157,6 +1165,9 @@ div#stats > * {
     min-width: 0;
   }
   .weekly-card__prompt {
+    text-align: left;
+  }
+  .weekly-card__countdown {
     text-align: left;
   }
   .weekly-card__meta {
