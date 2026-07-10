@@ -22,6 +22,14 @@ button {
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 24px rgba(0,0,0,0.18);
 }
 
+#board:empty {
+    display: none;
+}
+
+#board.board--hidden {
+    display: none;
+}
+
 .row--unused {
     display: none !important;
 }

@@ -958,6 +958,7 @@
         }
 
         resultScreen.style.display = "block";
+        document.getElementById("board")?.classList.add("board--hidden");
         resultScreen.scrollIntoView({ behavior: "smooth" });
 
         const shareBtn = document.getElementById("shareImageBtn");

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chik-pogodi-v8';
+const CACHE_NAME = 'chik-pogodi-v10';
 
 self.addEventListener('install', evt => {
     self.skipWaiting();

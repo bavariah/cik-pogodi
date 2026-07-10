@@ -459,6 +459,7 @@ function showCountdownToNextWord() {
 
 function showLockedGameScreen() {
   disableInput();
+  board.classList.add("board--hidden");
   const win = localStorage.getItem("last_result") === "win";
   const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
   const savedGrid = getCompletedResultGrid();
@@ -1160,6 +1161,7 @@ async function recordAbandonedGameIfNeeded() {
 
 function showDBLockedScreen() {
   disableInput();
+  board.classList.add("board--hidden");
   resultTitle.innerHTML = "Данас сте већ играли 🎮";
   resultGrid.innerHTML = "";
   const msg = document.createElement("div");
@@ -1208,6 +1210,7 @@ async function initGame() {
   }
 
   board.innerHTML = "";
+  board.classList.remove("board--hidden");
   keyboard.innerHTML = "";
   keyboard.classList.remove("keyboard--finished");
   resultScreen.classList.remove("result-screen--locked");
