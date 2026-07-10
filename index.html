@@ -735,7 +735,7 @@
       </span>
       <span class="weekly-card__meta" id="weeklyCardSolved">Отвори</span>
     </button>
-    <div id="board"></div>
+    <div id="board" style="display:none;"></div>
     <div id="keyboard"></div>
     <div id="hintWrapper" style="display:none;margin-top:10px">
       <button id="showHintBtn">Прикажи наговештај</button>
@@ -958,7 +958,11 @@
         }
 
         resultScreen.style.display = "block";
-        document.getElementById("board")?.classList.add("board--hidden");
+        const liveBoard = document.getElementById("board");
+        if (liveBoard) {
+          liveBoard.classList.add("board--hidden");
+          liveBoard.style.display = "none";
+        }
         resultScreen.scrollIntoView({ behavior: "smooth" });
 
         const shareBtn = document.getElementById("shareImageBtn");
