@@ -1156,17 +1156,18 @@ div#stats > * {
   }
 }
 
-@media only screen and (max-width: 420px) {
+@media only screen and (max-width: 600px) {
   .weekly-card {
     grid-template-columns: 1fr;
     gap: 6px;
   }
-  .weekly-card--completed .weekly-card__body {
+  .weekly-card__body {
     display: none;
   }
   .weekly-card__aside {
     align-items: flex-end;
     min-width: 0;
+    width: 100%;
   }
   .weekly-card__prompt {
     text-align: right;
@@ -1177,6 +1178,9 @@ div#stats > * {
   .weekly-card__meta {
     white-space: normal;
   }
+}
+
+@media only screen and (max-width: 420px) {
   .weekly-row {
     grid-template-columns: repeat(4, 48px);
   }
