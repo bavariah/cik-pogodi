@@ -1165,15 +1165,15 @@ div#stats > * {
     display: none;
   }
   .weekly-card__aside {
-    align-items: flex-end;
+    align-items: flex-start;
     min-width: 0;
     width: 100%;
   }
   .weekly-card__prompt {
-    text-align: right;
+    text-align: left;
   }
   .weekly-card__countdown {
-    text-align: right;
+    text-align: left;
   }
   .weekly-card__meta {
     white-space: normal;
