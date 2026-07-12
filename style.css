@@ -1477,6 +1477,36 @@ body::before {
   outline: none;
 }
 
+.top-icon {
+  width: 23px;
+  height: 23px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: #dce6e2;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.22));
+}
+
+#helpBtn .top-icon,
+#hintIconBtn .top-icon {
+  color: #93d7e8;
+}
+
+#signInBtn .top-icon {
+  color: #d9e2de;
+}
+
+.top-icon--trophy {
+  color: #f4d879;
+}
+
+.top-icon--chart {
+  color: #8ed1a0;
+}
+
 #guestBanner {
   width: min(560px, calc(100% - 24px)) !important;
   border: 1px solid rgba(244, 216, 121, 0.2) !important;
