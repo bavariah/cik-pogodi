@@ -1378,6 +1378,64 @@ div#stats > * {
   }
 }
 
+@media only screen and (max-width: 480px) {
+  #keyboard {
+    --mobile-key-gap: 3px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 6px 10px;
+    overflow: hidden;
+  }
+
+  .keyboard-row {
+    flex-wrap: nowrap !important;
+    gap: var(--mobile-key-gap) !important;
+    width: 100%;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .key:not(.key.wide) {
+    flex: 0 0 min(31px, calc((100vw - 54px) / 11)) !important;
+    width: min(31px, calc((100vw - 54px) / 11)) !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    padding: 0 !important;
+    font-size: 15px;
+  }
+
+  .key.wide {
+    min-width: 0;
+  }
+}
+
+@media only screen and (max-width: 380px) {
+  #keyboard {
+    --mobile-key-gap: 2px;
+    padding-inline: 5px;
+  }
+
+  .key:not(.key.wide) {
+    flex-basis: min(29px, calc((100vw - 42px) / 11)) !important;
+    width: min(29px, calc((100vw - 42px) / 11)) !important;
+    height: 40px !important;
+    font-size: 14px;
+  }
+
+  .profile-stats-grid--daily-modes {
+    gap: 6px;
+  }
+
+  .profile-stats-grid--daily-modes .profile-stat-item {
+    padding: 8px 3px;
+  }
+
+  .profile-stats-grid--daily-modes .profile-stat-label {
+    font-size: 8px;
+  }
+}
+
 /* Master visual polish */
 :root {
   --app-bg: #0b1110;
@@ -1507,6 +1565,12 @@ body::before {
   color: #8ed1a0;
 }
 
+:root.daily-mode-loading #board,
+:root.daily-mode-loading #keyboard,
+:root.daily-mode-loading #resultScreen {
+  display: none !important;
+}
+
 #guestBanner {
   width: min(560px, calc(100% - 24px)) !important;
   border: 1px solid rgba(244, 216, 121, 0.2) !important;
@@ -1579,6 +1643,17 @@ body::before {
   outline: none;
 }
 
+.daily-mode-picker__actions button.is-rolling {
+  animation: dailyDiceRoll 0.38s ease both;
+}
+
+@keyframes dailyDiceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  35% { transform: rotate(-12deg) scale(1.06); }
+  70% { transform: rotate(12deg) scale(1.06); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
 :root[data-daily-mode="5"] .daily-mode-picker {
   background:
     linear-gradient(145deg, rgba(15, 47, 43, 0.96), rgba(17, 28, 37, 0.96)),
@@ -1588,9 +1663,9 @@ body::before {
 
 :root[data-daily-mode="6"] .daily-mode-picker {
   background:
-    linear-gradient(145deg, rgba(41, 35, 24, 0.97), rgba(15, 31, 38, 0.96)),
-    linear-gradient(90deg, rgba(224, 189, 90, 0.16), transparent);
-  border-color: rgba(224, 189, 90, 0.32);
+    linear-gradient(145deg, rgba(39, 34, 23, 0.97), rgba(15, 31, 38, 0.96)),
+    linear-gradient(90deg, rgba(181, 159, 59, 0.18), transparent);
+  border-color: rgba(181, 159, 59, 0.36);
 }
 
 :root[data-daily-mode="5"] .daily-mode-picker__actions button.active {
@@ -1601,10 +1676,10 @@ body::before {
 }
 
 :root[data-daily-mode="6"] .daily-mode-picker__actions button.active {
-  color: #1c1608;
-  background: linear-gradient(180deg, #f4d879, #c99c3f);
-  border-color: rgba(244, 216, 121, 0.88);
-  box-shadow: 0 8px 18px rgba(224, 189, 90, 0.22);
+  color: #171205;
+  background: linear-gradient(180deg, #d1b65c, #b59f3b);
+  border-color: rgba(181, 159, 59, 0.9);
+  box-shadow: 0 8px 18px rgba(181, 159, 59, 0.24);
 }
 
 .weekly-card {
@@ -1646,9 +1721,9 @@ body::before {
 :root[data-daily-mode="6"] #board,
 :root[data-daily-mode="6"] #resultGrid:not(:empty) {
   background:
-    linear-gradient(160deg, rgba(46, 39, 25, 0.92), rgba(13, 28, 35, 0.88)),
-    linear-gradient(90deg, rgba(224, 189, 90, 0.12), transparent);
-  border-color: rgba(224, 189, 90, 0.24);
+    linear-gradient(160deg, rgba(43, 37, 24, 0.93), rgba(13, 28, 35, 0.88)),
+    linear-gradient(90deg, rgba(181, 159, 59, 0.13), transparent);
+  border-color: rgba(181, 159, 59, 0.28);
 }
 
 .row {
@@ -1765,6 +1840,25 @@ body::before {
   border-color: var(--line) !important;
 }
 
+.profile-stats-grid--daily-modes {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-stats-grid--daily-modes .profile-stat-item {
+  min-width: 0;
+  padding: 9px 4px;
+}
+
+.profile-stats-grid--daily-modes .profile-stat-value {
+  font-size: 19px;
+}
+
+.profile-stats-grid--daily-modes .profile-stat-label {
+  font-size: 9px;
+  line-height: 1.15;
+}
+
 .lb-row {
   border: 1px solid transparent;
 }
@@ -1841,5 +1935,51 @@ body::before {
   #board,
   #resultGrid:not(:empty) {
     padding: 9px;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  #keyboard {
+    --mobile-key-gap: 3px;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 6px 10px;
+    overflow: hidden;
+  }
+
+  .keyboard-row {
+    flex-wrap: nowrap !important;
+    gap: var(--mobile-key-gap) !important;
+    width: 100%;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .key:not(.key.wide) {
+    flex: 0 0 min(31px, calc((100vw - 54px) / 11)) !important;
+    width: min(31px, calc((100vw - 54px) / 11)) !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    padding: 0 !important;
+    font-size: 15px;
+  }
+
+  .key.wide {
+    min-width: 0;
+  }
+}
+
+@media only screen and (max-width: 380px) {
+  #keyboard {
+    --mobile-key-gap: 2px;
+    padding-inline: 5px;
+  }
+
+  .key:not(.key.wide) {
+    flex-basis: min(29px, calc((100vw - 42px) / 11)) !important;
+    width: min(29px, calc((100vw - 42px) / 11)) !important;
+    height: 40px !important;
+    font-size: 14px;
   }
 }
