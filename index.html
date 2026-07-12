@@ -39,6 +39,16 @@
         };
       }
 
+      function getScoreFromDistribution(distribution) {
+        const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+        const dist = Array.isArray(distribution) ? distribution : [];
+        return scoreMap.reduce((total, points, index) => total + ((dist[index] || 0) * points), 0);
+      }
+
+      function getSeasonScoreFromStats(stats) {
+        return getScoreFromDistribution(stats?.attempts);
+      }
+
       function getSeasonStatsKey(season = getCurrentSeason()) {
         return `season_stats_${season}`;
       }
@@ -311,21 +321,14 @@
       async function syncStats(user_id) {
         const season = getCurrentSeason();
         const stats = getSeasonStats(season) || getEmptyStats();
-        const username = localStorage.getItem("username") || "Играч";
+        const storedUsername = localStorage.getItem("username") || "";
+        const defaultUsername = "Играч";
         const dist = Array.isArray(stats.attempts) ? stats.attempts : [0, 0, 0, 0, 0, 0, 0];
         const seasonAttempts = dist.reduce((a, b) => a + b, 0);
-        const metadata = {
-          username,
-          distribution: dist,
-          misses: stats.misses || 0,
-          current_streak: stats.currentStreak || 0,
-          max_streak: stats.maxStreak || 0,
-          avatar_emoji: localStorage.getItem("avatar_emoji") || null,
-        };
 
         const { data, error: lookupError } = await client
           .from("scores")
-          .select("id, score, attempts")
+          .select("id, username, score, attempts, avatar_emoji")
           .eq("user_id", user_id)
           .eq("season", season)
           .maybeSingle();
@@ -334,20 +337,68 @@
           throw lookupError;
         }
 
+        let carryProfile = null;
+        if (!storedUsername || storedUsername === defaultUsername || !localStorage.getItem("avatar_emoji")) {
+          const { data: previousRows, error: previousError } = await client
+            .from("scores")
+            .select("username, avatar_emoji")
+            .eq("user_id", user_id)
+            .neq("season", season)
+            .order("season", { ascending: false })
+            .limit(1);
+          if (previousError) throw previousError;
+          carryProfile = previousRows?.[0] || null;
+        }
+
+        let username = storedUsername || data?.username || carryProfile?.username || defaultUsername;
+        if ((username === defaultUsername || !username) && data?.username) username = data.username;
+        if ((username === defaultUsername || !username) && carryProfile?.username) username = carryProfile.username;
+        if (username && username !== storedUsername) localStorage.setItem("username", username);
+
+        const avatarEmoji = localStorage.getItem("avatar_emoji") || data?.avatar_emoji || carryProfile?.avatar_emoji || null;
+        if (avatarEmoji && !localStorage.getItem("avatar_emoji")) {
+          localStorage.setItem("avatar_emoji", avatarEmoji);
+        }
+
+        const metadata = {
+          username,
+          distribution: dist,
+          misses: stats.misses || 0,
+          current_streak: stats.currentStreak || 0,
+          max_streak: stats.maxStreak || 0,
+          avatar_emoji: avatarEmoji,
+        };
+
         if (data) {
           const updatePayload = {};
           // Only update metadata if local has at least as many wins as DB (prevent new-browser blank from overwriting real data)
           if (seasonAttempts >= (data.attempts || 0)) {
             Object.assign(updatePayload, metadata);
+            const seasonScore = getSeasonScoreFromStats(stats);
+            if (seasonScore > (data.score || 0)) {
+              updatePayload.score = seasonScore;
+              updatePayload.attempts = seasonAttempts;
+              updatePayload.avg_score = seasonAttempts > 0
+                ? parseFloat((seasonScore / seasonAttempts).toFixed(2))
+                : 0;
+            } else if (seasonAttempts > (data.attempts || 0)) {
+              updatePayload.attempts = seasonAttempts;
+              updatePayload.avg_score = seasonAttempts > 0
+                ? parseFloat(((data.score || 0) / seasonAttempts).toFixed(2))
+                : 0;
+            }
           }
           if (Object.keys(updatePayload).length > 0) {
             const { error: updateError } = await client.from("scores").update(updatePayload).eq("id", data.id);
             if (updateError) throw updateError;
           }
         } else {
+          const seasonScore = getSeasonScoreFromStats(stats);
           const inserted = await insertCurrentSeasonScore({
-            user_id, ...metadata, score: 0,
-            attempts: 0, avg_score: 0, season
+            user_id, ...metadata, score: seasonScore,
+            attempts: seasonAttempts,
+            avg_score: seasonAttempts > 0 ? parseFloat((seasonScore / seasonAttempts).toFixed(2)) : 0,
+            season
           }, true);
           if (!inserted) throw new Error("Could not create the seasonal stats row");
         }

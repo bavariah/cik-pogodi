@@ -1009,6 +1009,12 @@ async function updateLeaderboard(username, score) {
   if (sessErr || !session) return;
   const uid = session.user.id;
   const season = getCurrentSeason();
+  const localStats = typeof getSeasonStats === "function" ? normalizeStats(getSeasonStats(season)) : null;
+  const localDist = Array.isArray(localStats?.attempts) ? localStats.attempts : [];
+  const localAttempts = localDist.reduce((total, count) => total + (count || 0), 0);
+  const localScore = typeof getScoreFromDistribution === "function"
+    ? getScoreFromDistribution(localDist)
+    : [50, 25, 10, 8, 5, 2, 1].reduce((total, points, index) => total + ((localDist[index] || 0) * points), 0);
 
   const { data, error } = await client.from("scores")
     .select("id, score, attempts")
@@ -1017,16 +1023,35 @@ async function updateLeaderboard(username, score) {
   if (error && error.code !== "PGRST116") { console.error("Lookup error:", error); return; }
 
   if (data) {
-    const newScore = (data.score || 0) + score;
-    const newAttempts = (data.attempts || 0) + 1;
-    await client.from("scores").update({
-      score: newScore, attempts: newAttempts,
-      avg_score: parseFloat((newScore / newAttempts).toFixed(2))
-    }).eq("id", data.id);
+    const updatePayload = { username: username || "Анон" };
+    if (localAttempts > (data.attempts || 0) && localScore > (data.score || 0)) {
+      updatePayload.score = localScore;
+      updatePayload.attempts = localAttempts;
+      updatePayload.avg_score = localAttempts > 0
+        ? parseFloat((localScore / localAttempts).toFixed(2))
+        : 0;
+    } else if (localAttempts === 0 || localAttempts > (data.attempts || 0)) {
+      const newScore = (data.score || 0) + score;
+      const newAttempts = (data.attempts || 0) + 1;
+      updatePayload.score = newScore;
+      updatePayload.attempts = newAttempts;
+      updatePayload.avg_score = parseFloat((newScore / newAttempts).toFixed(2));
+    } else if (localScore > (data.score || 0)) {
+      updatePayload.score = localScore;
+      updatePayload.avg_score = localAttempts > 0
+        ? parseFloat((localScore / localAttempts).toFixed(2))
+        : 0;
+    }
+    await client.from("scores").update(updatePayload).eq("id", data.id);
   } else {
+    const initialScore = localAttempts > 0 ? localScore : score;
+    const initialAttempts = localAttempts > 0 ? localAttempts : 1;
     await insertCurrentSeasonScore({
       user_id: uid, username: username || "Анон",
-      score, attempts: 1, avg_score: score, season
+      score: initialScore,
+      attempts: initialAttempts,
+      avg_score: parseFloat((initialScore / initialAttempts).toFixed(2)),
+      season
     });
   }
 }
