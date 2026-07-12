@@ -12,7 +12,7 @@ button {
 }
 #board {
     display: grid;
-    grid-template-rows: repeat(6, 1fr);
+    grid-template-rows: repeat(var(--daily-row-count, 7), 1fr);
     gap: 8px;
     margin: 2px 0 20px 0;
     padding: 10px 12px;
@@ -69,10 +69,70 @@ button {
 
 .row {
     display: grid;
-    grid-template-columns: repeat(6, 52px);
+    grid-template-columns: repeat(var(--daily-word-length, 6), 52px);
     gap: 6px;
     justify-content: center;
     perspective: 300px;
+}
+
+.daily-mode-picker {
+    width: min(520px, calc(100% - 24px));
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 8px 12px 6px;
+    padding: 10px 12px;
+    border: 1px solid rgba(83, 141, 78, 0.32);
+    border-radius: 8px;
+    background: #151b1a;
+}
+
+.daily-mode-picker__text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.daily-mode-picker__label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #d7ead2;
+}
+
+.daily-mode-picker__detail {
+    font-size: 12px;
+    color: #a9b5b2;
+}
+
+.daily-mode-picker__actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.daily-mode-picker__actions button {
+    min-width: 38px;
+    height: 34px;
+    border: 1px solid #3f514c;
+    border-radius: 6px;
+    background: #202927;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.daily-mode-picker__actions button.active {
+    background: #538d4e;
+    border-color: #76b970;
+}
+
+.daily-mode-picker__actions button:disabled {
+    opacity: 0.55;
+    cursor: default;
 }
 
 .tile {
@@ -586,6 +646,7 @@ div#stats > * {
 
 /* ── Day Hero ────────────────────────────────────────── */
 #dayHeroSection { padding: 4px 12px 8px; width: 100%; box-sizing: border-box; max-width: 360px; margin: 0 auto; }
+.day-hero-list { display: grid; gap: 8px; }
 
 .day-hero-card {
   background: linear-gradient(135deg, #1f1800 0%, #2a2000 100%);

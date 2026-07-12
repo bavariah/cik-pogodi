@@ -35,18 +35,163 @@
       function getEmptyStats() {
         return {
           total: 0, wins: 0, attempts: [0, 0, 0, 0, 0, 0, 0],
-          misses: 0, currentStreak: 0, maxStreak: 0
+          misses: 0, currentStreak: 0, maxStreak: 0, score: 0
         };
       }
 
-      function getScoreFromDistribution(distribution) {
-        const scoreMap = [50, 25, 10, 8, 5, 2, 1];
+      const DAILY_MODE_CONFIG = {
+        5: {
+          wordLength: 5,
+          rowCount: 6,
+          scoreMap: [25, 12, 10, 8, 6, 2],
+          wordsTable: "five_words",
+          acceptedTable: "five_accepted_words",
+          label: "5 слова",
+          detail: "6 покушаја · до 25 поена"
+        },
+        6: {
+          wordLength: 6,
+          rowCount: 7,
+          scoreMap: [50, 25, 10, 8, 5, 2, 1],
+          wordsTable: "words",
+          acceptedTable: "accepted_words",
+          label: "6 слова",
+          detail: "7 покушаја · до 50 поена"
+        }
+      };
+
+      let currentDailyMode = 6;
+      let currentDailyTimeWindow = 0;
+      const dailyWordCounts = new Map();
+
+      function getScoreFromDistribution(distribution, scoreMap = DAILY_MODE_CONFIG[6].scoreMap) {
         const dist = Array.isArray(distribution) ? distribution : [];
         return scoreMap.reduce((total, points, index) => total + ((dist[index] || 0) * points), 0);
       }
 
       function getSeasonScoreFromStats(stats) {
-        return getScoreFromDistribution(stats?.attempts);
+        return typeof stats?.score === "number" ? stats.score : getScoreFromDistribution(stats?.attempts);
+      }
+
+      function getDailyModeConfig(mode = currentDailyMode) {
+        return DAILY_MODE_CONFIG[Number(mode)] || DAILY_MODE_CONFIG[6];
+      }
+
+      function getDailyWordLength() {
+        return getDailyModeConfig().wordLength;
+      }
+
+      function getDailyRowCount() {
+        return getDailyModeConfig().rowCount;
+      }
+
+      function getDailyScoreMap() {
+        return getDailyModeConfig().scoreMap;
+      }
+
+      function getDailyScoreForRow(rowIndex) {
+        return getDailyScoreMap()[rowIndex] || 0;
+      }
+
+      function getDailyTimeWindow(offset = 0) {
+        return Math.floor((Date.now() - START_TIME) / lockTime) + offset;
+      }
+
+      function getDailyDayKey(offset = 0) {
+        const timeWindow = getDailyTimeWindow(offset);
+        const date = new Date(START_TIME + timeWindow * lockTime);
+        return [
+          date.getUTCFullYear(),
+          String(date.getUTCMonth() + 1).padStart(2, "0"),
+          String(date.getUTCDate()).padStart(2, "0")
+        ].join("-");
+      }
+
+      function getDailyModeKey(offset = 0) {
+        return `daily_mode_${getDailyDayKey(offset)}`;
+      }
+
+      function chooseRandomDailyMode(timeWindow = getDailyTimeWindow()) {
+        return timeWindow % 2 === 0 ? 5 : 6;
+      }
+
+      function resolveDailyMode(offset = 0) {
+        const key = getDailyModeKey(offset);
+        const saved = Number(localStorage.getItem(key));
+        if (saved === 5 || saved === 6) return saved;
+        const preference = localStorage.getItem("daily_mode_preference") || "random";
+        const mode = preference === "5" || preference === "6"
+          ? Number(preference)
+          : chooseRandomDailyMode(getDailyTimeWindow(offset));
+        localStorage.setItem(key, String(mode));
+        return mode;
+      }
+
+      function getCompletedDailyMode() {
+        if (!["win", "lose"].includes(localStorage.getItem("last_result"))) return null;
+        const mode = Number(localStorage.getItem("last_word_length"));
+        return mode === 5 || mode === 6 ? mode : null;
+      }
+
+      function setDailyMode(mode, remember = true) {
+        currentDailyMode = Number(mode) === 5 ? 5 : 6;
+        localStorage.setItem(getDailyModeKey(), String(currentDailyMode));
+        if (remember) localStorage.setItem("daily_mode_preference", String(currentDailyMode));
+        updateDailyModePicker();
+      }
+
+      function canSwitchDailyMode() {
+        if (localStorage.getItem("last_result")) return false;
+        try {
+          const state = JSON.parse(localStorage.getItem("gameState") || "null");
+          return !state?.boardState?.some(row => row.some(tile => tile.letter || tile.color));
+        } catch (e) {
+          return true;
+        }
+      }
+
+      function updateDailyModePicker() {
+        const picker = document.getElementById("dailyModePicker");
+        if (!picker) return;
+        const locked = !canSwitchDailyMode();
+        const preference = localStorage.getItem("daily_mode_preference") || "random";
+        picker.querySelectorAll("[data-daily-mode]").forEach(button => {
+          const mode = Number(button.dataset.dailyMode);
+          button.classList.toggle("active", mode === currentDailyMode);
+          button.disabled = locked;
+        });
+        const randomButton = picker.querySelector("[data-daily-random]");
+        if (randomButton) {
+          randomButton.classList.toggle("active", !locked && preference === "random");
+          randomButton.disabled = locked;
+        }
+        const detail = document.getElementById("dailyModeDetail");
+        if (detail) {
+          const prefix = !locked && preference === "random" ? "Насумично: " : "";
+          detail.textContent = locked
+            ? `Данас играш ${getDailyModeConfig().label}.`
+            : `${prefix}${getDailyModeConfig().label} · ${getDailyModeConfig().detail}`;
+        }
+      }
+
+      async function switchDailyMode(mode) {
+        if (!canSwitchDailyMode()) return;
+        setDailyMode(mode);
+        localStorage.removeItem("gameState");
+        localStorage.removeItem("last_result_grid");
+        localStorage.removeItem("last_target_word");
+        await loadWords({ preserveMode: true });
+      }
+
+      function setRandomDailyMode() {
+        if (!canSwitchDailyMode()) return;
+        localStorage.setItem("daily_mode_preference", "random");
+        const mode = chooseRandomDailyMode(currentDailyTimeWindow || getDailyTimeWindow());
+        setDailyMode(mode, false);
+        localStorage.removeItem("gameState");
+        localStorage.removeItem("last_result_grid");
+        localStorage.removeItem("last_target_word");
+        loadWords({ preserveMode: true }).catch(console.error);
       }
 
       function getSeasonStatsKey(season = getCurrentSeason()) {
@@ -111,6 +256,46 @@
         }
         trophyEl.innerHTML = trophies.map(t => `<span>${t}</span>`).join("");
         trophyEl.style.display = trophies.length ? "flex" : "none";
+      }
+
+      async function refreshDailyModeProfileStats(userId) {
+        const fiveEl = document.getElementById("profileDailyFive");
+        const sixEl = document.getElementById("profileDailySix");
+        const fivePtsEl = document.getElementById("profileDailyFivePoints");
+        const sixPtsEl = document.getElementById("profileDailySixPoints");
+        if (!fiveEl || !sixEl || !fivePtsEl || !sixPtsEl) return;
+
+        fiveEl.textContent = sixEl.textContent = fivePtsEl.textContent = sixPtsEl.textContent = "0";
+        const season = getCurrentSeason();
+        const [year, half] = season.split("-");
+        const start = half === "S1" ? `${year}-01-01` : `${year}-07-01`;
+        const end = half === "S1" ? `${year}-07-01` : `${Number(year) + 1}-01-01`;
+
+        const { data, error } = await client
+          .from("daily_results")
+          .select("word_length, correct, points, day_key")
+          .eq("user_id", userId)
+          .gte("day_key", start)
+          .lt("day_key", end)
+          .limit(1000);
+
+        if (error || !data) return;
+
+        const totals = {
+          5: { solved: 0, points: 0 },
+          6: { solved: 0, points: 0 }
+        };
+        data.forEach(row => {
+          const bucket = totals[row.word_length];
+          if (!bucket) return;
+          if (row.correct) bucket.solved++;
+          bucket.points += row.points || 0;
+        });
+
+        fiveEl.textContent = totals[5].solved;
+        sixEl.textContent = totals[6].solved;
+        fivePtsEl.textContent = totals[5].points;
+        sixPtsEl.textContent = totals[6].points;
       }
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -584,6 +769,7 @@
         }
         document.getElementById("profileTitle").textContent = getProfileTitle(stats, currentSeasonData);
         document.getElementById("profileSeasonCountdown").textContent = getSeasonCountdownText();
+        await refreshDailyModeProfileStats(uid).catch(console.error);
         if (typeof refreshWeeklyProfileStats === "function") {
           await refreshWeeklyProfileStats(uid).catch(console.error);
         }
@@ -638,11 +824,16 @@
 
       const WORDS_TABLE = "words";
       const ACCEPTED_WORDS_TABLE = "accepted_words";
+      const FIVE_WORDS_TABLE = "five_words";
+      const FIVE_ACCEPTED_WORDS_TABLE = "five_accepted_words";
       const WORD_ORDER_COLUMN = "sort_order";
       const SUBMISSIONS_TABLE = "submissions";
+      const FIVE_WORDS_CSV_PATH = "output/words/serbian-five-letter-answers.csv";
+      const FIVE_ACCEPTED_CSV_PATH = "output/words/serbian-five-letter-accepted.csv";
       let gameWords = [];
-      let gameWordCount = 0;
       const gameWordCache = new Map();
+      let localFiveWordsPromise = null;
+      let localFiveAcceptedWordsPromise = null;
       let targetWord = "";
       let hintText = "";
 
@@ -667,56 +858,152 @@
         };
       }
 
-      async function loadLegacyWords() {
-        const { data, error } = await client.from(WORDS_TABLE).select("word,hint");
-        if (error) throw error;
+      function parseSimpleCsv(text) {
+        const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+        if (lines.length < 2) return [];
+        const headers = lines[0].split(",").map(item => item.trim());
+        return lines.slice(1).map(line => {
+          const values = line.split(",");
+          return headers.reduce((row, header, index) => {
+            row[header] = (values[index] || "").trim();
+            return row;
+          }, {});
+        });
+      }
+
+      async function fetchCsvRows(path) {
+        const response = await fetch(path, { cache: "no-store" });
+        if (!response.ok) throw new Error(`CSV load failed: ${path}`);
+        return parseSimpleCsv(await response.text());
+      }
+
+      async function loadLocalFiveWords() {
+        if (!localFiveWordsPromise) {
+          localFiveWordsPromise = fetchCsvRows(FIVE_WORDS_CSV_PATH).then(rows => {
+            const words = rows.map(normalizeWordRow).filter(Boolean);
+            dailyWordCounts.set(5, words.length);
+            words.forEach((entry, index) => gameWordCache.set(`5:${index}`, entry));
+            return words;
+          });
+        }
+        return localFiveWordsPromise;
+      }
+
+      async function loadLocalFiveAcceptedWords() {
+        if (!localFiveAcceptedWordsPromise) {
+          localFiveAcceptedWordsPromise = fetchCsvRows(FIVE_ACCEPTED_CSV_PATH).then(rows => {
+            const accepted = new Set();
+            rows.forEach(row => {
+              const word = (row.word || "").trim().toLowerCase();
+              if (word) accepted.add(word);
+            });
+            return accepted;
+          });
+        }
+        return localFiveAcceptedWordsPromise;
+      }
+
+      async function isLocalAcceptedWord(word) {
+        const accepted = await loadLocalFiveAcceptedWords();
+        return accepted.has(word.trim().toLowerCase());
+      }
+
+      function getWordSource(wordLength = currentDailyMode) {
+        const config = getDailyModeConfig(wordLength);
+        return {
+          wordsTable: config.wordsTable,
+          acceptedTable: config.acceptedTable,
+          activeOnly: config.wordLength === 5
+        };
+      }
+
+      async function loadLegacyWords(wordLength = currentDailyMode) {
+        const source = getWordSource(wordLength);
+        let query = client.from(source.wordsTable).select("word,hint");
+        if (source.activeOnly) query = query.eq("active", true);
+        const { data, error } = await query;
+        if (error) {
+          if (wordLength === 5) {
+            gameWords = await loadLocalFiveWords();
+            return;
+          }
+          throw error;
+        }
         gameWords = data.map(normalizeWordRow).filter(Boolean);
-        gameWordCount = gameWords.length;
-        gameWords.forEach((entry, index) => gameWordCache.set(index, entry));
+        dailyWordCounts.set(wordLength, gameWords.length);
+        gameWords.forEach((entry, index) => gameWordCache.set(`${wordLength}:${index}`, entry));
       }
 
-      async function ensureGameWordCount() {
-        if (gameWordCount > 0) return gameWordCount;
-        const { count, error } = await client
-          .from(WORDS_TABLE)
+      async function ensureGameWordCount(wordLength = currentDailyMode) {
+        if (dailyWordCounts.has(wordLength)) return dailyWordCounts.get(wordLength);
+        const source = getWordSource(wordLength);
+        let query = client
+          .from(source.wordsTable)
           .select("*", { count: "exact", head: true });
-        if (error) throw error;
-        gameWordCount = count || 0;
-        return gameWordCount;
+        if (source.activeOnly) query = query.eq("active", true);
+        const { count, error } = await query;
+        if (error) {
+          if (wordLength === 5) {
+            const words = await loadLocalFiveWords();
+            return words.length;
+          }
+          throw error;
+        }
+        dailyWordCounts.set(wordLength, count || 0);
+        return count || 0;
       }
 
-      async function getWordByTimeWindow(timeWindow) {
-        const count = await ensureGameWordCount();
+      async function getWordByTimeWindow(timeWindow, wordLength = currentDailyMode) {
+        const count = await ensureGameWordCount(wordLength);
         if (!count) return null;
         const index = ((timeWindow % count) + count) % count;
-        if (gameWordCache.has(index)) return gameWordCache.get(index);
+        const cacheKey = `${wordLength}:${index}`;
+        if (gameWordCache.has(cacheKey)) return gameWordCache.get(cacheKey);
 
-        const { data, error } = await client
-          .from(WORDS_TABLE)
-          .select("word,hint")
+        const source = getWordSource(wordLength);
+        let query = client
+          .from(source.wordsTable)
+          .select("word,hint");
+        if (source.activeOnly) query = query.eq("active", true);
+        query = query
           .order(WORD_ORDER_COLUMN, { ascending: true })
-          .range(index, index)
-          .maybeSingle();
+          .range(index, index);
+        const { data, error } = await query.maybeSingle();
 
         if (error) {
-          if (gameWords.length === 0) await loadLegacyWords();
+          if (gameWords.length === 0) await loadLegacyWords(wordLength);
           return gameWords[index] || null;
         }
 
         const entry = normalizeWordRow(data);
-        if (entry) gameWordCache.set(index, entry);
+        if (entry) gameWordCache.set(cacheKey, entry);
         return entry;
       }
 
-      async function loadWords() {
+      async function loadWords(options = {}) {
         const sessionRes = await client.auth.getSession();
         const isLoggedIn = !!sessionRes.data?.session?.user;
-        if (isLoggedIn) {
-          ({ word: targetWord, hint: hintText } = await getTodayWord());
-          document.getElementById("guestBanner").style.display = "none";
-        } else {
-          ({ word: targetWord, hint: hintText } = await getYesterdayWord());
-          document.getElementById("guestBanner").style.display = "block";
+        const offset = isLoggedIn ? 0 : -1;
+        currentDailyTimeWindow = getDailyTimeWindow(offset);
+        if (!options.preserveMode) currentDailyMode = getCompletedDailyMode() || resolveDailyMode(offset);
+        updateDailyModePicker();
+        try {
+          if (isLoggedIn) {
+            ({ word: targetWord, hint: hintText } = await getTodayWord());
+            document.getElementById("guestBanner").style.display = "none";
+          } else {
+            ({ word: targetWord, hint: hintText } = await getYesterdayWord());
+            document.getElementById("guestBanner").style.display = "block";
+          }
+        } catch (error) {
+          if (currentDailyMode === 5) {
+            console.warn("Five-letter mode is not ready yet, falling back to 6 letters.", error);
+            setDailyMode(6, false);
+            if (isLoggedIn) ({ word: targetWord, hint: hintText } = await getTodayWord());
+            else ({ word: targetWord, hint: hintText } = await getYesterdayWord());
+          } else {
+            throw error;
+          }
         }
         if (!targetWord) { console.error("No word available for today"); hideLoadingScreen(); return; }
         hideLoadingScreen();
@@ -724,18 +1011,18 @@
       }
 
       async function getTodayWord() {
-        const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-        return getWordByTimeWindow(timeWindow);
+        const timeWindow = getDailyTimeWindow();
+        return getWordByTimeWindow(timeWindow, currentDailyMode);
       }
 
       async function getYesterdayWord() {
-        const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-        return getWordByTimeWindow(timeWindow - 1);
+        const timeWindow = getDailyTimeWindow();
+        return getWordByTimeWindow(timeWindow - 1, currentDailyMode);
       }
 
       async function getGameWordForOffset(offset = 0) {
-        const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
-        return getWordByTimeWindow(timeWindow + offset);
+        const timeWindow = getDailyTimeWindow();
+        return getWordByTimeWindow(timeWindow + offset, currentDailyMode);
       }
 
       document.addEventListener("DOMContentLoaded", loadWords);
@@ -778,6 +1065,17 @@
     </div>
     <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border-bottom:1px solid #333;line-height:1.6;width:100%;box-sizing:border-box;">
       Гледаш јучерашњу реч — <button onclick="openLoginModal()" style="background:none;border:none;color:#538d4e;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">пријави се</button> за данашњу
+    </div>
+    <div id="dailyModePicker" class="daily-mode-picker">
+      <div class="daily-mode-picker__text">
+        <span class="daily-mode-picker__label">Дневна игра</span>
+        <span id="dailyModeDetail" class="daily-mode-picker__detail">Изабери режим пре првог покушаја</span>
+      </div>
+      <div class="daily-mode-picker__actions">
+        <button type="button" data-daily-mode="5" onclick="switchDailyMode(5)">5</button>
+        <button type="button" data-daily-mode="6" onclick="switchDailyMode(6)">6</button>
+        <button type="button" data-daily-random onclick="setRandomDailyMode()">🎲</button>
+      </div>
     </div>
     <button id="weeklyChallengeCard" class="weekly-card" type="button">
       <span class="weekly-card__body">
@@ -890,6 +1188,13 @@
           <div class="profile-stat-item profile-stat-item--points"><div class="profile-stat-value" id="profileTotalScore">–</div><div class="profile-stat-label">Поена (сезона)</div></div>
           <div class="profile-stat-item profile-stat-item--average"><div class="profile-stat-value" id="profileAvgScore">–</div><div class="profile-stat-label">Просек пт/игри</div></div>
         </div>
+        <div class="profile-stats-heading">Дневни режими</div>
+        <div class="profile-stats-grid profile-stats-grid--daily-modes">
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileDailyFive">–</div><div class="profile-stat-label">5 слова решено</div></div>
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileDailyFivePoints">–</div><div class="profile-stat-label">5 слова поени</div></div>
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileDailySix">–</div><div class="profile-stat-label">6 слова решено</div></div>
+          <div class="profile-stat-item"><div class="profile-stat-value" id="profileDailySixPoints">–</div><div class="profile-stat-label">6 слова поени</div></div>
+        </div>
         <div class="profile-stats-heading">Недељни изазови</div>
         <div class="profile-stats-grid profile-stats-grid--weekly">
           <div class="profile-stat-item profile-stat-item--weekly"><div class="profile-stat-value" id="profileWeeklySolved">–</div><div class="profile-stat-label">Решено</div></div>
@@ -921,7 +1226,7 @@
         <button id="closeHelpBtn" class="modal-close">✕</button>
         <h2 style="margin-bottom:15px;text-align:center">Како играти</h2>
         <div style="margin-bottom:20px">
-          <p>Погодите реч од 6 слова у 7 покушаја.</p>
+          <p>Погодите реч од 5 или 6 слова у дневном режиму који изаберете.</p>
           <p>Након сваког покушаја, боја плочица ће се променити да покаже колико сте близу решења:</p>
           <div style="margin:15px 0;display:flex;align-items:center;gap:10px;">
             <div style="width:40px;height:40px;background:#538d4e;display:flex;justify-content:center;align-items:center;font-weight:bold;">А</div>
@@ -938,23 +1243,22 @@
         </div>
         <div style="margin-bottom:20px">
           <h3>Наговештај</h3>
-          <p>Ако не успете да погодите реч у првих 6 покушаја, добићете могућност да видите наговештај пре последњег покушаја.</p>
+          <p>Ако не успете да погодите реч пре последњег покушаја, добићете могућност да видите наговештај.</p>
           <p>Наговештај ће се појавити као знак питања (❓) у горњем левом углу.</p>
         </div>
         <div style="margin-bottom:20px">
           <h3>Бодовање</h3>
           <p>Бодови се додељују на основу тога у ком реду сте погодили реч:</p>
           <ul style="list-style-type:none;padding-left:0">
-            <li>1. ред: 50 поена</li><li>2. ред: 25 поена</li><li>3. ред: 10 поена</li>
-            <li>4. ред: 8 поена</li><li>5. ред: 5 поена</li><li>6. ред: 2 поена</li>
-            <li>7. ред: 1 поен</li>
+            <li>5 слова: 25, 12, 10, 8, 6, 2</li>
+            <li>6 слова: 50, 25, 10, 8, 5, 2, 1</li>
           </ul>
         </div>
         <div style="margin-bottom:20px;background:#1a0f0f;border-left:3px solid #c0392b;padding:12px 14px;border-radius:0 8px 8px 0;">
           <h3 style="margin:0 0 8px;color:#ff7b7b;">⚠️ Казне — 0 поена</h3>
           <p style="margin:0 0 6px;">Добијате <strong>0 поена</strong> и губите низ победа у два случаја:</p>
           <ul style="padding-left:18px;margin:0;line-height:2;">
-            <li>Нисте погодили реч ни у 7 покушаја</li>
+            <li>Нисте погодили реч у дозвољеном броју покушаја</li>
             <li>Почели сте игру, али нисте завршили пре следеће речи</li>
           </ul>
         </div>
@@ -1001,10 +1305,13 @@
           else if (currentRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
           resultTitle.innerHTML = message;
         } else {
-          resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
+          const completedWord = typeof completedTargetWord === "function"
+            ? completedTargetWord()
+            : (localStorage.getItem("last_target_word") || targetWord || "");
+          resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${completedWord.toUpperCase()}</strong></small>`;
         }
 
-        const completedRows = win ? currentRow + 1 : 7;
+        const completedRows = win ? currentRow + 1 : (typeof getDailyRowCount === "function" ? getDailyRowCount() : 7);
         for (let r = 0; r < completedRows; r++) {
           const rowClone = boardRows[r].cloneNode(true);
           rowClone.style.marginBottom = "5px";

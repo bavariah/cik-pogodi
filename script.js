@@ -12,6 +12,37 @@ let currentRow = 0;
 let currentGuess = "";
 let isFlipping = false;
 
+function activeWordLength() {
+  return typeof getDailyWordLength === "function" ? getDailyWordLength() : 6;
+}
+
+function activeRowCount() {
+  return typeof getDailyRowCount === "function" ? getDailyRowCount() : 7;
+}
+
+function activeScoreMap() {
+  return typeof getDailyScoreMap === "function" ? getDailyScoreMap() : [50, 25, 10, 8, 5, 2, 1];
+}
+
+function activeScoreForRow(rowIndex) {
+  return typeof getDailyScoreForRow === "function"
+    ? getDailyScoreForRow(rowIndex)
+    : (activeScoreMap()[rowIndex] || 0);
+}
+
+function activeModeLabel() {
+  return `${activeWordLength()} слова`;
+}
+
+function completedTargetWord() {
+  return (localStorage.getItem("last_target_word") || targetWord || "").trim().toLowerCase();
+}
+
+function applyDailyLayoutVars() {
+  document.documentElement.style.setProperty("--daily-word-length", activeWordLength());
+  document.documentElement.style.setProperty("--daily-row-count", activeRowCount());
+}
+
 function getTimeWindowBounds(offset = 0) {
   const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime) + offset;
   return {
@@ -49,10 +80,11 @@ function getSeasonCountdownText() {
 // ─── Board & keyboard ─────────────────────────────────────────────────────────
 
 function createBoard() {
-  for (let i = 0; i < 7; i++) {
+  applyDailyLayoutVars();
+  for (let i = 0; i < activeRowCount(); i++) {
     const row = document.createElement("div");
     row.classList.add("row");
-    for (let j = 0; j < 6; j++) {
+    for (let j = 0; j < activeWordLength(); j++) {
       const tile = document.createElement("div");
       tile.classList.add("tile");
       row.appendChild(tile);
@@ -99,7 +131,7 @@ function createKeyboard() {
 
 function handleKey(letter) {
   if (isFlipping) return;
-  if (currentGuess.length < 6) {
+  if (currentGuess.length < activeWordLength()) {
     currentGuess += letter.toLowerCase();
     updateBoard();
     const row = board.children[currentRow];
@@ -107,6 +139,7 @@ function handleKey(letter) {
     tile.classList.add("tile-animate");
     setTimeout(() => tile.classList.remove("tile-animate"), 150);
     saveGameState();
+    if (typeof updateDailyModePicker === "function") updateDailyModePicker();
   }
 }
 
@@ -147,13 +180,19 @@ function shakeCurrentRow() {
 
 async function isKnownWord(word) {
   const normalized = word.trim().toLowerCase();
+  const table = typeof getWordSource === "function"
+    ? getWordSource(activeWordLength()).acceptedTable
+    : ACCEPTED_WORDS_TABLE;
   const { data, error } = await client
-    .from(ACCEPTED_WORDS_TABLE)
+    .from(table)
     .select("word")
     .eq("word", normalized)
     .limit(1)
     .maybeSingle();
   if (error) {
+    if (activeWordLength() === 5 && typeof isLocalAcceptedWord === "function") {
+      return isLocalAcceptedWord(normalized);
+    }
     console.error("Word validation failed:", error);
     return false;
   }
@@ -162,7 +201,8 @@ async function isKnownWord(word) {
 
 function recordRejectedGuess(word) {
   const normalized = word.trim().toLowerCase();
-  client.rpc("record_rejected_guess", { p_guess: normalized })
+  const rpcName = activeWordLength() === 5 ? "record_five_rejected_guess" : "record_rejected_guess";
+  client.rpc(rpcName, { p_guess: normalized })
     .then(({ error }) => {
       if (error) console.error("Failed to record rejected guess:", error);
     });
@@ -189,8 +229,8 @@ function saveResultGrid(rowCount = 7) {
 
 function getCompletedResultGrid() {
   const grid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
-  if (localStorage.getItem("last_result") !== "win") return grid.slice(0, 7);
-  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
+  if (localStorage.getItem("last_result") !== "win") return grid.slice(0, activeRowCount());
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || String(activeRowCount() - 1));
   return grid.slice(0, lastAttemptRow + 1);
 }
 
@@ -219,9 +259,10 @@ function checkAndRecordMiss(gameState, savedTimeWindow) {
 
 async function submitGuess() {
   if (isFlipping) return;
-  if (currentGuess.length !== 6) {
+  const wordLength = activeWordLength();
+  if (currentGuess.length !== wordLength) {
     shakeCurrentRow();
-    showToast("Реч мора имати 6 слова");
+    showToast(`Реч мора имати ${wordLength} слова`);
     return;
   }
   isFlipping = true;
@@ -237,12 +278,12 @@ async function submitGuess() {
   const row = board.children[currentRow];
   const targetArr = targetWord.split("");
   const guessArr = currentGuess.split("");
-  const tileStatus = Array(6).fill("grey");
+  const tileStatus = Array(wordLength).fill("grey");
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < wordLength; i++) {
     if (guessArr[i] === targetArr[i]) { tileStatus[i] = "green"; targetArr[i] = null; }
   }
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < wordLength; i++) {
     if (tileStatus[i] === "grey" && targetArr.includes(guessArr[i])) {
       tileStatus[i] = "orange";
       targetArr[targetArr.indexOf(guessArr[i])] = null;
@@ -285,7 +326,7 @@ async function submitGuess() {
   });
 
   const isWin = currentGuess === targetWord;
-  const isLose = !isWin && currentRow === 6;
+  const isLose = !isWin && currentRow === activeRowCount() - 1;
 
   await new Promise(resolve => setTimeout(resolve, totalFlipTime));
   isFlipping = false;
@@ -323,6 +364,8 @@ function clearAllGameData() {
   localStorage.removeItem("last_result_grid");
   localStorage.removeItem("last_result");
   localStorage.removeItem("last_attempt_row");
+  localStorage.removeItem("last_word_length");
+  localStorage.removeItem("last_target_word");
   localStorage.removeItem("last_played_timeWindow");
   window.location.reload();
 }
@@ -347,14 +390,16 @@ function normalizeStats(stats) {
   normalized.misses = normalized.misses || 0;
   normalized.currentStreak = normalized.currentStreak || 0;
   normalized.maxStreak = normalized.maxStreak || 0;
+  normalized.score = normalized.score || 0;
   return normalized;
 }
 
-function applyStatsResult(stats, rowSolved) {
+function applyStatsResult(stats, rowSolved, pointsAwarded = 0) {
   stats.total++;
   if (rowSolved !== null) {
     stats.wins++;
     stats.attempts[rowSolved]++;
+    stats.score = (stats.score || 0) + pointsAwarded;
     stats.currentStreak++;
     if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
   } else {
@@ -364,19 +409,21 @@ function applyStatsResult(stats, rowSolved) {
   return stats;
 }
 
-function recordStatsResult(rowSolved) {
+function recordStatsResult(rowSolved, pointsAwarded = 0) {
   const allStats = applyStatsResult(
     normalizeStats(JSON.parse(localStorage.getItem("stats"))),
-    rowSolved
+    rowSolved,
+    pointsAwarded
   );
-  const seasonStats = applyStatsResult(normalizeStats(getSeasonStats()), rowSolved);
+  const seasonStats = applyStatsResult(normalizeStats(getSeasonStats()), rowSolved, pointsAwarded);
   localStorage.setItem("stats", JSON.stringify(allStats));
   saveSeasonStats(seasonStats);
   return { allStats, seasonStats };
 }
 
-async function updateStats(rowSolved) {
-  recordStatsResult(rowSolved);
+async function updateStats(rowSolved, sync = true, pointsAwarded = 0) {
+  recordStatsResult(rowSolved, pointsAwarded);
+  if (!sync) return;
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user) {
@@ -458,11 +505,12 @@ function showCountdownToNextWord() {
 // ─── Locked screen ────────────────────────────────────────────────────────────
 
 function showLockedGameScreen() {
+  applyDailyLayoutVars();
   disableInput();
   board.classList.add("board--hidden");
   board.style.display = "none";
   const win = localStorage.getItem("last_result") === "win";
-  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || "6");
+  const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || String(activeRowCount() - 1));
   const savedGrid = getCompletedResultGrid();
 
   resultGrid.innerHTML = "";
@@ -486,7 +534,7 @@ function showLockedGameScreen() {
     else if (lastAttemptRow === 3) message = "👏 Није било лако, али успели сте у четвртом покушају!";
     resultTitle.innerHTML = message;
   } else {
-    resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${targetWord.toUpperCase()}</strong></small>`;
+    resultTitle.innerHTML = `Нисте погодили 😞<br><small style="color:#ccc;">Тачна реч је: <strong>${completedTargetWord().toUpperCase()}</strong></small>`;
   }
 
   resultScreen.style.display = "block";
@@ -534,6 +582,8 @@ function checkIfLocked() {
   } else if (lastPlayed !== -1) {
     localStorage.removeItem("gameState");
     localStorage.removeItem("last_result_grid");
+    localStorage.removeItem("last_word_length");
+    localStorage.removeItem("last_target_word");
   }
   return false;
 }
@@ -541,11 +591,19 @@ function checkIfLocked() {
 // ─── Game state persistence ───────────────────────────────────────────────────
 
 function saveGameState() {
-  const gameState = { currentRow, currentGuess, timestamp: Date.now(), boardState: [] };
+  const gameState = {
+    currentRow,
+    currentGuess,
+    timestamp: Date.now(),
+    wordLength: activeWordLength(),
+    rowCount: activeRowCount(),
+    dayKey: typeof getDailyDayKey === "function" ? getDailyDayKey() : "",
+    boardState: []
+  };
   for (let i = 0; i <= currentRow; i++) {
     const row = board.children[i];
     const rowState = [];
-    for (let j = 0; j < 6; j++) {
+    for (let j = 0; j < activeWordLength(); j++) {
       const tile = row.children[j];
       rowState.push({
         letter: tile.textContent,
@@ -568,6 +626,7 @@ function loadGameState() {
   const isCompleted = ["win", "lose"].includes(localStorage.getItem("last_result"));
   if (lastPlayed !== -1 && lastPlayed !== currentTimeWindow) return false;
   if (isCompleted && lastPlayed === currentTimeWindow) return false;
+  if (gameState.wordLength && gameState.wordLength !== activeWordLength()) return false;
 
   gameState.boardState.forEach((rowState, rowIndex) => {
     const row = board.children[rowIndex];
@@ -601,7 +660,7 @@ function loadGameState() {
 function checkAndShowHint() {
   const hintIconBtn = document.getElementById("hintIconBtn");
   if (!hintIconBtn) return;
-  if (currentRow >= 6) {
+  if (currentRow >= activeRowCount() - 1) {
     hintIconBtn.style.display = "block";
     hintIconBtn.onclick = () => {
       const hintModal = document.getElementById("hintModal");
@@ -634,6 +693,8 @@ function checkAndShowHint() {
     localStorage.removeItem("last_result_grid");
     localStorage.removeItem("last_result");
     localStorage.removeItem("last_attempt_row");
+    localStorage.removeItem("last_word_length");
+    localStorage.removeItem("last_target_word");
     localStorage.removeItem("last_played_timeWindow");
     window.location.reload();
   }
@@ -884,104 +945,114 @@ function playSuccessSound() {
 
 // ─── Day Hero ─────────────────────────────────────────────────────────────────
 
+function attemptLabel(attempt) {
+  return ["првог", "другог", "трећег", "четвртог", "петог", "шестог", "седмог"][attempt - 1] || `${attempt}.`;
+}
+
 async function loadDayHero() {
   const el = document.getElementById("dayHeroSection");
-  if (!el || typeof getGameWordForOffset !== "function") return;
+  if (!el || typeof getDailyDayKey !== "function") return;
 
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
-  const yesterdayEntry = await getGameWordForOffset(-1);
-  if (!yesterdayEntry?.word) return;
-  const { start, end } = getTimeWindowBounds(-1);
+  const yesterdayKey = getDailyDayKey(-1);
 
   const { data, error } = await client
-    .from("submissions")
-    .select("username, attempt, played_at, user_id")
-    .eq("word", yesterdayEntry.word)
+    .from("daily_results")
+    .select("username, attempt, played_at, user_id, word_length, points")
+    .eq("day_key", yesterdayKey)
     .eq("correct", true)
     .not("user_id", "is", null)
-    .gte("played_at", start)
-    .lt("played_at", end)
     .order("attempt", { ascending: true })
     .order("played_at", { ascending: true })
-    .limit(1);
+    .limit(100);
 
-  if (error || !data || data.length === 0) return;
-  const hero = data[0];
-  if (!hero.username || hero.username === "anon") return;
+  if (error || !data || data.length === 0) {
+    el.style.display = "none";
+    return;
+  }
 
   const currentUsername = localStorage.getItem("username");
-  const isYou = hero.username === currentUsername;
-  const safeHeroUsername = escapeHtml(hero.username);
+  const thresholds = { 5: 3, 6: 3 };
+  const cards = [];
 
-  let avatarEmoji = null;
-  if (hero.user_id) {
-    const { data: scoreRow } = await client
-      .from("scores")
-      .select("avatar_emoji")
-      .eq("user_id", hero.user_id)
-      .order("season", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    avatarEmoji = scoreRow?.avatar_emoji || null;
-  }
+  [5, 6].forEach(mode => {
+    const hero = data.find(row =>
+      row.word_length === mode &&
+      row.attempt <= thresholds[mode] &&
+      row.username &&
+      row.username !== "anon"
+    );
+    if (!hero) return;
 
-  const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-  const score = scoreMap[(hero.attempt || 1) - 1] || 1;
-  const attemptLabel = ["првог", "другог", "трећег", "четвртог", "петог", "шестог", "седмог"][hero.attempt - 1] || `${hero.attempt}.`;
+    const isYou = hero.username === currentUsername;
+    const safeHeroUsername = escapeHtml(hero.username);
+    const pointsText = hero.points ? ` · +${hero.points}` : "";
 
-  // Count consecutive days this hero has been on top
-  let streak = 1;
-  if (hero.user_id) {
-    for (let daysBack = 2; daysBack <= 14; daysBack++) {
-      const tw = currentTimeWindow - daysBack;
-      if (tw < 0) break;
-      const pastWord = await getGameWordForOffset(-daysBack);
-      if (!pastWord?.word) break;
-      const { start: pastStart, end: pastEnd } = getTimeWindowBounds(-daysBack);
-      const { data: prev } = await client
-        .from("submissions")
-        .select("user_id")
-        .eq("word", pastWord.word)
-        .eq("correct", true)
-        .not("user_id", "is", null)
-        .gte("played_at", pastStart)
-        .lt("played_at", pastEnd)
-        .order("attempt", { ascending: true })
-        .order("played_at", { ascending: true })
-        .limit(1);
-      if (!prev || prev.length === 0 || prev[0].user_id !== hero.user_id) break;
-      streak++;
-    }
-  }
-
-  const streakBadge = streak > 1 ? `<div class="day-hero-streak">🔥 ${streak} дана заредом</div>` : "";
-
-  el.innerHTML = `
-    <div class="day-hero-card">
-      <div class="day-hero-label">💎 ВАУУУ ЈУЧЕРАШЊЕГ ДАНА</div>
-      <div class="day-hero-body">
-        <div class="day-hero-info">
-          <div class="day-hero-name">${safeHeroUsername}${isYou ? " ⭐" : ""}</div>
-          <div class="day-hero-sub">из <strong>${attemptLabel}</strong> покушаја</div>
-          ${streakBadge}
+    cards.push(`
+      <div class="day-hero-card">
+        <div class="day-hero-label">💎 ВАУ ${mode} СЛОВА</div>
+        <div class="day-hero-body">
+          <div class="day-hero-info">
+            <div class="day-hero-name">${safeHeroUsername}${isYou ? " ⭐" : ""}</div>
+            <div class="day-hero-sub">из <strong>${attemptLabel(hero.attempt)}</strong> покушаја${pointsText}</div>
+          </div>
         </div>
       </div>
-    </div>`;
+    `);
+  });
+
+  if (cards.length === 0) {
+    el.style.display = "none";
+    return;
+  }
+
+  el.innerHTML = `<div class="day-hero-list">${cards.join("")}</div>`;
   el.style.display = "block";
 }
 
 // ─── Game end ─────────────────────────────────────────────────────────────────
 
+async function recordDailyResult(win, points) {
+  const dayKey = typeof getDailyDayKey === "function" ? getDailyDayKey() : new Date().toISOString().slice(0, 10);
+  const { data: { session } } = await client.auth.getSession();
+  const username = localStorage.getItem("username") || "anon";
+
+  if (!session?.user) return false;
+
+  const { data, error } = await client.rpc("record_daily_result", {
+    p_day_key: dayKey,
+    p_word_length: activeWordLength(),
+    p_word: targetWord,
+    p_guess: currentGuess || targetWord,
+    p_attempt: currentRow + 1,
+    p_correct: win,
+    p_points: points,
+    p_username: username,
+    p_season: typeof getCurrentSeason === "function" ? getCurrentSeason() : ""
+  });
+
+  if (error) {
+    console.error("Failed to record daily result:", error);
+    return false;
+  }
+
+  await persistCareerStats(session.user.id).catch(console.error);
+  return Array.isArray(data) ? data[0]?.inserted !== false : true;
+}
+
 async function endGame(win) {
   localStorage.setItem("last_played_timeWindow", Math.floor((Date.now() - START_TIME) / lockTime));
   localStorage.setItem("last_result", win ? "win" : "lose");
   localStorage.setItem("last_attempt_row", currentRow.toString());
-  const completedRows = win ? currentRow + 1 : 7;
+  localStorage.setItem("last_word_length", String(activeWordLength()));
+  localStorage.setItem("last_target_word", targetWord);
+  const completedRows = win ? currentRow + 1 : activeRowCount();
   saveResultGrid(completedRows);
   compactCompletedGame(completedRows);
   disableInput();
-  await updateStats(win ? currentRow : null);
+  const points = win ? activeScoreForRow(currentRow) : 0;
+  await updateStats(win ? currentRow : null, false, points);
 
   if (win) {
     const row = board.children[currentRow];
@@ -990,8 +1061,21 @@ async function endGame(win) {
     });
     playSuccessSound();
     setTimeout(() => createFireworks(), 600);
-    const scoreMap = [50, 25, 10, 8, 5, 2, 1];
-    await updateLeaderboard(localStorage.getItem("username"), scoreMap[currentRow] || 0);
+  }
+
+  const recorded = await recordDailyResult(win, points).catch(error => {
+    console.error("daily result failed", error);
+    return false;
+  });
+  if (!recorded) {
+    if (win) await updateLeaderboard(localStorage.getItem("username"), points);
+    const { data: { session } } = await client.auth.getSession();
+    if (session?.user) {
+      await Promise.all([
+        syncStats(session.user.id),
+        persistCareerStats(session.user.id)
+      ]).catch(e => console.error("stats sync failed", e));
+    }
   }
 
   setTimeout(() => {
@@ -1012,8 +1096,8 @@ async function updateLeaderboard(username, score) {
   const localStats = typeof getSeasonStats === "function" ? normalizeStats(getSeasonStats(season)) : null;
   const localDist = Array.isArray(localStats?.attempts) ? localStats.attempts : [];
   const localAttempts = localDist.reduce((total, count) => total + (count || 0), 0);
-  const localScore = typeof getScoreFromDistribution === "function"
-    ? getScoreFromDistribution(localDist)
+  const localScore = typeof getSeasonScoreFromStats === "function"
+    ? getSeasonScoreFromStats(localStats)
     : [50, 25, 10, 8, 5, 2, 1].reduce((total, points, index) => total + ((localDist[index] || 0) * points), 0);
 
   const { data, error } = await client.from("scores")
@@ -1059,21 +1143,51 @@ async function updateLeaderboard(username, score) {
 // ─── After-game info ──────────────────────────────────────────────────────────
 
 async function showYesterdayWord() {
-  if (typeof getGameWordForOffset !== "function") return;
+  if (typeof getWordByTimeWindow !== "function") return;
   const currentTimeWindow = Math.floor((Date.now() - START_TIME) / lockTime);
   if (currentTimeWindow === 0) return;
-  const yesterdayEntry = await getGameWordForOffset(-1);
-  if (!yesterdayEntry) return;
+  const yesterdayTimeWindow = currentTimeWindow - 1;
+  const entries = await Promise.all([
+    getWordByTimeWindow(yesterdayTimeWindow, 5).catch(() => null),
+    getWordByTimeWindow(yesterdayTimeWindow, 6).catch(() => null),
+  ]);
+  const parts = entries
+    .map((entry, index) => entry?.word ? `${index === 0 ? 5 : 6}: ${entry.word.toUpperCase()}` : "")
+    .filter(Boolean);
+  if (parts.length === 0) return;
   const el = document.getElementById("yesterdaySection");
   if (el) {
-    el.textContent = `Јучерашња реч је била: ${yesterdayEntry.word.toUpperCase()}`;
+    el.textContent = `Јучерашње речи: ${parts.join(" · ")}`;
     el.style.display = "block";
   }
 }
 
 async function loadDailyStats() {
   const el = document.getElementById("dailyStatsBar");
-  if (!el || !targetWord) return;
+  if (!el || typeof getDailyDayKey !== "function") return;
+  const dayKey = getDailyDayKey();
+  const { data: dailyRows, error: dailyError } = await client
+    .from("daily_results")
+    .select("word_length, correct")
+    .eq("day_key", dayKey);
+
+  if (!dailyError && Array.isArray(dailyRows) && dailyRows.length > 0) {
+    const totals = {
+      5: { played: 0, solved: 0 },
+      6: { played: 0, solved: 0 },
+    };
+    dailyRows.forEach(row => {
+      const bucket = totals[row.word_length];
+      if (!bucket) return;
+      bucket.played++;
+      if (row.correct) bucket.solved++;
+    });
+    el.textContent = `Данас: 5 слова ${totals[5].solved}/${totals[5].played} · 6 слова ${totals[6].solved}/${totals[6].played}`;
+    el.style.display = "block";
+    return;
+  }
+
+  if (!targetWord) return;
   const { start, end } = getTimeWindowBounds();
   const { count, error } = await client.from("submissions")
     .select("*", { count: "exact", head: true })
@@ -1201,6 +1315,8 @@ function showDBLockedScreen() {
 }
 
 async function initGame() {
+  applyDailyLayoutVars();
+  if (typeof updateDailyModePicker === "function") updateDailyModePicker();
   await recordAbandonedGameIfNeeded();
   await loadStatsFromDB().catch(console.error);
   loadDayHero().catch(console.error);
@@ -1223,10 +1339,19 @@ async function initGame() {
     const isSameBrowser = gameStateWindow === currentTimeWindow;
     if (!isSameBrowser) {
       const { start, end } = getTimeWindowBounds();
-      const { count } = await client.from("submissions")
+      let dailyResultCount = 0;
+      if (typeof getDailyDayKey === "function") {
+        const { count } = await client.from("daily_results")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", session.user.id)
+          .eq("day_key", getDailyDayKey());
+        dailyResultCount = count || 0;
+      }
+      const { count } = dailyResultCount > 0
+        ? { count: dailyResultCount }
+        : await client.from("submissions")
         .select("*", { count: "exact", head: true })
         .eq("user_id", session.user.id)
-        .eq("word", targetWord)
         .gte("played_at", start)
         .lt("played_at", end);
       if (count > 0) {
@@ -1252,6 +1377,8 @@ async function initGame() {
     localStorage.removeItem("last_result_grid");
     localStorage.removeItem("last_result");
     localStorage.removeItem("last_attempt_row");
+    localStorage.removeItem("last_word_length");
+    localStorage.removeItem("last_target_word");
     localStorage.removeItem("last_played_timeWindow");
     window.location.reload();
     return;
@@ -1260,5 +1387,6 @@ async function initGame() {
   createBoard();
   createKeyboard();
   loadGameState();
+  if (typeof updateDailyModePicker === "function") updateDailyModePicker();
   showCountdownToNextWord();
 }
