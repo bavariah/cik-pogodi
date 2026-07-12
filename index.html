@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image:width" content="192" />
     <meta property="og:image:height" content="192" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=20260712-3" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
@@ -147,6 +147,7 @@
         currentDailyMode = Number(mode) === 5 ? 5 : 6;
         localStorage.setItem(getDailyModeKey(), String(currentDailyMode));
         if (remember) localStorage.setItem("daily_mode_preference", String(currentDailyMode));
+        if (typeof applyDailyLayoutVars === "function") applyDailyLayoutVars();
         updateDailyModePicker();
       }
 
@@ -175,13 +176,6 @@
         if (randomButton) {
           randomButton.classList.toggle("active", !locked && preference === "random");
           randomButton.disabled = locked;
-        }
-        const detail = document.getElementById("dailyModeDetail");
-        if (detail) {
-          const prefix = !locked && preference === "random" ? "Насумично: " : "";
-          detail.textContent = locked
-            ? `Данас играш ${getDailyModeConfig().label}.`
-            : `${prefix}${getDailyModeConfig().label} · ${getDailyModeConfig().detail}`;
         }
       }
 
@@ -1077,28 +1071,29 @@
     <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border-bottom:1px solid #333;line-height:1.6;width:100%;box-sizing:border-box;">
       Гледаш јучерашњу реч — <button onclick="openLoginModal()" style="background:none;border:none;color:#538d4e;cursor:pointer;font-size:12px;padding:0;text-decoration:underline;">пријави се</button> за данашњу
     </div>
-    <div id="dailyModePicker" class="daily-mode-picker">
-      <div class="daily-mode-picker__text">
-        <span class="daily-mode-picker__label">Дневна игра</span>
-        <span id="dailyModeDetail" class="daily-mode-picker__detail">Изабери режим пре првог покушаја</span>
+    <div class="play-launcher-grid">
+      <div id="dailyModePicker" class="daily-mode-picker">
+        <div class="daily-mode-picker__text">
+          <span class="daily-mode-picker__label">Дневна игра</span>
+        </div>
+        <div class="daily-mode-picker__actions">
+          <button type="button" data-daily-mode="5" onclick="switchDailyMode(5)">5</button>
+          <button type="button" data-daily-mode="6" onclick="switchDailyMode(6)">6</button>
+          <button type="button" data-daily-random onclick="setRandomDailyMode()">🎲</button>
+        </div>
       </div>
-      <div class="daily-mode-picker__actions">
-        <button type="button" data-daily-mode="5" onclick="switchDailyMode(5)">5</button>
-        <button type="button" data-daily-mode="6" onclick="switchDailyMode(6)">6</button>
-        <button type="button" data-daily-random onclick="setRandomDailyMode()">🎲</button>
-      </div>
+      <button id="weeklyChallengeCard" class="weekly-card" type="button">
+        <span class="weekly-card__body">
+          <strong id="weeklyCardTitle">Недељна игра</strong>
+          <small id="weeklyCardDetail"></small>
+        </span>
+        <span class="weekly-card__aside">
+          <span class="weekly-card__prompt" id="weeklyCardPrompt">Доступно</span>
+          <span class="weekly-card__countdown" id="weeklyCardCountdown"></span>
+          <span class="weekly-card__meta" id="weeklyCardSolved">Играј</span>
+        </span>
+      </button>
     </div>
-    <button id="weeklyChallengeCard" class="weekly-card" type="button">
-      <span class="weekly-card__body">
-        <strong id="weeklyCardTitle">Недељна реч од 4 слова</strong>
-        <small id="weeklyCardDetail">5 покушаја · бонус поени · одвојено од дневне игре</small>
-      </span>
-      <span class="weekly-card__aside">
-        <span class="weekly-card__prompt" id="weeklyCardPrompt">Nova reč je dostupna</span>
-        <span class="weekly-card__countdown" id="weeklyCardCountdown">Dostupno još</span>
-        <span class="weekly-card__meta" id="weeklyCardSolved">Klikni ovde</span>
-      </span>
-    </button>
     <div id="board" style="display:none;"></div>
     <div id="keyboard"></div>
     <div id="hintWrapper" style="display:none;margin-top:10px">
@@ -1361,8 +1356,8 @@
     </script>
 
     <div id="toast"></div>
-    <script src="script.js" defer></script>
-    <script src="weekly.js" defer></script>
+    <script src="script.js?v=20260712-3" defer></script>
+    <script src="weekly.js?v=20260712-2" defer></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")

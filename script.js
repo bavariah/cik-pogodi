@@ -39,8 +39,10 @@ function completedTargetWord() {
 }
 
 function applyDailyLayoutVars() {
-  document.documentElement.style.setProperty("--daily-word-length", activeWordLength());
+  const wordLength = activeWordLength();
+  document.documentElement.style.setProperty("--daily-word-length", wordLength);
   document.documentElement.style.setProperty("--daily-row-count", activeRowCount());
+  document.documentElement.dataset.dailyMode = String(wordLength);
 }
 
 function getDailyLockDayKey() {
@@ -569,12 +571,6 @@ function showLockedGameScreen() {
 
   resultScreen.style.display = "block";
   resultScreen.classList.add("result-screen--locked");
-  const msg = document.createElement("div");
-  msg.className = "played-status";
-  msg.style.marginTop = "20px";
-  msg.style.color = "#fff";
-  msg.innerHTML = "<h2 style='margin-bottom:10px;'>Већ сте играли ову игру 😊</h2><p>Сачекајте за следећу реч.</p>";
-  resultScreen.insertBefore(msg, resultScreen.firstChild);
 
   const shareBtn = document.getElementById("shareImageBtn");
   if (shareBtn) {

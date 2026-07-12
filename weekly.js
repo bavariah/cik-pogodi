@@ -32,8 +32,8 @@ function getWeeklyStateKey() {
 
 function getWeeklyCountdownText(end, isCompleted) {
   const diff = end.getTime() - Date.now();
-  const prefix = isCompleted ? "Nova reč za" : "Dostupno još";
-  if (diff <= 0) return isCompleted ? "Nova reč uskoro" : "Još malo vremena";
+  const prefix = isCompleted ? "Нова за" : "Још";
+  if (diff <= 0) return isCompleted ? "Нова ускоро" : "Још мало";
 
   const totalHours = Math.max(1, Math.ceil(diff / (60 * 60 * 1000)));
   const days = Math.floor(totalHours / 24);
@@ -467,26 +467,25 @@ async function updateWeeklyLauncher() {
   card.classList.toggle("weekly-card--completed", isCompleted);
   card.classList.toggle("weekly-card--available", !isCompleted);
 
-  if (title) title.textContent = isCompleted ? "Недељни изазов" : "Недељна реч од 4 слова";
-  if (detail) {
-    detail.textContent = isCompleted
-      ? `Нова реч стиже: ${next}`
-      : `5 покушаја · бонус поени · важи до: ${next}`;
-  }
+  if (title) title.textContent = "Недељна игра";
+  if (detail) detail.textContent = "";
   if (prompt) {
     prompt.textContent = isCompleted
-      ? (displayState.result === "win" ? "Rešena reč za ovu nedelju" : "Izazov odigran za ovu nedelju")
-      : "Nova reč je dostupna";
+      ? "Није доступно"
+      : "Доступно";
   }
-  if (countdown) countdown.textContent = getWeeklyCountdownText(end, isCompleted);
-  if (solved) solved.textContent = isCompleted ? "Pogledaj rezultat" : "Klikni ovde";
+  if (countdown) countdown.textContent = "";
+  if (solved) {
+    solved.textContent = isCompleted ? "" : "Играј";
+    solved.style.display = isCompleted ? "none" : "";
+  }
 
   const { count } = await client
     .from("weekly_results")
     .select("*", { count: "exact", head: true })
     .eq("week_key", key)
     .eq("correct", true);
-  if (solved && count !== null && isCompleted) solved.textContent = `${count} решило ове недеље`;
+  if (solved && count !== null && isCompleted) solved.style.display = "none";
 }
 
 async function refreshWeeklyProfileStats(userId) {
