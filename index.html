@@ -133,7 +133,14 @@
         if (lockedDay === getDailyDayKey() && (lockedMode === 5 || lockedMode === 6)) return lockedMode;
         if (!["win", "lose"].includes(localStorage.getItem("last_result"))) return null;
         const mode = Number(localStorage.getItem("last_word_length"));
-        return mode === 5 || mode === 6 ? mode : null;
+        if (mode === 5 || mode === 6) return mode;
+        try {
+          const savedGrid = JSON.parse(localStorage.getItem("last_result_grid") || "[]");
+          const inferredMode = Number(savedGrid?.[0]?.length);
+          return inferredMode === 5 || inferredMode === 6 ? inferredMode : null;
+        } catch (e) {
+          return null;
+        }
       }
 
       function setDailyMode(mode, remember = true) {

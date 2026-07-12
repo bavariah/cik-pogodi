@@ -539,6 +539,7 @@ function showLockedGameScreen() {
   const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || String(activeRowCount() - 1));
   const savedGrid = getCompletedResultGrid();
   const resultWordLength = savedGrid[0]?.length || storedWordLength || activeWordLength();
+  if (resultWordLength === 5 || resultWordLength === 6) setPlayedDailyLock(resultWordLength);
   resultGrid.style.setProperty("--daily-word-length", resultWordLength);
 
   removePlayedStatusMessages();
