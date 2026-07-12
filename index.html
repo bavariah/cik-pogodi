@@ -119,7 +119,7 @@
         const key = getDailyModeKey(offset);
         const saved = Number(localStorage.getItem(key));
         if (saved === 5 || saved === 6) return saved;
-        const preference = localStorage.getItem("daily_mode_preference") || "random";
+        const preference = localStorage.getItem("daily_mode_preference") || "6";
         const mode = preference === "5" || preference === "6"
           ? Number(preference)
           : chooseRandomDailyMode(getDailyTimeWindow(offset));
@@ -128,6 +128,9 @@
       }
 
       function getCompletedDailyMode() {
+        const lockedDay = localStorage.getItem("daily_already_played_day_key");
+        const lockedMode = Number(localStorage.getItem("daily_already_played_word_length"));
+        if (lockedDay === getDailyDayKey() && (lockedMode === 5 || lockedMode === 6)) return lockedMode;
         if (!["win", "lose"].includes(localStorage.getItem("last_result"))) return null;
         const mode = Number(localStorage.getItem("last_word_length"));
         return mode === 5 || mode === 6 ? mode : null;
@@ -141,6 +144,7 @@
       }
 
       function canSwitchDailyMode() {
+        if (localStorage.getItem("daily_already_played_day_key") === getDailyDayKey()) return false;
         if (localStorage.getItem("last_result")) return false;
         try {
           const state = JSON.parse(localStorage.getItem("gameState") || "null");
@@ -154,7 +158,7 @@
         const picker = document.getElementById("dailyModePicker");
         if (!picker) return;
         const locked = !canSwitchDailyMode();
-        const preference = localStorage.getItem("daily_mode_preference") || "random";
+        const preference = localStorage.getItem("daily_mode_preference") || "6";
         picker.querySelectorAll("[data-daily-mode]").forEach(button => {
           const mode = Number(button.dataset.dailyMode);
           button.classList.toggle("active", mode === currentDailyMode);
@@ -1296,6 +1300,7 @@
         const resultTitle = document.getElementById("resultTitle");
         const resultScreen = document.getElementById("resultScreen");
         resultGrid.innerHTML = "";
+        resultGrid.style.setProperty("--daily-word-length", typeof getDailyWordLength === "function" ? getDailyWordLength() : 6);
 
         if (win) {
           let message = "Браво! Погодили сте реч!";

@@ -69,8 +69,8 @@ button {
 
 .row {
     display: grid;
-    grid-template-columns: repeat(var(--daily-word-length, 6), 52px);
-    gap: 6px;
+    grid-template-columns: repeat(var(--daily-word-length, 6), var(--daily-tile-size, 52px));
+    gap: var(--daily-tile-gap, 6px);
     justify-content: center;
     perspective: 300px;
 }
@@ -136,8 +136,8 @@ button {
 }
 
 .tile {
-    width: 52px;
-    height: 50px;
+    width: var(--daily-tile-size, 52px);
+    height: var(--daily-tile-height, 50px);
     border: 2px solid #3f514c;
     border-radius: 5px;
     text-transform: uppercase;
@@ -1242,6 +1242,14 @@ div#stats > * {
 }
 
 @media only screen and (max-width: 420px) {
+  :root {
+    --daily-tile-size: min(48px, calc((100vw - 52px) / var(--daily-word-length, 6)));
+    --daily-tile-height: var(--daily-tile-size);
+    --daily-tile-gap: 5px;
+  }
+  .tile {
+    font-size: 22px;
+  }
   .weekly-row {
     grid-template-columns: repeat(4, 48px);
   }

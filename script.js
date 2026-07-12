@@ -43,6 +43,29 @@ function applyDailyLayoutVars() {
   document.documentElement.style.setProperty("--daily-row-count", activeRowCount());
 }
 
+function getDailyLockDayKey() {
+  return typeof getDailyDayKey === "function" ? getDailyDayKey() : new Date().toISOString().slice(0, 10);
+}
+
+function setPlayedDailyLock(wordLength) {
+  const mode = Number(wordLength);
+  if (mode !== 5 && mode !== 6) return;
+  localStorage.setItem("daily_already_played_day_key", getDailyLockDayKey());
+  localStorage.setItem("daily_already_played_word_length", String(mode));
+  if (typeof setDailyMode === "function") setDailyMode(mode, false);
+  applyDailyLayoutVars();
+  if (typeof updateDailyModePicker === "function") updateDailyModePicker();
+}
+
+function clearPlayedDailyLock() {
+  localStorage.removeItem("daily_already_played_day_key");
+  localStorage.removeItem("daily_already_played_word_length");
+}
+
+function removePlayedStatusMessages() {
+  document.querySelectorAll(".played-status, .db-played-status").forEach(el => el.remove());
+}
+
 function getTimeWindowBounds(offset = 0) {
   const timeWindow = Math.floor((Date.now() - START_TIME) / lockTime) + offset;
   return {
@@ -367,6 +390,7 @@ function clearAllGameData() {
   localStorage.removeItem("last_word_length");
   localStorage.removeItem("last_target_word");
   localStorage.removeItem("last_played_timeWindow");
+  clearPlayedDailyLock();
   window.location.reload();
 }
 
@@ -505,6 +529,8 @@ function showCountdownToNextWord() {
 // ─── Locked screen ────────────────────────────────────────────────────────────
 
 function showLockedGameScreen() {
+  const storedWordLength = Number(localStorage.getItem("last_word_length"));
+  if (storedWordLength === 5 || storedWordLength === 6) setPlayedDailyLock(storedWordLength);
   applyDailyLayoutVars();
   disableInput();
   board.classList.add("board--hidden");
@@ -512,7 +538,10 @@ function showLockedGameScreen() {
   const win = localStorage.getItem("last_result") === "win";
   const lastAttemptRow = parseInt(localStorage.getItem("last_attempt_row") || String(activeRowCount() - 1));
   const savedGrid = getCompletedResultGrid();
+  const resultWordLength = savedGrid[0]?.length || storedWordLength || activeWordLength();
+  resultGrid.style.setProperty("--daily-word-length", resultWordLength);
 
+  removePlayedStatusMessages();
   resultGrid.innerHTML = "";
   savedGrid.forEach(rowData => {
     const rowDiv = document.createElement("div");
@@ -584,6 +613,7 @@ function checkIfLocked() {
     localStorage.removeItem("last_result_grid");
     localStorage.removeItem("last_word_length");
     localStorage.removeItem("last_target_word");
+    clearPlayedDailyLock();
   }
   return false;
 }
@@ -696,6 +726,7 @@ function checkAndShowHint() {
     localStorage.removeItem("last_word_length");
     localStorage.removeItem("last_target_word");
     localStorage.removeItem("last_played_timeWindow");
+    clearPlayedDailyLock();
     window.location.reload();
   }
 })();
@@ -1047,6 +1078,7 @@ async function endGame(win) {
   localStorage.setItem("last_attempt_row", currentRow.toString());
   localStorage.setItem("last_word_length", String(activeWordLength()));
   localStorage.setItem("last_target_word", targetWord);
+  setPlayedDailyLock(activeWordLength());
   const completedRows = win ? currentRow + 1 : activeRowCount();
   saveResultGrid(completedRows);
   compactCompletedGame(completedRows);
@@ -1299,13 +1331,20 @@ async function recordAbandonedGameIfNeeded() {
 
 // ─── Game init ────────────────────────────────────────────────────────────────
 
-function showDBLockedScreen() {
+function showDBLockedScreen(dailyResult = null) {
+  const playedWordLength = Number(dailyResult?.word_length);
+  if (playedWordLength === 5 || playedWordLength === 6) setPlayedDailyLock(playedWordLength);
+  applyDailyLayoutVars();
+  if (typeof updateDailyModePicker === "function") updateDailyModePicker();
   disableInput();
   board.classList.add("board--hidden");
   board.style.display = "none";
   resultTitle.innerHTML = "Данас сте већ играли 🎮";
   resultGrid.innerHTML = "";
+  resultGrid.style.setProperty("--daily-word-length", playedWordLength === 5 || playedWordLength === 6 ? playedWordLength : activeWordLength());
+  removePlayedStatusMessages();
   const msg = document.createElement("div");
+  msg.className = "played-status db-played-status";
   msg.style.cssText = "margin-top:10px;color:#aaa;text-align:center;font-size:14px;";
   msg.innerHTML = "<p>Играли сте данас из другог прегледача.</p><p>Нова реч долази ускоро!</p>";
   resultScreen.insertBefore(msg, resultScreen.firstChild);
@@ -1340,12 +1379,15 @@ async function initGame() {
     if (!isSameBrowser) {
       const { start, end } = getTimeWindowBounds();
       let dailyResultCount = 0;
+      let dailyResult = null;
       if (typeof getDailyDayKey === "function") {
-        const { count } = await client.from("daily_results")
-          .select("*", { count: "exact", head: true })
+        const { data } = await client.from("daily_results")
+          .select("word_length, correct, attempt, word")
           .eq("user_id", session.user.id)
-          .eq("day_key", getDailyDayKey());
-        dailyResultCount = count || 0;
+          .eq("day_key", getDailyDayKey())
+          .maybeSingle();
+        dailyResult = data || null;
+        dailyResultCount = dailyResult ? 1 : 0;
       }
       const { count } = dailyResultCount > 0
         ? { count: dailyResultCount }
@@ -1355,7 +1397,7 @@ async function initGame() {
         .gte("played_at", start)
         .lt("played_at", end);
       if (count > 0) {
-        showDBLockedScreen();
+        showDBLockedScreen(dailyResult || { word_length: 6 });
         return;
       }
     }
@@ -1380,6 +1422,7 @@ async function initGame() {
     localStorage.removeItem("last_word_length");
     localStorage.removeItem("last_target_word");
     localStorage.removeItem("last_played_timeWindow");
+    clearPlayedDailyLock();
     window.location.reload();
     return;
   }
