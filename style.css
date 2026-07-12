@@ -1443,30 +1443,37 @@ body::before {
   margin-right: 6px !important;
 }
 
+#topBar > div:first-child,
+#topBar > div:last-child {
+  gap: 10px !important;
+}
+
 #topBar span {
   font-size: 14px !important;
   letter-spacing: 1.2px !important;
 }
 
 #topBar button {
-  width: 34px !important;
-  height: 34px !important;
-  padding: 0 !important;
-  border-radius: 10px !important;
+  width: auto !important;
+  min-width: 28px !important;
+  height: 32px !important;
+  padding: 0 2px !important;
+  border-radius: 0 !important;
   color: var(--text) !important;
-  background: rgba(255, 255, 255, 0.055) !important;
-  border: 1px solid rgba(255, 255, 255, 0.055) !important;
-  display: inline-flex !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  display: inline-flex;
   align-items: center !important;
   justify-content: center !important;
-  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+  transition: transform 0.16s ease, opacity 0.16s ease, filter 0.16s ease;
 }
 
 #topBar button:hover,
 #topBar button:focus-visible {
   transform: translateY(-1px);
-  border-color: var(--line-strong) !important;
-  background: rgba(255, 255, 255, 0.09) !important;
+  background: transparent !important;
+  filter: brightness(1.12);
   outline: none;
 }
 
@@ -1781,7 +1788,8 @@ body::before {
   }
 
   #topBar button {
-    width: 32px !important;
+    width: auto !important;
+    min-width: 28px !important;
     height: 32px !important;
   }
 

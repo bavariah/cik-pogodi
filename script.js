@@ -748,7 +748,7 @@ document.addEventListener("touchend", function (e) {
 const hintIconBtn = document.getElementById("hintIconBtn");
 const hintModal = document.getElementById("hintModal");
 const closeHintBtn = document.getElementById("closeHintBtn");
-hintIconBtn.style.display = currentRow < 6 ? "none" : "block";
+hintIconBtn.style.display = "none";
 closeHintBtn.onclick = () => { hintModal.style.display = "none"; };
 
 document.getElementById("helpBtn").onclick = () => { document.getElementById("helpModal").style.display = "flex"; };
