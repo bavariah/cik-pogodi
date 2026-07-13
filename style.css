@@ -281,17 +281,17 @@ button {
 }
 
 .key.green {
-  background-color: #4f8b67 !important;
+  background: linear-gradient(180deg, #6daa7c, #4f8b67) !important;
   color: white;
 }
 
 .key.orange {
-  background-color: #b8943d !important;
+  background: linear-gradient(180deg, #d2ad52, #a98231) !important;
   color: white;
 }
 
 .key.grey {
-  background-color: #343c3d !important;
+  background: linear-gradient(180deg, #3a4647, #2c3536) !important;
   color: white;
 }
 #showHintBtn {
@@ -1109,6 +1109,10 @@ div#stats > * {
 #statsContent,
 #leaderboardContent {
   color: #d5dbd8 !important;
+}
+
+:root[data-daily-mode="5"] .daily-hint-help {
+  display: none;
 }
 
 #loginModal label {

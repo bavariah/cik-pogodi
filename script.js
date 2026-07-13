@@ -690,6 +690,11 @@ function loadGameState() {
 function checkAndShowHint() {
   const hintIconBtn = document.getElementById("hintIconBtn");
   if (!hintIconBtn) return;
+  if (activeWordLength() !== 6) {
+    hintIconBtn.style.display = "none";
+    hintIconBtn.onclick = null;
+    return;
+  }
   if (currentRow >= activeRowCount() - 1) {
     hintIconBtn.style.display = "block";
     hintIconBtn.onclick = () => {
