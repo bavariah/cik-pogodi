@@ -146,7 +146,9 @@ function createKeyboard() {
   enter.style.width = "50%";
   enter.onclick = submitGuess;
   const del = document.createElement("button");
-  del.textContent = "⌫";
+  del.innerHTML = '<svg class="delete-key-icon" viewBox="0 0 28 20" aria-hidden="true"><path d="M10 3h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H10L2 10l8-7Z"></path><path d="m15 7 6 6"></path><path d="m21 7-6 6"></path></svg>';
+  del.setAttribute("aria-label", "Обриши");
+  del.title = "Обриши";
   del.classList.add("key", "wide", "key-delete");
   del.style.width = "50%";
   del.onclick = deleteLetter;
