@@ -918,18 +918,6 @@ div#stats > * {
   font-size: 22px;
   line-height: 1.15;
 }
-.weekly-modal__points {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #3b3218;
-  border: 1px solid #f4d87966;
-  color: #f4d879;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
 .weekly-meta,
 .weekly-status {
   text-align: center;

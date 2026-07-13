@@ -73,7 +73,7 @@ function closeWeeklyModal() {
 async function loadWeeklyChallenge() {
   const { weekIndex, key } = getWeeklyWindow();
   const meta = document.getElementById("weeklyMeta");
-  if (meta) meta.textContent = "Svake subote nova nedeljna bonus reč";
+  if (meta) meta.textContent = "Учитавање броја играча...";
 
   const { count, error: countError } = await client
     .from(WEEKLY_WORDS_TABLE)
@@ -105,9 +105,10 @@ async function loadWeeklyChallenge() {
   weeklyFlipping = false;
   buildWeeklyBoard();
   buildWeeklyKeyboard();
+  updateWeeklyPlayedCount(key).catch(console.error);
 
   const saved = loadWeeklyState();
-  if (!saved) setWeeklyStatus("4 слова · 5 покушаја · бонус поени за сезону");
+  if (!saved) setWeeklyStatus("Погоди недељну реч.");
 
   const { data: { session } } = await client.auth.getSession();
   if (session?.user && !saved?.completed) {
@@ -119,6 +120,23 @@ async function loadWeeklyChallenge() {
       .maybeSingle();
     if (existing) showWeeklyLocked(existing);
   }
+}
+
+async function updateWeeklyPlayedCount(weekKey = getWeeklyWindow().key) {
+  const meta = document.getElementById("weeklyMeta");
+  if (!meta) return;
+  const { count, error } = await client
+    .from("weekly_results")
+    .select("*", { count: "exact", head: true })
+    .eq("week_key", weekKey);
+  if (error) {
+    meta.textContent = "Недељна игра је доступна.";
+    return;
+  }
+  const total = count || 0;
+  meta.textContent = total === 1
+    ? "Ове недеље је играо 1 играч."
+    : `Ове недеље је играло ${total} играча.`;
 }
 
 function buildWeeklyBoard() {
