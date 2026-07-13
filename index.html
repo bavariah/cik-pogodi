@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image:width" content="192" />
     <meta property="og:image:height" content="192" />
-    <link rel="stylesheet" href="style.css?v=20260712-11" />
+    <link rel="stylesheet" href="style.css?v=20260713-1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
@@ -29,6 +29,7 @@
       }
       function getSeasonLabel(s) {
         const [year, half] = s.split("-");
+        if (year === "2025") return "2025 Јануар–Децембар";
         return `${year} ${half === "S1" ? "Јануар–Јун" : "Јул–Децембар"}`;
       }
 
@@ -43,16 +44,16 @@
         5: {
           wordLength: 5,
           rowCount: 6,
-          scoreMap: [25, 12, 10, 8, 6, 2],
+          scoreMap: [30, 15, 12, 8, 6, 2],
           wordsTable: "five_words",
           acceptedTable: "five_accepted_words",
           label: "5 слова",
-          detail: "6 покушаја · до 25 поена"
+          detail: "6 покушаја · до 30 поена"
         },
         6: {
           wordLength: 6,
           rowCount: 7,
-          scoreMap: [50, 25, 10, 8, 5, 2, 1],
+          scoreMap: [50, 30, 15, 12, 8, 6, 2],
           wordsTable: "words",
           acceptedTable: "accepted_words",
           label: "6 слова",
@@ -1319,7 +1320,8 @@
         <button id="closeHelpBtn" class="modal-close">✕</button>
         <h2 style="margin-bottom:15px;text-align:center">Како играти</h2>
         <div style="margin-bottom:20px">
-          <p>Погодите реч од 5 или 6 слова у дневном режиму који изаберете.</p>
+          <p>Сваког дана можете одиграти само једну дневну игру: изаберите 5 слова, 6 слова или насумичан избор пре него што почнете.</p>
+          <p>Када започнете дневну игру, тај избор је закључан за тај дан.</p>
           <p>Након сваког покушаја, боја плочица ће се променити да покаже колико сте близу решења:</p>
           <div style="margin:15px 0;display:flex;align-items:center;gap:10px;">
             <div style="width:40px;height:40px;background:#538d4e;display:flex;justify-content:center;align-items:center;font-weight:bold;">А</div>
@@ -1343,8 +1345,9 @@
           <h3>Бодовање</h3>
           <p>Бодови се додељују на основу тога у ком реду сте погодили реч:</p>
           <ul style="list-style-type:none;padding-left:0">
-            <li>5 слова: 25, 12, 10, 8, 6, 2</li>
-            <li>6 слова: 50, 25, 10, 8, 5, 2, 1</li>
+            <li>5 слова: 30, 15, 12, 8, 6, 2</li>
+            <li>6 слова: 50, 30, 15, 12, 8, 6, 2</li>
+            <li>4 слова недељно: 20, 15, 12, 10, 4</li>
           </ul>
         </div>
         <div style="margin-bottom:20px;background:#1a0f0f;border-left:3px solid #c0392b;padding:12px 14px;border-radius:0 8px 8px 0;">
@@ -1443,8 +1446,8 @@
     </script>
 
     <div id="toast"></div>
-    <script src="script.js?v=20260712-6" defer></script>
-    <script src="weekly.js?v=20260712-2" defer></script>
+    <script src="script.js?v=20260713-1" defer></script>
+    <script src="weekly.js?v=20260713-1" defer></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")

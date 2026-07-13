@@ -21,7 +21,7 @@ function activeRowCount() {
 }
 
 function activeScoreMap() {
-  return typeof getDailyScoreMap === "function" ? getDailyScoreMap() : [50, 25, 10, 8, 5, 2, 1];
+  return typeof getDailyScoreMap === "function" ? getDailyScoreMap() : [50, 30, 15, 12, 8, 6, 2];
 }
 
 function activeScoreForRow(rowIndex) {
@@ -86,6 +86,7 @@ function getCurrentSeason() {
 
 function getSeasonLabel(s) {
   const [year, half] = s.split("-");
+  if (year === "2025") return "2025 Јануар–Децембар";
   return `${year} ${half === "S1" ? "Јануар–Јун" : "Јул–Децембар"}`;
 }
 
@@ -1127,7 +1128,7 @@ async function updateLeaderboard(username, score) {
   const localAttempts = localDist.reduce((total, count) => total + (count || 0), 0);
   const localScore = typeof getSeasonScoreFromStats === "function"
     ? getSeasonScoreFromStats(localStats)
-    : [50, 25, 10, 8, 5, 2, 1].reduce((total, points, index) => total + ((localDist[index] || 0) * points), 0);
+    : [50, 30, 15, 12, 8, 6, 2].reduce((total, points, index) => total + ((localDist[index] || 0) * points), 0);
 
   const { data, error } = await client.from("scores")
     .select("id, score, attempts")

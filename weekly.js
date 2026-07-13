@@ -1,6 +1,6 @@
 const WEEKLY_WORDS_TABLE = "weekly_words";
 const WEEKLY_ACCEPTED_WORDS_TABLE = "weekly_accepted_words";
-const WEEKLY_RESULT_SCORE = [20, 15, 10, 8, 6];
+const WEEKLY_RESULT_SCORE = [20, 15, 12, 10, 4];
 const WEEKLY_ANCHOR_SATURDAY = new Date(2026, 0, 3);
 const WEEKLY_ROW_COUNT = 5;
 const WEEKLY_WORD_LENGTH = 4;
