@@ -519,13 +519,24 @@ function renderStatsPopup() {
 
 function showCountdownToNextWord() {
   const timerEl = document.getElementById("timer");
+  if (!timerEl) return;
+  const hoursEl = timerEl.querySelector("[data-countdown-hours]");
+  const minutesEl = timerEl.querySelector("[data-countdown-minutes]");
+  const secondsEl = timerEl.querySelector("[data-countdown-seconds]");
+
   function updateTimer() {
     const remainder = lockTime - ((Date.now() - START_TIME) % lockTime);
     if (remainder < 2000 || remainder > lockTime - 2000) { window.location.reload(); return; }
     const h = Math.floor(remainder / 3600000);
     const m = Math.floor((remainder % 3600000) / 60000);
     const s = Math.floor((remainder % 60000) / 1000);
-    timerEl.textContent = `Следећа реч за: ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    const hours = String(h).padStart(2, "0");
+    const minutes = String(m).padStart(2, "0");
+    const seconds = String(s).padStart(2, "0");
+    if (hoursEl) hoursEl.textContent = hours;
+    if (minutesEl) minutesEl.textContent = minutes;
+    if (secondsEl) secondsEl.textContent = seconds;
+    timerEl.setAttribute("aria-label", `Следећа реч за ${hours} сати, ${minutes} минута и ${seconds} секунди`);
   }
   updateTimer();
   setInterval(updateTimer, 1000);

@@ -30,19 +30,6 @@ function getWeeklyStateKey() {
   return `weekly_challenge_${getWeeklyWindow().key}`;
 }
 
-function getWeeklyCountdownText(end, isCompleted) {
-  const diff = end.getTime() - Date.now();
-  const prefix = isCompleted ? "Нова за" : "Још";
-  if (diff <= 0) return isCompleted ? "Нова ускоро" : "Још мало";
-
-  const totalHours = Math.max(1, Math.ceil(diff / (60 * 60 * 1000)));
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  if (days && hours) return `${prefix} ${days}d ${hours}h`;
-  if (days) return `${prefix} ${days}d`;
-  return `${prefix} ${hours}h`;
-}
-
 function escapeWeeklyHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -456,15 +443,11 @@ function fallbackWeeklyShare(text) {
 async function updateWeeklyLauncher() {
   const card = document.getElementById("weeklyChallengeCard");
   if (!card) return;
-  const { key, end } = getWeeklyWindow();
+  const { key } = getWeeklyWindow();
   const state = JSON.parse(localStorage.getItem(getWeeklyStateKey()) || "null");
   let displayState = state?.completed ? state : null;
   const title = document.getElementById("weeklyCardTitle");
-  const detail = document.getElementById("weeklyCardDetail");
-  const prompt = document.getElementById("weeklyCardPrompt");
-  const countdown = document.getElementById("weeklyCardCountdown");
   const solved = document.getElementById("weeklyCardSolved");
-  const next = end.toLocaleDateString("sr-RS", { weekday: "long" });
 
   const { data: { session } } = await client.auth.getSession();
   if (!displayState && session?.user) {
@@ -487,25 +470,11 @@ async function updateWeeklyLauncher() {
   card.classList.toggle("weekly-card--completed", isCompleted);
   card.classList.toggle("weekly-card--available", !isCompleted);
 
-  if (title) title.textContent = "Недељна игра";
-  if (detail) detail.textContent = "";
-  if (prompt) {
-    prompt.textContent = isCompleted
-      ? "Није доступно"
-      : "Доступно";
-  }
-  if (countdown) countdown.textContent = "";
+  if (title) title.textContent = "Недељна";
   if (solved) {
     solved.textContent = isCompleted ? "" : "Играј";
     solved.style.display = isCompleted ? "none" : "";
   }
-
-  const { count } = await client
-    .from("weekly_results")
-    .select("*", { count: "exact", head: true })
-    .eq("week_key", key)
-    .eq("correct", true);
-  if (solved && count !== null && isCompleted) solved.style.display = "none";
 }
 
 async function refreshWeeklyProfileStats(userId) {

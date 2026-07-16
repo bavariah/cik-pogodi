@@ -818,6 +818,7 @@ div#stats > * {
 .weekly-card__body {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   min-width: 0;
 }
@@ -825,36 +826,47 @@ div#stats > * {
   font-size: 12px;
   line-height: 1.2;
 }
-.weekly-card__body small {
-  color: #c9c2a8;
-  font-size: 10px;
-  line-height: 1.35;
+.weekly-card__identity {
+  gap: 6px;
 }
-.weekly-card__body small:empty,
-.weekly-card__countdown:empty {
-  display: none;
+.weekly-card__tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 20px);
+  gap: 3px;
+}
+.weekly-card__tiles > span {
+  width: 20px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 5px;
+  background: rgba(8, 14, 16, 0.48);
+  color: #f7faf7;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.weekly-card__tiles > span:nth-child(1) {
+  background: rgba(83, 141, 78, 0.86);
+  border-color: rgba(118, 185, 112, 0.62);
+}
+.weekly-card__tiles > span:nth-child(2) {
+  background: rgba(181, 159, 59, 0.88);
+  border-color: rgba(226, 198, 104, 0.62);
+}
+.weekly-card__tiles > span:nth-child(3),
+.weekly-card__tiles > span:nth-child(4) {
+  background: rgba(58, 68, 66, 0.9);
 }
 .weekly-card__aside {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
   min-width: 0;
-}
-.weekly-card__prompt {
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.15;
-  text-align: left;
-}
-.weekly-card__countdown {
-  color: #c9c2a8;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.15;
-  text-align: left;
-  white-space: nowrap;
+  width: 100%;
 }
 .weekly-card__meta {
   color: #121212;
@@ -863,18 +875,16 @@ div#stats > * {
   padding: 5px 8px;
   font-size: 10px;
   font-weight: 700;
-  margin: 6px 0 0;
+  margin: 0;
   text-align: left;
   white-space: nowrap;
 }
 
 .weekly-card__aside .weekly-card__meta {
-  margin-top: 6px;
+  margin-top: 0;
 }
-.weekly-card--completed .weekly-card__meta {
-  color: #f4d879;
-  background: rgba(244,216,121,0.1);
-  border: 1px solid rgba(244,216,121,0.36);
+.weekly-card--completed .weekly-card__aside {
+  display: none;
 }
 .weekly-modal {
   position: fixed;
@@ -1309,23 +1319,14 @@ div#stats > * {
     gap: 6px;
     padding: 9px 10px;
   }
-  .weekly-card__body small,
-  .weekly-card__countdown {
-    display: none;
-  }
   .weekly-card__aside {
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
     width: 100%;
   }
-  .weekly-card__prompt {
-    text-align: left;
-  }
-  .weekly-card__countdown {
-    text-align: left;
-  }
   .weekly-card__meta {
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.1;
   }
 }
@@ -1353,8 +1354,18 @@ div#stats > * {
     height: 42px;
     font-size: 13px;
   }
-  .weekly-card__prompt {
-    font-size: 10px;
+  .weekly-card__identity {
+    gap: 5px;
+  }
+  .weekly-card__tiles {
+    grid-template-columns: repeat(4, 17px);
+    gap: 2px;
+  }
+  .weekly-card__tiles > span {
+    width: 17px;
+    height: 19px;
+    border-radius: 4px;
+    font-size: 9px;
   }
   .weekly-card__meta {
     font-size: 9px;
@@ -1693,7 +1704,7 @@ body::before {
 
 .daily-mode-picker,
 .weekly-card {
-  min-height: 116px;
+  min-height: 96px;
   border-radius: 14px;
   border-color: var(--line);
   box-shadow: var(--shadow-tight), inset 0 1px 0 rgba(255, 255, 255, 0.055);
@@ -1720,9 +1731,7 @@ body::before {
   line-height: 1.1;
 }
 
-.daily-mode-picker__detail,
-.weekly-card__body small,
-.weekly-card__countdown {
+.daily-mode-picker__detail {
   color: var(--muted);
 }
 
@@ -1792,6 +1801,7 @@ body::before {
     linear-gradient(145deg, rgba(16, 37, 45, 0.96), rgba(42, 34, 18, 0.96)),
     linear-gradient(90deg, rgba(127, 211, 230, 0.12), rgba(244, 216, 121, 0.10));
   border-color: rgba(127, 211, 230, 0.24);
+  padding-block: 8px;
 }
 
 .weekly-card:hover,
@@ -1913,16 +1923,100 @@ body::before {
 }
 
 #dailyStatsBar,
-#yesterdaySection,
-#timer {
+#yesterdaySection {
   color: var(--muted) !important;
 }
 
-#timer {
-  width: min(560px, calc(100% - 24px));
+#timer.daily-countdown {
+  width: fit-content;
+  max-width: calc(100% - 24px);
   box-sizing: border-box;
-  padding: 0 12px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px auto 26px;
+  padding: 8px 10px 8px 9px;
+  border: 1px solid rgba(127, 211, 230, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(18, 29, 32, 0.9), rgba(15, 20, 20, 0.82));
+  color: #f7faf7;
+  box-shadow: var(--shadow-tight), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.daily-countdown__intro {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-right: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.daily-countdown__clock {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  color: #8fd7ca;
+  background: rgba(95, 184, 169, 0.11);
+  border: 1px solid rgba(110, 200, 185, 0.18);
+}
+
+.daily-countdown__clock svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.daily-countdown__label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.daily-countdown__time {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.daily-countdown__unit {
+  min-width: 28px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+}
+
+.daily-countdown__unit strong {
+  color: #f8dd7f;
+  font-size: 15px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.daily-countdown__unit small {
+  color: #7f8c89;
+  font-size: 7px;
+  font-weight: 750;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.daily-countdown__separator {
+  color: rgba(248, 221, 127, 0.54);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 #statsModal > div,
@@ -1983,8 +2077,7 @@ body::before {
 @media only screen and (max-width: 600px) {
   #topBar,
   .play-launcher-grid,
-  #resultScreen,
-  #timer {
+  #resultScreen {
     width: min(560px, calc(100% - 16px)) !important;
   }
 
@@ -1995,8 +2088,12 @@ body::before {
 
   .daily-mode-picker,
   .weekly-card {
-    min-height: 108px;
+    min-height: 92px;
     border-radius: 12px;
+  }
+
+  #timer.daily-countdown {
+    max-width: calc(100% - 16px);
   }
 
   #keyboard {
@@ -2038,6 +2135,7 @@ body::before {
   .daily-mode-picker,
   .weekly-card {
     padding: 10px !important;
+    min-height: 88px;
   }
 
   .daily-mode-picker__actions button {

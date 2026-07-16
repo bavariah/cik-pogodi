@@ -1159,13 +1159,13 @@
         </div>
       </div>
       <button id="weeklyChallengeCard" class="weekly-card" type="button">
-        <span class="weekly-card__body">
-          <strong id="weeklyCardTitle">Недељна игра</strong>
-          <small id="weeklyCardDetail"></small>
+        <span class="weekly-card__body weekly-card__identity">
+          <strong id="weeklyCardTitle">Недељна</strong>
+          <span class="weekly-card__tiles" aria-hidden="true">
+            <span>И</span><span>Г</span><span>Р</span><span>А</span>
+          </span>
         </span>
         <span class="weekly-card__aside">
-          <span class="weekly-card__prompt" id="weeklyCardPrompt">Доступно</span>
-          <span class="weekly-card__countdown" id="weeklyCardCountdown"></span>
           <span class="weekly-card__meta" id="weeklyCardSolved">Играј</span>
         </span>
       </button>
@@ -1198,7 +1198,21 @@
       <div id="dayHeroSection" style="display:none;margin-top:10px;"></div>
     </div>
 
-    <div id="timer" style="margin-top:20px;color:#ccc;margin-bottom:30px"></div>
+    <div id="timer" class="daily-countdown" role="timer" aria-live="off">
+      <span class="daily-countdown__intro">
+        <span class="daily-countdown__clock" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3 2"></path></svg>
+        </span>
+        <span class="daily-countdown__label">Следећа реч</span>
+      </span>
+      <span class="daily-countdown__time" aria-hidden="true">
+        <span class="daily-countdown__unit"><strong data-countdown-hours>00</strong><small>сат</small></span>
+        <span class="daily-countdown__separator">:</span>
+        <span class="daily-countdown__unit"><strong data-countdown-minutes>00</strong><small>мин</small></span>
+        <span class="daily-countdown__separator">:</span>
+        <span class="daily-countdown__unit"><strong data-countdown-seconds>00</strong><small>сек</small></span>
+      </span>
+    </div>
     <div id="stats" style="display:none !important"></div>
 
     <!-- Stats Modal -->
