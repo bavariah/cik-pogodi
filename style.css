@@ -1575,6 +1575,77 @@ body::before {
   color: #8ed1a0;
 }
 
+.top-icon--menu {
+  color: #93d7e8;
+}
+
+.games-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.games-menu__panel {
+  width: 210px;
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 10px);
+  right: -4px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: rgba(18, 27, 26, 0.98);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(16px);
+}
+
+.games-menu__panel[hidden] {
+  display: none;
+}
+
+.games-menu__title {
+  display: block;
+  padding: 2px 4px 8px;
+  color: var(--muted);
+  font-size: 10px !important;
+  font-weight: 800;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+}
+
+.games-menu__item {
+  display: grid;
+  gap: 2px;
+  padding: 10px 11px;
+  border: 1px solid rgba(110, 200, 185, 0.18);
+  border-radius: 9px;
+  color: var(--text);
+  background: rgba(110, 200, 185, 0.08);
+  text-decoration: none;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+
+.games-menu__item:hover,
+.games-menu__item:focus-visible {
+  border-color: rgba(143, 215, 202, 0.42);
+  background: rgba(110, 200, 185, 0.14);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.games-menu__item span {
+  color: var(--muted);
+  font-size: 10px !important;
+  font-weight: 700;
+  letter-spacing: 0.03em !important;
+}
+
+.games-menu__item strong {
+  color: #8fd7ca;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
 :root.daily-mode-loading #board,
 :root.daily-mode-loading #keyboard,
 :root.daily-mode-loading #resultScreen {
@@ -1935,30 +2006,13 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin: 12px auto 8px;
+  margin: 12px auto 26px;
   padding: 8px 10px 8px 9px;
   border: 1px solid rgba(127, 211, 230, 0.18);
   border-radius: 14px;
   background: linear-gradient(145deg, rgba(18, 29, 32, 0.9), rgba(15, 20, 20, 0.82));
   color: #f7faf7;
   box-shadow: var(--shadow-tight), inset 0 1px 0 rgba(255, 255, 255, 0.045);
-}
-
-.more-games-link {
-  width: fit-content;
-  display: block;
-  margin: 0 auto 26px;
-  color: #8fd7ca;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: color 0.18s ease, opacity 0.18s ease;
-}
-
-.more-games-link:hover,
-.more-games-link:focus-visible {
-  color: #f8dd7f;
-  text-decoration: underline;
 }
 
 .daily-countdown__intro {

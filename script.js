@@ -773,6 +773,30 @@ closeHintBtn.onclick = () => { hintModal.style.display = "none"; };
 document.getElementById("helpBtn").onclick = () => { document.getElementById("helpModal").style.display = "flex"; };
 document.getElementById("closeHelpBtn").onclick = () => { document.getElementById("helpModal").style.display = "none"; };
 
+const gamesMenu = document.querySelector(".games-menu");
+const gamesMenuBtn = document.getElementById("gamesMenuBtn");
+const gamesMenuPanel = document.getElementById("gamesMenuPanel");
+
+function setGamesMenuOpen(isOpen) {
+  gamesMenuPanel.hidden = !isOpen;
+  gamesMenuBtn.setAttribute("aria-expanded", String(isOpen));
+}
+
+gamesMenuBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  setGamesMenuOpen(gamesMenuPanel.hidden);
+});
+
+document.addEventListener("click", event => {
+  if (!gamesMenu.contains(event.target)) setGamesMenuOpen(false);
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape" || gamesMenuPanel.hidden) return;
+  setGamesMenuOpen(false);
+  gamesMenuBtn.focus();
+});
+
 if (!localStorage.getItem("helpShown")) {
   setTimeout(() => {
     document.getElementById("helpModal").style.display = "flex";

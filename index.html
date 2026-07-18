@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image:width" content="192" />
     <meta property="og:image:height" content="192" />
-    <link rel="stylesheet" href="style.css?v=20260713-4" />
+    <link rel="stylesheet" href="style.css?v=20260718-1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
@@ -1109,6 +1109,11 @@
         <path d="M19 19v-7" />
         <path d="M3.8 19h16.4" />
       </symbol>
+      <symbol id="icon-menu" viewBox="0 0 24 24">
+        <path d="M5 7h14" />
+        <path d="M5 12h14" />
+        <path d="M5 17h14" />
+      </symbol>
     </svg>
     <!-- Loading screen -->
     <div id="loadingScreen">
@@ -1142,6 +1147,16 @@
         <button id="signInBtn" style="background:none;outline:none;font-size:20px;box-shadow:none;border:none;cursor:pointer;padding:4px 8px;line-height:1;"><svg class="top-icon" aria-hidden="true"><use href="#icon-lock"></use></svg></button>
         <button id="openLeaderboardBtn" title="Leaderboard" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;"><svg class="top-icon top-icon--trophy" aria-hidden="true"><use href="#icon-trophy"></use></svg></button>
         <button id="openStatsBtn" title="Statistika" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;"><svg class="top-icon top-icon--chart" aria-hidden="true"><use href="#icon-chart"></use></svg></button>
+        <div class="games-menu">
+          <button id="gamesMenuBtn" type="button" title="Još igara" aria-label="Još igara" aria-expanded="false" aria-controls="gamesMenuPanel"><svg class="top-icon top-icon--menu" aria-hidden="true"><use href="#icon-menu"></use></svg></button>
+          <div id="gamesMenuPanel" class="games-menu__panel" hidden>
+            <span class="games-menu__title">Još igara</span>
+            <a class="games-menu__item" href="https://recograd.vercel.app/" target="_blank" rel="noopener noreferrer">
+              <span>Nova igra</span>
+              <strong>Reč po reč</strong>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
     <div id="guestBanner" style="display:none;font-size:12px;color:#b59f3b;text-align:center;padding:5px 12px;background:#1a1600;border-bottom:1px solid #333;line-height:1.6;width:100%;box-sizing:border-box;">
@@ -1213,7 +1228,6 @@
         <span class="daily-countdown__unit"><strong data-countdown-seconds>00</strong><small>сек</small></span>
       </span>
     </div>
-    <a class="more-games-link" href="https://recograd.vercel.app/" target="_blank" rel="noopener noreferrer">Nova igra Reč po reč</a>
     <div id="stats" style="display:none !important"></div>
 
     <!-- Stats Modal -->
@@ -1459,7 +1473,7 @@
     </script>
 
     <div id="toast"></div>
-    <script src="script.js?v=20260713-2" defer></script>
+    <script src="script.js?v=20260718-1" defer></script>
     <script src="weekly.js?v=20260713-3" defer></script>
     <script>
       if ("serviceWorker" in navigator) {
