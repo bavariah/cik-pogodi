@@ -1497,6 +1497,9 @@ body::before {
 #topBar {
   width: min(560px, calc(100% - 24px)) !important;
   box-sizing: border-box !important;
+  position: relative;
+  z-index: 100;
+  overflow: visible;
   margin: max(8px, env(safe-area-inset-top)) auto 10px !important;
   padding: 10px 10px !important;
   background: rgba(15, 20, 20, 0.82) !important;
@@ -1575,28 +1578,76 @@ body::before {
   color: #8ed1a0;
 }
 
-.top-icon--menu {
-  color: #93d7e8;
-}
-
 .games-menu {
   position: relative;
   display: inline-flex;
+}
+
+#gamesMenuBtn {
+  color: #93d7e8 !important;
+}
+
+.games-menu__icon {
+  width: 21px;
+  height: 16px;
+  position: relative;
+  display: block;
+}
+
+.games-menu__icon > span {
+  height: 2px;
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
+  transition: top 0.2s ease, bottom 0.2s ease, transform 0.2s ease;
+}
+
+.games-menu__icon > span:first-child {
+  top: 4px;
+}
+
+.games-menu__icon > span:last-child {
+  bottom: 4px;
+}
+
+#gamesMenuBtn[aria-expanded="true"] .games-menu__icon > span:first-child {
+  top: 7px;
+  transform: rotate(45deg);
+}
+
+#gamesMenuBtn[aria-expanded="true"] .games-menu__icon > span:last-child {
+  bottom: 7px;
+  transform: rotate(-45deg);
 }
 
 .games-menu__panel {
   width: 210px;
   box-sizing: border-box;
   position: absolute;
-  z-index: 50;
+  z-index: 110;
   top: calc(100% + 10px);
   right: -4px;
   padding: 10px;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
   background: rgba(18, 27, 26, 0.98);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.64), 0 0 0 1px rgba(143, 215, 202, 0.04);
   backdrop-filter: blur(16px);
+  animation: games-menu-in 0.16s ease-out;
+}
+
+@keyframes games-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .games-menu__panel[hidden] {

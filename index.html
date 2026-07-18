@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image:width" content="192" />
     <meta property="og:image:height" content="192" />
-    <link rel="stylesheet" href="style.css?v=20260718-1" />
+    <link rel="stylesheet" href="style.css?v=20260718-2" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
@@ -1109,11 +1109,6 @@
         <path d="M19 19v-7" />
         <path d="M3.8 19h16.4" />
       </symbol>
-      <symbol id="icon-menu" viewBox="0 0 24 24">
-        <path d="M5 7h14" />
-        <path d="M5 12h14" />
-        <path d="M5 17h14" />
-      </symbol>
     </svg>
     <!-- Loading screen -->
     <div id="loadingScreen">
@@ -1148,7 +1143,9 @@
         <button id="openLeaderboardBtn" title="Leaderboard" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;"><svg class="top-icon top-icon--trophy" aria-hidden="true"><use href="#icon-trophy"></use></svg></button>
         <button id="openStatsBtn" title="Statistika" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;"><svg class="top-icon top-icon--chart" aria-hidden="true"><use href="#icon-chart"></use></svg></button>
         <div class="games-menu">
-          <button id="gamesMenuBtn" type="button" title="Još igara" aria-label="Još igara" aria-expanded="false" aria-controls="gamesMenuPanel"><svg class="top-icon top-icon--menu" aria-hidden="true"><use href="#icon-menu"></use></svg></button>
+          <button id="gamesMenuBtn" type="button" title="Još igara" aria-label="Još igara" aria-expanded="false" aria-controls="gamesMenuPanel">
+            <span class="games-menu__icon" aria-hidden="true"><span></span><span></span></span>
+          </button>
           <div id="gamesMenuPanel" class="games-menu__panel" hidden>
             <span class="games-menu__title">Još igara</span>
             <a class="games-menu__item" href="https://recograd.vercel.app/" target="_blank" rel="noopener noreferrer">
