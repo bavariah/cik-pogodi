@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://bavariah.github.io/cik-pogodi/favicon-cik2.png" />
     <meta property="og:image:width" content="192" />
     <meta property="og:image:height" content="192" />
-    <link rel="stylesheet" href="style.css?v=20260718-2" />
+    <link rel="stylesheet" href="style.css?v=20260718-3" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script defer>
@@ -821,12 +821,12 @@
 
         if (allSeasons && allSeasons.length > 1) {
           const title = document.createElement("div");
-          title.style.cssText = "font-size:12px;color:#aaa;margin-bottom:6px;margin-top:12px;";
+          title.className = "profile-season-history__title";
           title.textContent = "Историја сезона";
           histEl.appendChild(title);
           allSeasons.forEach(row => {
             const el = document.createElement("div");
-            el.style.cssText = "display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #333;";
+            el.className = "profile-season-history__row";
             const seasonGames = (row.attempts || 0) + (row.misses || 0);
             el.innerHTML = `<span style="color:#aaa">${getSeasonLabel(row.season)}</span><span>${row.score || 0} пт · ${(row.avg_score || 0).toFixed(1)} просек (${seasonGames} игара)</span>`;
             histEl.appendChild(el);
@@ -1275,14 +1275,14 @@
 
     <!-- Profile Modal -->
     <div id="profileModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);justify-content:center;align-items:center;z-index:1001;font-family:sans-serif;">
-      <div style="background:#222;padding:25px;border-radius:12px;max-width:320px;width:90%;color:#fff;position:relative;max-height:90vh;overflow-y:auto;">
+      <div class="profile-modal__panel" style="background:#222;padding:25px;border-radius:12px;max-width:320px;width:90%;color:#fff;position:relative;max-height:90vh;overflow-y:auto;">
         <button id="closeProfileBtn" class="modal-close">✕</button>
         <div id="profileAvatar" class="profile-avatar" onclick="toggleEmojiPicker()"><span id="profileAvatarText">??</span></div>
-        <div onclick="toggleEmojiPicker()" style="text-align:center;font-size:11px;color:#666;margin:-4px 0 8px;cursor:pointer;user-select:none;">✏️ Кликни за промену</div>
+        <div class="profile-avatar-hint" onclick="toggleEmojiPicker()" style="text-align:center;font-size:11px;color:#666;margin:-4px 0 8px;cursor:pointer;user-select:none;">✏️ Кликни за промену</div>
         <div id="emojiPicker" style="display:none;margin-bottom:8px;">
           <div class="emoji-picker-grid" id="emojiGrid"></div>
         </div>
-        <div style="text-align:center;margin-bottom:5px;">
+        <div class="profile-name-row" style="text-align:center;margin-bottom:5px;">
           <span id="profileUsernameDisplay" style="font-size:18px;font-weight:bold;"></span>
           <button id="profileEditBtn" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;margin-left:5px;">✏️</button>
         </div>
