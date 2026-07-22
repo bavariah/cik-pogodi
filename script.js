@@ -891,7 +891,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
 
   const { data, error } = await client
     .from("scores")
-    .select("username, score, avg_score, attempts, avatar_emoji")
+    .select("username, score, avg_score, attempts, misses, avatar_emoji")
     .eq("season", getCurrentSeason())
     .gt("score", 0)
     .order(orderBy, { ascending: false })
@@ -921,7 +921,7 @@ async function loadLeaderboard(orderBy = "avg_score") {
       : (entry.score || 0);
     const scoreUnit = orderBy === "avg_score" ? " пт/игри" : " пт";
     const scoreSub = orderBy === "avg_score"
-      ? `${entry.attempts || 0} игара`
+      ? `${(entry.attempts || 0) + (entry.misses || 0)} игара`
       : `${(entry.avg_score || 0).toFixed(1)} просек`;
     return `<div class="lb-row${rowClass ? " " + rowClass : ""}${isYou ? " lb-you" : ""}">
       ${rankEl}
@@ -1108,7 +1108,6 @@ async function recordDailyResult(win, points) {
     return false;
   }
 
-  await persistCareerStats(session.user.id).catch(console.error);
   return Array.isArray(data) ? data[0]?.inserted !== false : true;
 }
 
@@ -1135,19 +1134,16 @@ async function endGame(win) {
     setTimeout(() => createFireworks(), 600);
   }
 
-  const recorded = await recordDailyResult(win, points).catch(error => {
+  await recordDailyResult(win, points).catch(error => {
     console.error("daily result failed", error);
     return false;
   });
-  if (!recorded) {
-    if (win) await updateLeaderboard(localStorage.getItem("username"), points);
-    const { data: { session } } = await client.auth.getSession();
-    if (session?.user) {
-      await Promise.all([
-        syncStats(session.user.id),
-        persistCareerStats(session.user.id)
-      ]).catch(e => console.error("stats sync failed", e));
-    }
+  const { data: { session } } = await client.auth.getSession();
+  if (session?.user) {
+    await Promise.all([
+      syncStats(session.user.id),
+      persistCareerStats(session.user.id)
+    ]).catch(e => console.error("stats sync failed", e));
   }
 
   setTimeout(() => {
@@ -1156,60 +1152,6 @@ async function endGame(win) {
     loadDailyStats().catch(console.error);
     loadDayHero().catch(console.error);
   }, win ? 1200 : 0);
-}
-
-// ─── Leaderboard DB update ────────────────────────────────────────────────────
-
-async function updateLeaderboard(username, score) {
-  const { data: { session }, error: sessErr } = await client.auth.getSession();
-  if (sessErr || !session) return;
-  const uid = session.user.id;
-  const season = getCurrentSeason();
-  const localStats = typeof getSeasonStats === "function" ? normalizeStats(getSeasonStats(season)) : null;
-  const localDist = Array.isArray(localStats?.attempts) ? localStats.attempts : [];
-  const localAttempts = localDist.reduce((total, count) => total + (count || 0), 0);
-  const localScore = typeof getSeasonScoreFromStats === "function"
-    ? getSeasonScoreFromStats(localStats)
-    : [50, 30, 15, 12, 8, 6, 2].reduce((total, points, index) => total + ((localDist[index] || 0) * points), 0);
-
-  const { data, error } = await client.from("scores")
-    .select("id, score, attempts")
-    .eq("user_id", uid).eq("season", season).maybeSingle();
-
-  if (error && error.code !== "PGRST116") { console.error("Lookup error:", error); return; }
-
-  if (data) {
-    const updatePayload = { username: username || "Анон" };
-    if (localAttempts > (data.attempts || 0) && localScore > (data.score || 0)) {
-      updatePayload.score = localScore;
-      updatePayload.attempts = localAttempts;
-      updatePayload.avg_score = localAttempts > 0
-        ? parseFloat((localScore / localAttempts).toFixed(2))
-        : 0;
-    } else if (localAttempts === 0 || localAttempts > (data.attempts || 0)) {
-      const newScore = (data.score || 0) + score;
-      const newAttempts = (data.attempts || 0) + 1;
-      updatePayload.score = newScore;
-      updatePayload.attempts = newAttempts;
-      updatePayload.avg_score = parseFloat((newScore / newAttempts).toFixed(2));
-    } else if (localScore > (data.score || 0)) {
-      updatePayload.score = localScore;
-      updatePayload.avg_score = localAttempts > 0
-        ? parseFloat((localScore / localAttempts).toFixed(2))
-        : 0;
-    }
-    await client.from("scores").update(updatePayload).eq("id", data.id);
-  } else {
-    const initialScore = localAttempts > 0 ? localScore : score;
-    const initialAttempts = localAttempts > 0 ? localAttempts : 1;
-    await insertCurrentSeasonScore({
-      user_id: uid, username: username || "Анон",
-      score: initialScore,
-      attempts: initialAttempts,
-      avg_score: parseFloat((initialScore / initialAttempts).toFixed(2)),
-      season
-    });
-  }
 }
 
 // ─── After-game info ──────────────────────────────────────────────────────────

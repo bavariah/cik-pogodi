@@ -260,10 +260,10 @@
         const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
         const seasonScore = seasonRow?.score || 0;
         const seasonAvg = seasonRow?.avg_score || 0;
-        const seasonAttempts = seasonRow?.attempts || 0;
+        const seasonGames = (seasonRow?.attempts || 0) + (seasonRow?.misses || 0);
 
         if ((stats.maxStreak || 0) >= 10) return "Шампион низа";
-        if (seasonAttempts >= 5 && seasonAvg >= 10) return "Мајстор просека";
+        if (seasonGames >= 5 && seasonAvg >= 10) return "Мајстор просека";
         if (seasonScore >= 250) return "Ловац на поене";
         if (total >= 10 && winRate >= 80) return "Сигурна рука";
         if ((stats.currentStreak || 0) >= 3) return "У добром низу";
@@ -545,18 +545,43 @@
         const storedUsername = localStorage.getItem("username") || "";
         const defaultUsername = "Играч";
         const dist = Array.isArray(stats.attempts) ? stats.attempts : [0, 0, 0, 0, 0, 0, 0];
-        const seasonAttempts = dist.reduce((a, b) => a + b, 0);
+        const dailyWins = dist.reduce((a, b) => a + b, 0);
+        const dailyMisses = stats.misses || 0;
+        const dailyGames = dailyWins + dailyMisses;
+        const dailyScore = getSeasonScoreFromStats(stats);
+        const [seasonYearText, seasonHalf] = season.split("-");
+        const seasonYear = Number(seasonYearText);
+        const weeklyStart = `${seasonYear}-${seasonHalf === "S1" ? "01-01" : "07-01"}`;
+        const weeklyEnd = seasonHalf === "S1"
+          ? `${seasonYear}-07-01`
+          : `${seasonYear + 1}-01-01`;
 
-        const { data, error: lookupError } = await client
-          .from("scores")
-          .select("id, username, score, attempts, avatar_emoji")
-          .eq("user_id", user_id)
-          .eq("season", season)
-          .maybeSingle();
+        const [scoreResult, weeklyResult] = await Promise.all([
+          client
+            .from("scores")
+            .select("id, username, score, attempts, misses, avatar_emoji")
+            .eq("user_id", user_id)
+            .eq("season", season)
+            .maybeSingle(),
+          client
+            .from("weekly_results")
+            .select("correct, points")
+            .eq("user_id", user_id)
+            .gte("week_key", weeklyStart)
+            .lt("week_key", weeklyEnd)
+        ]);
+
+        const { data, error: lookupError } = scoreResult;
+        const { data: weeklyRows, error: weeklyError } = weeklyResult;
 
         if (lookupError && lookupError.code !== "PGRST116") {
           throw lookupError;
         }
+        if (weeklyError) throw weeklyError;
+
+        const weeklyWins = (weeklyRows || []).filter(row => row.correct).length;
+        const weeklyLosses = (weeklyRows || []).length - weeklyWins;
+        const weeklyPoints = (weeklyRows || []).reduce((sum, row) => sum + (Number(row.points) || 0), 0);
 
         let carryProfile = null;
         if (!storedUsername || storedUsername === defaultUsername || !localStorage.getItem("avatar_emoji")) {
@@ -581,44 +606,58 @@
           localStorage.setItem("avatar_emoji", avatarEmoji);
         }
 
-        const metadata = {
+        const profileMetadata = {
           username,
-          distribution: dist,
-          misses: stats.misses || 0,
-          current_streak: stats.currentStreak || 0,
-          max_streak: stats.maxStreak || 0,
           avatar_emoji: avatarEmoji,
         };
 
         if (data) {
-          const updatePayload = {};
-          // Only update metadata if local has at least as many wins as DB (prevent new-browser blank from overwriting real data)
-          if (seasonAttempts >= (data.attempts || 0)) {
-            Object.assign(updatePayload, metadata);
-            const seasonScore = getSeasonScoreFromStats(stats);
-            if (seasonScore > (data.score || 0)) {
-              updatePayload.score = seasonScore;
-              updatePayload.attempts = seasonAttempts;
-              updatePayload.avg_score = seasonAttempts > 0
-                ? parseFloat((seasonScore / seasonAttempts).toFixed(2))
-                : 0;
-            } else if (seasonAttempts > (data.attempts || 0)) {
-              updatePayload.attempts = seasonAttempts;
-              updatePayload.avg_score = seasonAttempts > 0
-                ? parseFloat(((data.score || 0) / seasonAttempts).toFixed(2))
-                : 0;
-            }
+          const updatePayload = { ...profileMetadata };
+          const dbDailyWins = Math.max(0, (data.attempts || 0) - weeklyWins);
+          const dbDailyMisses = Math.max(0, (data.misses || 0) - weeklyLosses);
+          const dbDailyGames = dbDailyWins + dbDailyMisses;
+          const dbDailyScore = Math.max(0, (data.score || 0) - weeklyPoints);
+          const localDailyIsComplete = dailyGames >= dbDailyGames
+            && dailyWins >= dbDailyWins
+            && dailyMisses >= dbDailyMisses;
+
+          // Weekly games live in attempts/misses, but never in the daily row distribution.
+          if (localDailyIsComplete) {
+            const combinedScore = Math.max(dailyScore, dbDailyScore) + weeklyPoints;
+            const combinedWins = dailyWins + weeklyWins;
+            const combinedMisses = dailyMisses + weeklyLosses;
+            const combinedGames = combinedWins + combinedMisses;
+            Object.assign(updatePayload, {
+              score: combinedScore,
+              attempts: combinedWins,
+              misses: combinedMisses,
+              avg_score: combinedGames > 0
+                ? parseFloat((combinedScore / combinedGames).toFixed(2))
+                : 0,
+              distribution: dist,
+              current_streak: stats.currentStreak || 0,
+              max_streak: stats.maxStreak || 0,
+            });
           }
           if (Object.keys(updatePayload).length > 0) {
             const { error: updateError } = await client.from("scores").update(updatePayload).eq("id", data.id);
             if (updateError) throw updateError;
           }
         } else {
-          const seasonScore = getSeasonScoreFromStats(stats);
+          const combinedScore = dailyScore + weeklyPoints;
+          const combinedWins = dailyWins + weeklyWins;
+          const combinedMisses = dailyMisses + weeklyLosses;
+          const combinedGames = combinedWins + combinedMisses;
           const inserted = await insertCurrentSeasonScore({
-            user_id, ...metadata, score: seasonScore,
-            attempts: seasonAttempts,
-            avg_score: seasonAttempts > 0 ? parseFloat((seasonScore / seasonAttempts).toFixed(2)) : 0,
+            user_id,
+            ...profileMetadata,
+            score: combinedScore,
+            attempts: combinedWins,
+            misses: combinedMisses,
+            avg_score: combinedGames > 0 ? parseFloat((combinedScore / combinedGames).toFixed(2)) : 0,
+            distribution: dist,
+            current_streak: stats.currentStreak || 0,
+            max_streak: stats.maxStreak || 0,
             season
           }, true);
           if (!inserted) throw new Error("Could not create the seasonal stats row");
@@ -786,7 +825,7 @@
               .eq("season", season).gt("score", currentSeasonData.score || 0);
             scoreRank = (count || 0) + 1;
           }
-          if ((currentSeasonData.attempts || 0) > 0 && (currentSeasonData.avg_score || 0) > 0) {
+          if (seasonGames > 0 && (currentSeasonData.avg_score || 0) > 0) {
             const { count } = await client.from("scores").select("*", { count: "exact", head: true })
               .eq("season", season).gt("avg_score", currentSeasonData.avg_score || 0);
             avgRank = (count || 0) + 1;
@@ -1470,8 +1509,8 @@
     </script>
 
     <div id="toast"></div>
-    <script src="script.js?v=20260718-1" defer></script>
-    <script src="weekly.js?v=20260713-3" defer></script>
+    <script src="script.js?v=20260722-1" defer></script>
+    <script src="weekly.js?v=20260722-1" defer></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")

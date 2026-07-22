@@ -312,9 +312,6 @@ async function finishWeeklyChallenge(win) {
 
   const { key } = getWeeklyWindow();
   const { data: { session } } = await client.auth.getSession();
-  if (session?.user && typeof syncStats === "function") {
-    await syncStats(session.user.id).catch(console.error);
-  }
   const username = localStorage.getItem("username") || "anon";
   const { error } = await client.rpc("record_weekly_challenge_result", {
     p_week_key: key,
@@ -327,6 +324,9 @@ async function finishWeeklyChallenge(win) {
     p_season: typeof getCurrentSeason === "function" ? getCurrentSeason() : ""
   });
   if (error) console.error("Failed to record weekly result:", error);
+  if (!error && session?.user && typeof syncStats === "function") {
+    await syncStats(session.user.id).catch(console.error);
+  }
 
   showWeeklyResult(win, points, state);
   updateWeeklyLauncher().catch(console.error);
