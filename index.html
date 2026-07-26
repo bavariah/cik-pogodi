@@ -547,8 +547,8 @@
         const dist = Array.isArray(stats.attempts) ? stats.attempts : [0, 0, 0, 0, 0, 0, 0];
         const dailyWins = dist.reduce((a, b) => a + b, 0);
         const dailyMisses = stats.misses || 0;
-        const dailyGames = dailyWins + dailyMisses;
         const dailyScore = getSeasonScoreFromStats(stats);
+        const pendingDailyMiss = localStorage.getItem("pending_miss_sync") === season ? 1 : 0;
         const [seasonYearText, seasonHalf] = season.split("-");
         const seasonYear = Number(seasonYearText);
         const weeklyStart = `${seasonYear}-${seasonHalf === "S1" ? "01-01" : "07-01"}`;
@@ -617,15 +617,19 @@
           const dbDailyMisses = Math.max(0, (data.misses || 0) - weeklyLosses);
           const dbDailyGames = dbDailyWins + dbDailyMisses;
           const dbDailyScore = Math.max(0, (data.score || 0) - weeklyPoints);
-          const localDailyIsComplete = dailyGames >= dbDailyGames
+          // Completed daily games are written by record_daily_result before this
+          // sync. Only an explicitly pending abandoned game may add one DB miss.
+          const trustedDailyMisses = Math.min(dailyMisses, dbDailyMisses + pendingDailyMiss);
+          const trustedDailyGames = dailyWins + trustedDailyMisses;
+          const localDailyIsComplete = trustedDailyGames >= dbDailyGames
             && dailyWins >= dbDailyWins
-            && dailyMisses >= dbDailyMisses;
+            && trustedDailyMisses >= dbDailyMisses;
 
           // Weekly games live in attempts/misses, but never in the daily row distribution.
           if (localDailyIsComplete) {
             const combinedScore = Math.max(dailyScore, dbDailyScore) + weeklyPoints;
             const combinedWins = dailyWins + weeklyWins;
-            const combinedMisses = dailyMisses + weeklyLosses;
+            const combinedMisses = trustedDailyMisses + weeklyLosses;
             const combinedGames = combinedWins + combinedMisses;
             Object.assign(updatePayload, {
               score: combinedScore,
@@ -642,11 +646,13 @@
           if (Object.keys(updatePayload).length > 0) {
             const { error: updateError } = await client.from("scores").update(updatePayload).eq("id", data.id);
             if (updateError) throw updateError;
+            if (pendingDailyMiss) localStorage.removeItem("pending_miss_sync");
           }
         } else {
           const combinedScore = dailyScore + weeklyPoints;
           const combinedWins = dailyWins + weeklyWins;
-          const combinedMisses = dailyMisses + weeklyLosses;
+          const trustedDailyMisses = pendingDailyMiss ? Math.min(dailyMisses, 1) : 0;
+          const combinedMisses = trustedDailyMisses + weeklyLosses;
           const combinedGames = combinedWins + combinedMisses;
           const inserted = await insertCurrentSeasonScore({
             user_id,
@@ -661,6 +667,7 @@
             season
           }, true);
           if (!inserted) throw new Error("Could not create the seasonal stats row");
+          if (pendingDailyMiss) localStorage.removeItem("pending_miss_sync");
         }
       }
 
@@ -1509,7 +1516,7 @@
     </script>
 
     <div id="toast"></div>
-    <script src="script.js?v=20260722-1" defer></script>
+    <script src="script.js?v=20260726-1" defer></script>
     <script src="weekly.js?v=20260722-1" defer></script>
     <script>
       if ("serviceWorker" in navigator) {

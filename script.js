@@ -1220,19 +1220,24 @@ async function loadStatsFromDB() {
   if (!session?.user) return;
   const uid = session.user.id;
 
-  if (localStorage.getItem("pending_miss_sync")) {
-    localStorage.removeItem("pending_miss_sync");
-  }
-
-  await syncStats(uid).catch(() => {});
-
   await checkAndArchiveSeason();
 
   // Aggregate ALL seasons to build full career stats
-  const [{ data: allRows }, { data: correctSubmissions }] = await Promise.all([
+  const season = getCurrentSeason();
+  const [seasonYearText, seasonHalf] = season.split("-");
+  const seasonYear = Number(seasonYearText);
+  const weeklyStart = `${seasonYear}-${seasonHalf === "S1" ? "01-01" : "07-01"}`;
+  const weeklyEnd = seasonHalf === "S1"
+    ? `${seasonYear}-07-01`
+    : `${seasonYear + 1}-01-01`;
+  const [
+    { data: allRows, error: scoreRowsError },
+    { data: correctSubmissions, error: submissionsError },
+    { data: weeklyRows, error: weeklyRowsError }
+  ] = await Promise.all([
     client
       .from("scores")
-      .select("season, attempts, misses, distribution, current_streak, max_streak")
+      .select("season, score, attempts, misses, distribution, current_streak, max_streak")
       .eq("user_id", uid)
       .order("season", { ascending: false }),
     client
@@ -1240,18 +1245,35 @@ async function loadStatsFromDB() {
       .select("attempt")
       .eq("user_id", uid)
       .eq("correct", true)
-      .limit(1000)
+      .limit(1000),
+    client
+      .from("weekly_results")
+      .select("correct, points")
+      .eq("user_id", uid)
+      .gte("week_key", weeklyStart)
+      .lt("week_key", weeklyEnd)
   ]);
+  if (scoreRowsError) throw scoreRowsError;
+  if (submissionsError) throw submissionsError;
+  if (weeklyRowsError) throw weeklyRowsError;
 
   const scoreRows = allRows || [];
 
   const currentSeasonRow = scoreRows.find(row => row.season === getCurrentSeason());
   if (currentSeasonRow) {
+    const weeklyLosses = (weeklyRows || []).filter(row => !row.correct).length;
+    const weeklyPoints = (weeklyRows || []).reduce((sum, row) => sum + (Number(row.points) || 0), 0);
+    const dailyDistribution = Array.isArray(currentSeasonRow.distribution)
+      ? currentSeasonRow.distribution
+      : [0, 0, 0, 0, 0, 0, 0];
+    const dailyWins = dailyDistribution.reduce((sum, count) => sum + (Number(count) || 0), 0);
+    const dailyMisses = Math.max(0, (currentSeasonRow.misses || 0) - weeklyLosses);
     const serverSeasonStats = normalizeStats({
-      total: (currentSeasonRow.attempts || 0) + (currentSeasonRow.misses || 0),
-      wins: currentSeasonRow.attempts || 0,
-      misses: currentSeasonRow.misses || 0,
-      attempts: currentSeasonRow.distribution,
+      total: dailyWins + dailyMisses,
+      wins: dailyWins,
+      misses: dailyMisses,
+      attempts: dailyDistribution,
+      score: Math.max(0, (currentSeasonRow.score || 0) - weeklyPoints),
       currentStreak: currentSeasonRow.current_streak || 0,
       maxStreak: currentSeasonRow.max_streak || 0
     });
@@ -1300,6 +1322,7 @@ async function recordAbandonedGameIfNeeded() {
 
   // Game from a previous window was never completed — count as loss
   recordStatsResult(null);
+  localStorage.setItem("pending_miss_sync", getCurrentSeason());
   localStorage.removeItem("gameState");
 
   const { data: { session } } = await client.auth.getSession();
@@ -1338,8 +1361,8 @@ function showDBLockedScreen(dailyResult = null) {
 async function initGame() {
   applyDailyLayoutVars();
   if (typeof updateDailyModePicker === "function") updateDailyModePicker();
-  await recordAbandonedGameIfNeeded();
   await loadStatsFromDB().catch(console.error);
+  await recordAbandonedGameIfNeeded();
   loadDayHero().catch(console.error);
 
   if (checkIfLocked()) {
