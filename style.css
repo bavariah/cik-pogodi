@@ -940,7 +940,7 @@ div#stats > * {
 }
 .weekly-board {
   display: grid;
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   gap: 7px;
   justify-content: center;
   margin: 0 auto 16px;

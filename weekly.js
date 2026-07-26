@@ -1,8 +1,8 @@
 const WEEKLY_WORDS_TABLE = "weekly_words";
 const WEEKLY_ACCEPTED_WORDS_TABLE = "weekly_accepted_words";
-const WEEKLY_RESULT_SCORE = [20, 15, 12, 10, 4];
+const WEEKLY_RESULT_SCORE = [20, 15, 12, 10, 4, 2];
 const WEEKLY_ANCHOR_SATURDAY = new Date(2026, 0, 3);
-const WEEKLY_ROW_COUNT = 5;
+const WEEKLY_ROW_COUNT = 6;
 const WEEKLY_WORD_LENGTH = 4;
 
 let weeklyWord = "";
@@ -425,7 +425,7 @@ function shareWeeklyResult(win, points, state = null) {
   const { key } = getWeeklyWindow();
   const text = [
     `Чик Погоди недељни изазов ${key}`,
-    win ? `${weeklyRow + 1}/5 · +${points} поена` : "X/5",
+    win ? `${weeklyRow + 1}/${WEEKLY_ROW_COUNT} · +${points} поена` : `X/${WEEKLY_ROW_COUNT}`,
     grid.map(row => row.map(tile => emoji[tile.color] || "⬛").join("")).join("\n"),
     "https://bavariah.github.io/cik-pogodi/"
   ].join("\n");
