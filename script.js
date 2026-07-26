@@ -1297,6 +1297,15 @@ async function loadStatsFromDB() {
   const dbMaxStreak     = scoreRows.reduce((m, r) => Math.max(m, r.max_streak     || 0), 0);
   const dbCurrentStreak = scoreRows[0]?.current_streak || 0; // most recent season first
 
+  // Seasonal score rows are authoritative for losses. Do not let a stale
+  // browser career snapshot restore losses removed by the weekly-sync repair.
+  const localCareerStats = normalizeStats(JSON.parse(localStorage.getItem("stats")));
+  if (localCareerStats.misses > dbMisses) {
+    localCareerStats.misses = dbMisses;
+    localCareerStats.total = Math.max(localCareerStats.wins + dbMisses, dbTotal);
+    localStorage.setItem("stats", JSON.stringify(localCareerStats));
+  }
+
   await reconcileCareerStats(uid, {
     total: dbTotal,
     wins: dbWins,
