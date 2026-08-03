@@ -1807,6 +1807,10 @@ body::before {
   transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
 }
 
+.games-menu__item + .games-menu__item {
+  margin-top: 8px;
+}
+
 .games-menu__item:hover,
 .games-menu__item:focus-visible {
   border-color: rgba(143, 215, 202, 0.42);
